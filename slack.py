@@ -10,10 +10,10 @@ def send_reminder(to_user, against_user, debug=True):
         return
     message = 'Friendly reminder that you have a match against <@'+against_user+'>. Please work with them to find a time to play.'
     if debug:
-        print 'Sending to', to_user, ':', message
+        print('Sending to', to_user, ':', message)
     else:
         slack_client.chat.post_message(to_user, message, as_user=True)
-        print 'For reals sent to', to_user, ':', message
+        print('For reals sent to', to_user, ':', message)
     time.sleep(1.5)
 
 def send_message(to_user, against_user, debug=True):
@@ -22,11 +22,11 @@ def send_message(to_user, against_user, debug=True):
     message = 'This week, you have a bye. Relax and get some practice in.'
     if against_user is not None:
         message = 'This week, you play against <@'+against_user+'>. Please message them _today_ to find a time that works. After your match, report the winner and # of sets (best of 3) to <@UGP9FEBLY> in <#C03NHDHBD>.'
-    if debug and not to_user == 'U04QW49D1':
-        print 'Sending to', to_user, ':', message
+    if debug and not to_user == bot_config.get_commissioner_slack_id():
+        print('Sending to', to_user, ':', message)
     else:
         slack_client.chat.post_message(to_user, message, as_user=True)
-        print 'For reals sent to', to_user, ':', message
+        print('For reals sent to', to_user, ':', message)
     time.sleep(1.5)
 
 def send_messages_for_week(week, debug=True):
@@ -46,11 +46,11 @@ def send_reminders_for_week(week, debug=True):
 def send_custom_to_active(message, debug=True):
     players = db.get_active_players()
     for player in players:
-        if debug and not player.slack_id == 'U04QW49D1':
-            print 'Sending to', player.slack_id, ':', message
+        if debug and not player.slack_id == bot_config.get_commissioner_slack_id():
+            print('Sending to', player.slack_id, ':', message)
         else:
             slack_client.chat.post_message(player.slack_id, message, as_user=True)
-            print 'For reals sent to', player.slack_id, ':', message
+            print('For reals sent to', player.slack_id, ':', message)
         time.sleep(1.5)
 
 def send_custom_for_missed_games(message, num_missed, week, debug=True):
@@ -70,9 +70,9 @@ def send_custom_for_missed_games(message, num_missed, week, debug=True):
     for player_id in players:
         test = len(players[player_id])
         if len(players[player_id]) >= num_missed:
-            if debug and not player_id == 'U04QW49D1':
-                print 'Sending to', player_id, ':', message
+            if debug and not player_id == bot_config.get_commissioner_slack_id():
+                print('Sending to', player_id, ':', message)
             else:
                 slack_client.chat.post_message(player_id, message, as_user=True)
-                print 'For reals sent to', player_id, ':', message
+                print('For reals sent to', player_id, ':', message)
             time.sleep(1.5)

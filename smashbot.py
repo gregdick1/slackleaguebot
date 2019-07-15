@@ -8,26 +8,12 @@ from multiprocessing import Process
 
 import logging, sys
 
-#Hacky setup to get stdout and stderr to go the log file
-class LoggerWriter:
-    def __init__(self, level):
-            self.level = level
-
-    def write(self, message):
-            if message != '\n':
-                    self.level(message)
-
-    def flush(self):
-            self.level(sys.stderr)
-
-
 class SmashBot():
     def __init__(self):
+        print("initializing")
+
         self.slack_client = SlackClient(bot_config.get_slack_api_key())
         self.logger = logging.getLogger('smashbot')
-        # Send stdout and stderr to the log file
-        sys.stdout = LoggerWriter(self.logger.debug)
-        sys.stderr = LoggerWriter(self.logger.warning)
 
         hdlr = logging.FileHandler(bot_config.get_log_path())
         formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
@@ -178,8 +164,11 @@ class SmashBot():
         self.enter_score(result['winner_id'], result['loser_id'], result['score_total'], channel, timestamp)
 
     def start_bot(self):
+        print("Testing")
         p = Process(target=self.keepalive)
         p.start()
+
+
         if self.slack_client.rtm_connect():
             print("StarterBot connected and running!")
             while True:
@@ -204,4 +193,8 @@ class SmashBot():
             print("Connection failed. Invalid Slack token or bot ID?")
 
 if __name__ == "__main__":
-    SmashBot().start_bot()
+    print("Test1")
+    bot = SmashBot()
+    print("Test2")
+    bot.start_bot()
+    print("Test3")

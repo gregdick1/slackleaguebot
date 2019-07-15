@@ -11,5 +11,5 @@ match_making.create_matches_for_season(datetime.date(2019, 6, 3), skip_weeks=[],
 # players.update_groupings()
 #
 # db.clear_matches_for_season(2)
-print match_making.print_season_markup()
+print(match_making.print_season_markup())
 # db.push_db()

@@ -133,7 +133,7 @@ def get_player_by_name(name):
     row = c.fetchone()
     conn.close()
     if row is None or len(row) == 0:
-        print 'Couldn not find player with name:', name
+        print('Couldn not find player with name:', name)
         return None
     return Player.from_db(row)
 
@@ -144,7 +144,7 @@ def get_player_by_id(id):
     row = c.fetchone()
     conn.close()
     if len(row) == 0:
-        print 'Couldn not find player with id:', id
+        print('Couldn not find player with id:', id)
         return None
     return Player.from_db(row)
 
@@ -155,7 +155,7 @@ def get_floor_player_by_id(id):
     row = c.fetchone()
     conn.close()
     if row == None or len(row) == 0:
-        print 'Could not find player with id:', id
+        print('Could not find player with id:', id)
         return None
     return FloorPlayer.from_db(row)
 
@@ -276,7 +276,7 @@ def get_match_by_players(player_a, player_b):
     conn.close()
 
     if len(row) == 0:
-        print "No match for players:", player_a.name, player_b.name
+        print("No match for players:", player_a.name, player_b.name)
         return None
     return Match.from_db(row)
 
@@ -292,16 +292,16 @@ def update_match_by_id(winner_id, loser_id, sets):
 
 def _update_match(winner, loser, sets):
     if winner is None or loser is None:
-        print 'Could not update match'
+        print('Could not update match')
         return False
 
     if sets not in [2,3]:
-        print 'Sets must be 2 or 3'
+        print('Sets must be 2 or 3')
         return False
 
     match = get_match_by_players(winner, loser)
     if match is None:
-        print 'Could not update match'
+        print('Could not update match')
         return False
 
     conn = get_connection()

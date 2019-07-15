@@ -29,7 +29,7 @@ def ensure_players_in_db():
     if len(user_map) != len(local_player_map):
         for key, value in user_map.iteritems():
             del local_player_map[key]
-        print 'Could not find slack ids for the following ', local_player_map
+        print('Could not find slack ids for the following ', local_player_map)
 
 def update_groupings():
     ensure_players_in_db()
@@ -63,7 +63,7 @@ def print_new_groups():
         if len(last_group):
             for player in last_group + promoted + last_relegated_2:
                 name = [p.name for p in all_players if p.slack_id == player['player_id']][0]
-                print "u'"+name+"': '"+last_group_letter+"',"
+                print("u'"+name+"': '"+last_group_letter+"',")
 
         last_relegated_2 = last_relegated[:]
         last_relegated = players[-2:]
@@ -72,6 +72,6 @@ def print_new_groups():
     player_names = []
     for player in last_group + last_relegated_2:
         name = [p.name for p in all_players if p.slack_id == player['player_id']][0]
-        print "u'" + name + "': '" + last_group_letter + "',"
+        print("u'" + name + "': '" + last_group_letter + "',")
 
 # print_new_groups()
