@@ -21,15 +21,15 @@ class LoggerWriter:
             self.level(sys.stderr)
 
 
-class PongBot():
+class SmashBot():
     def __init__(self):
         self.slack_client = SlackClient(bot_config.get_slack_api_key())
-        self.logger = logging.getLogger('pongbot')
+        self.logger = logging.getLogger('smashbot')
         # Send stdout and stderr to the log file
         sys.stdout = LoggerWriter(self.logger.debug)
         sys.stderr = LoggerWriter(self.logger.warning)
 
-        hdlr = logging.FileHandler('/home/ec2-user/smashbot/log.txt')
+        hdlr = logging.FileHandler(bot_config.get_log_path())
         formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
         hdlr.setFormatter(formatter)
         self.logger.addHandler(hdlr)
@@ -196,7 +196,7 @@ class PongBot():
                             self.logger.debug('Got an admin output that I handle - ' + str(output))
                             self.handle_admin_command(output['text'].strip(), output['channel'], output['ts'])
 
-                    time.sleep(1)
+                    time.sleep(10)
                 except Exception:
                     self.logger.debug('Main while loop web socket exception.')
                     self.slack_client.rtm_connect()
@@ -204,4 +204,4 @@ class PongBot():
             print("Connection failed. Invalid Slack token or bot ID?")
 
 if __name__ == "__main__":
-    PongBot().start_bot()
+    SmashBot().start_bot()

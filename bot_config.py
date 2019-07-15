@@ -23,3 +23,6 @@ def get_channel_slack_id():
 
 def get_commissioner_slack_id():
     return _get_value_for_key('COMMISSIONER_SLACK_ID')
+
+def get_log_path():
+    return _get_value_for_key('LOG_PATH')

@@ -107,3 +107,4 @@ config.json
 
 *.sqlite
 *.sqlite.bak
+log.txt
