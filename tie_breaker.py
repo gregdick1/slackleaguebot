@@ -101,8 +101,8 @@ def resolve_group_tie(players, group_matches):
 
 def order_players(group_players, group_matches):
     final_order = []
-    for wins in xrange(len(group_players)-1, -1, -1):
-        for losses in xrange(len(group_players) - 1, -1, -1):
+    for wins in range(len(group_players)-1, -1, -1):
+        for losses in range(len(group_players) - 1, -1, -1):
             temp = [p for p in group_players if p['m_w'] == wins and p['m_l'] == losses]
             final_order = final_order + resolve_group_tie(temp, group_matches)
     return final_order

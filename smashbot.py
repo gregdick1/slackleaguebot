@@ -10,8 +10,6 @@ import logging, sys
 
 class SmashBot():
     def __init__(self):
-        print("initializing")
-
         self.slack_client = SlackClient(bot_config.get_slack_api_key())
         self.logger = logging.getLogger('smashbot')
 
@@ -52,9 +50,11 @@ class SmashBot():
     def print_group(self, channel, group):
         try:
             include_sets = False
+
             if group.endswith(' with sets'):
                 include_sets = True
                 group = group[:group.index(' with sets')].strip()
+
             season = db.get_current_season()
             all_matches = db.get_matches_for_season(season)
             all_players = db.get_players()
@@ -68,7 +68,8 @@ class SmashBot():
                 if include_sets:
                     message += ' ('+str(p['s_w'])+'-'+str(p['s_l'])+')'
             self.slack_client.api_call("chat.postMessage", channel=channel, text=message, as_user=True)
-        except:
+        except Exception as e:
+            self.logger.debug(e)
             self.slack_client.api_call("chat.postMessage", channel=channel, text="Not a group (or I messed up).", as_user=True)
 
     def parse_score(self, command, poster, admin=False):
@@ -164,7 +165,6 @@ class SmashBot():
         self.enter_score(result['winner_id'], result['loser_id'], result['score_total'], channel, timestamp)
 
     def start_bot(self):
-        print("Testing")
         p = Process(target=self.keepalive)
         p.start()
 
@@ -193,8 +193,4 @@ class SmashBot():
             print("Connection failed. Invalid Slack token or bot ID?")
 
 if __name__ == "__main__":
-    print("Test1")
-    bot = SmashBot()
-    print("Test2")
-    bot.start_bot()
-    print("Test3")
+    SmashBot().start_bot()

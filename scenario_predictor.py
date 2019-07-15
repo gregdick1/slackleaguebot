@@ -22,7 +22,7 @@ def apply_binary_combo(match, combo):
 
 def create_match_scenario(unplayed_matches, combo_index):
     theoretical_matches = [copy(m) for m in unplayed_matches]
-    for i in xrange(0,len(theoretical_matches)):
+    for i in range(0,len(theoretical_matches)):
         binary_place = long(pow(2, i+1)) #2, 4, 8, etc
         combo = (combo_index % binary_place) / binary_place
         m = theoretical_matches[i]
@@ -41,7 +41,7 @@ def run_match_combinations(group_matches):
     #focus on each match, one at a time to see if it has implications for anyone
     for match in unplayed_matches:
         player_outcomes = {}
-        for i in xrange(0, 6):
+        for i in range(0, 6):
             player_outcomes[str(i)] = {}
             for player_id in player_ids:
                 player_outcomes[str(i)][player_id] = []
@@ -49,7 +49,7 @@ def run_match_combinations(group_matches):
 
             unplayed_matches_copy = [m for m in unplayed_matches if m != match]
             combinations = long(pow(2, len(unplayed_matches_copy)))
-            for j in xrange(0, combinations):
+            for j in range(0, combinations):
                 theoretical_matches = create_match_scenario(unplayed_matches_copy, j)
                 full_scenario = played_matches + [match] + theoretical_matches
                 ordered_players = match_making.gather_scores(full_scenario)
