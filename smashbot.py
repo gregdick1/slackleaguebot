@@ -30,21 +30,11 @@ class SmashBot():
                 self.logger.debug('Keep alive web socket exception.')
                 self.slack_client.rtm_connect()
 
-    def format_name(self, player, last_initial = False):
-        first = player['first_name']
-        last = player['last_name'].strip()
-        if last_initial:
-            return (first + ' ' + last[:1]).strip()
-        try:
-            last = last[:last.index(' ')]
-        finally:
-            return (first + ' ' + last).strip()
-
     def print_help(self, channel):
         message = 'I support the following:'
         message = message + '\n`@sul help` - see these commands'
         message = message + '\n`@sul me over @them 2-2` or `@sul @them over me 2-1` - report a score'
-        message = message + '\n`@sul group a [with sets]` - see the current rankings of a group, optionally include sets'
+        message = message + '\n`@sul group a` - see the current rankings of a group, optionally include sets'
         self.slack_client.api_call("chat.postMessage", channel=channel, text=message, as_user=True)
 
     def print_group(self, channel, group):
@@ -87,7 +77,6 @@ class SmashBot():
                 loser = poster
                 winner = command[command.index('<@')+2:command.index('>')].upper()
                 score = command[command.index('me') + 2:].strip()
-
             else:
                 raise Exception('Bad format')
 
@@ -129,85 +118,80 @@ class SmashBot():
             e = sys.exc_info()[0]
             self.logger.error(e)
 
-    def handle_command(self, command, channel, poster, timestamp):
-        command = command.lower().strip()
+    def filter_invalid_messages(self, message_list):
+        valid_messages = []
+
+        for message_object in message_list:
+            if message_object is None:
+                continue
+            
+            if 'text' not in message_object or 'channel' not in message_object or 'user' not in message_object or 'ts' not in message_object:
+                continue
+
+            if 'bot_id' in message_object:
+                continue
+
+            message_text = message_object['text']
+            if message_object['channel'][:1] == 'D':
+                if message_text.startswith('<@' + bot_config.get_bot_slack_user_id() + '>'):
+                    message_text = message_text[message_text.index(">") + 1:].strip()
+
+                message_object['text'] = message_text
+                valid_messages.append(message_object)
+                continue
+
+            if message_object['channel'] == bot_config.get_channel_slack_id() and message_text.startswith('<@' + bot_config.get_bot_slack_user_id() + '>'):
+                message_text = message_text[message_text.index(">") + 1:].strip()
+
+                message_object['text'] = message_text
+                valid_messages.append(message_object)
+                continue
+
+        return valid_messages
+    
+    def parse_message(self, message_object):
+        command = message_object["text"]
+        channel = message_object["channel"]
+        user_id = message_object["user"]
+        timestamp = message_object["ts"]
 
         if command == 'help':
             self.print_help(channel)
-            return
-
-        if command.startswith('group '):
-            self.print_group(channel, command[6:].strip())
-            return
-
-        result = self.parse_score(command, poster)
-        if result is None:
-            format_msg = "Didn't catch that. The format is `@sul me over @them 2-1` or `@sul @them over me 2-1`."
-            self.slack_client.api_call("chat.postMessage", channel=channel,
-                                       text=format_msg, as_user=True)
-            return
-
-        self.enter_score(result['winner_id'], result['loser_id'], result['score_total'], channel, timestamp)
-
-    def handle_direct_message_command(self, command, channel):
-        if command.startswith('group '):
-            self.print_group(channel, command[6:].strip())
-
-    def handle_admin_direct_message_command(self, command, channel, timestamp):
-        if command.startswith('group '):
-            self.print_group(channel, command[6:].strip())
-            return
-
-        result = self.parse_score(command, None, admin=True)
-        if result is None:
-            format_msg = "Still here."
-            self.slack_client.api_call("chat.postMessage", channel=channel,
-                                       text=format_msg, as_user=True)
-            return
-
-        self.enter_score(result['winner_id'], result['loser_id'], result['score_total'], channel, timestamp)
-
-    def parse_message(self, output):
-        message_text = ""
-        message_channel = ""
-        user_id = ""
-        timestamp = ""
-        if output and 'text' in output and 'channel' in output and 'user' in output and 'ts' in output:
-            message_text = output['text']
-            message_channel = output['channel']
-            user_id = output['user']
-            timestamp = output['ts']
+        elif command.startswith('group'):
+            self.print_group(channel, command[6:])
         else:
-            self.logger.error('Invalid message - ' + str(output))
-            return
-
-        # Sent in SSB channel
-        if message_channel == bot_config.get_channel_slack_id() and message_text.startswith('<@' + bot_config.get_bot_slack_user_id() + '>'):
-            self.logger.debug('Got an output that I handle - ' + str(output))
-            self.handle_command(message_text[12:].strip(), message_channel, user, timestamp)
-
-        # Normal DM
-        elif message_channel[:1] == 'D':
-            self.logger.debug('Got an direct message that I handle - ' + str(output))
-
             if user_id == bot_config.get_commissioner_slack_id():
-                self.handle_admin_direct_message_command(message_text.strip(), message_channel, timestamp)
+                result = self.parse_score(command, None, admin=True)
             else:
-                self.handle_direct_message_command(message_text.strip(), message_channel)
+                result = self.parse_score(command, user_id, admin=False)
 
+            if result is None:
+                format_msg = "Didn't catch that. The format is `@sul me over @them 2-1` or `@sul @them over me 2-1`."
+                self.slack_client.api_call("chat.postMessage", channel=channel, text=format_msg, as_user=True)
+            elif result is not None and channel[:1] == 'D':
+                format_msg = "Nice try, you have to put this in the main channel"
+                self.slack_client.api_call('chat.postMessage', channel=channel, text=format_msg, as_user=True)
+            elif result is not None and channel == bot_config.get_channel_slack_id():
+                self.enter_score(result['winner_id'], result['loser_id'], result['score_total'], channel, timestamp)
+
+        return None
+    
     def start_bot(self):
         p = Process(target=self.keepalive)
         p.start()
 
         if self.slack_client.rtm_connect():
             print("StarterBot connected and running!")
+
             while True:
                 try:
-                    output_list = self.slack_client.rtm_read()
-                    for output in output_list:
-                        self.parse_message(output)
+                    message_list = self.slack_client.rtm_read()
+                    message_list = self.filter_invalid_messages(message_list)
 
-                    time.sleep(10)
+                    for message in message_list:
+                        self.parse_message(message)
+
+                    time.sleep(1)
                 except Exception as e:
                     self.logger.debug('Main while loop web socket exception.', e)
                     self.slack_client.rtm_connect()
