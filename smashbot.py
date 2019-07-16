@@ -33,12 +33,13 @@ class SmashBot():
 
     def print_help(self, channel):
         message = 'I support the following:'
-        message = message + '\n`@sul help` - see these commands'
         message = message + '\n`@sul me over @them 2-2` or `@sul @them over me 2-1` - report a score'
         message = message + '\n`@sul group a` - see the current rankings of a group, optionally include sets'
+        message = message + '\n`@sul leaderboard` - see the leaderboard, sorted by winrate'
+        message = message + '\n`@sul loserboard` - see the loserboard, sorted by winrate'
         self.slack_client.api_call("chat.postMessage", channel=channel, text=message, as_user=True)
 
-    def get_leaderboard(self):
+    def get_leaderboard(self, reverse_order=True):
         matches = db.get_matches()
         players = db.get_players()
 
@@ -52,19 +53,36 @@ class SmashBot():
             }
         
         for match in matches:
-            player_dict[match.player_1_id]['games_total'] = player_dict[match.player_1_id]['games_total'] + 1
-            player_dict[match.player_2_id]['games_total'] = player_dict[match.player_2_id]['games_total'] + 1
+            games_played = match.sets
+
+            player_1 = player_dict[match.player_1_id]
+            player_2 = player_dict[match.player_2_id]
+
+            player_dict[match.player_1_id]['games_total'] = player_1['games_total'] + games_played
+            player_dict[match.player_2_id]['games_total'] = player_2['games_total'] + games_played
 
             if match.player_1_id == match.winner_id:
-                player_dict[match.player_1_id]['games_won'] = player_dict[match.player_1_id]['games_won'] + 1
-            else:
-                player_dict[match.player_2_id]['games_won'] = player_dict[match.player_2_id]['games_won'] + 1
+                player_dict[match.player_1_id]['games_won'] = player_1['games_won'] + 2
+
+                if games_played == 3:
+                    player_dict[match.player_2_id]['games_won'] = player_2['games_won'] + 1
+
+            elif match.player_2_id == match.winner_id:
+                player_dict[match.player_2_id]['games_won'] = player_2['games_won'] + 2
+                
+                if games_played == 3:
+                    player_dict[match.player_1_id]['games_won'] = player_1['games_won'] + 1
+                
         
         winrate_dict = dict()
         for player_id, player in player_dict.items():
-            winrate_dict[player['name']] = round((player['games_won'] / player['games_total']) * 100, 2)
+            winrate_dict[player['name']] = {
+                'games_won': player['games_won'],
+                'games_lost': player['games_total'] - player['games_won'],
+                'winrate': round((player['games_won'] / player['games_total']) * 100, 2)
+            }
 
-        sorted_winrates = collections.OrderedDict(sorted(winrate_dict.items(), key=lambda x: x[1], reverse=True))
+        sorted_winrates = collections.OrderedDict(sorted(winrate_dict.items(), key=lambda x: x[1]['winrate'], reverse=reverse_order))
 
         return sorted_winrates
         
@@ -73,16 +91,18 @@ class SmashBot():
 
         message = ""
         for player_name in list(sorted_winrates)[:10]:
-            message = message + f"\n {player_name}: {sorted_winrates[player_name]}%"
+            player_object = sorted_winrates[player_name]
+            message = message + f"\n {player_name}: {player_object['winrate']}% ({player_object['games_won']}-{player_object['games_lost']})"
         
         self.slack_client.api_call("chat.postMessage", channel=channel, text=message, as_user=True)
 
     def print_loserboard(self, channel):
-        sorted_winrates = self.get_leaderboard()
+        sorted_winrates = self.get_leaderboard(False)
 
         message = ""
-        for player_name, winrate in reversed(list(sorted_winrates.items())[-10:]):
-            message = message + f"\n {player_name}: {winrate}%"
+        for player_name in list(sorted_winrates)[:10]:
+            player_object = sorted_winrates[player_name]
+            message = message + f"\n {player_name}: {player_object['winrate']}% ({player_object['games_won']}-{player_object['games_lost']})"
         
         self.slack_client.api_call("chat.postMessage", channel=channel, text=message, as_user=True)
 
