@@ -6,6 +6,7 @@ from match_making import gather_scores, get_player_name
 import time
 from websocket import WebSocketConnectionClosedException
 from multiprocessing import Process
+from datetime import datetime
 
 import logging, sys
 
@@ -37,6 +38,9 @@ class SmashBot():
         message = message + '\n`@sul group a` - see the current rankings of a group'
         message = message + '\n`@sul leaderboard` - see the leaderboard, sorted by winrate'
         message = message + '\n`@sul loserboard` - see the loserboard, sorted by winrate'
+        message = message + '\n`@sul who do i play` - see who you play this week (only in dms)'
+        message = message + '\n`@sul get_matches_for_week` - see all matches occuring this week in all groups'
+
         self.slack_client.api_call("chat.postMessage", channel=channel, text=message, as_user=True)
 
     def get_leaderboard(self, reverse_order=True):
@@ -106,28 +110,34 @@ class SmashBot():
 
         self.slack_client.api_call("chat.postMessage", channel=channel, text=message, as_user=True)
 
-    def print_whole_week(self, channel):
-        all_weekly_matches = db.get_matches_for_week()
+    def print_whole_week(self, channel, date):
+        all_weekly_matches = db.get_matches_for_week(date)
+        players = db.get_players()
 
         message = ""
         for match in all_weekly_matches:
-            message = message + f"\n {match.player_1_id} vs. {match.player_2_id} : week: {match.week}"
+            message = message + f"\n {get_player_name(players, match.player_1_id)} vs. {get_player_name(players, match.player_2_id)} : week: {match.week}"
 
         self.slack_client.api_call("chat.postMessage", channel=channel, text=message, as_user=True)
 
-    def print_user_week(self, channel, user_id):
-        all_weekly_matches = db.get_matches_for_week()
+    def print_user_week(self, user_id, channel, date):
+        all_weekly_matches = db.get_matches_for_week(date)
+        players = db.get_players()
 
         user_match_dict = dict()
         for match in all_weekly_matches:
-            if match.player_1_id == user_id
-                user_match_dict[match.player_2_id] = match.week
-            elif match.player_2_id == user_id
-                user_match_dict[match.player_1_id] = match.week
+            print(user_id)
+            print(match.player_1_id)
+            if match.player_1_id == user_id:
+                user_match_dict[get_player_name(players, match.player_2_id)] = match.week
+            elif match.player_2_id == user_id:
+                user_match_dict[get_player_name(players, match.player_1_id)] = match.week
 
         message = ""
-        for player, week in user_match_dict:
-            message = message + f"\n Playing: {player} | week: {week}"        self.slack_client.api_call("chat.postMessage", channel=channel, text=message, as_user=True)
+        for player, week in user_match_dict.items():
+            message = message + f"\n Playing: {player} | week: {week}"
+
+        self.slack_client.api_call("chat.postMessage", channel=channel, text=message, as_user=True)
 
     def print_group(self, channel, group):
         try:
@@ -253,16 +263,17 @@ class SmashBot():
         command = message_object["text"]
         channel = message_object["channel"]
         user_id = message_object["user"]
-        timestamp = message_object["ts"]
+        timestamp = float(message_object["ts"])
+        user_date = datetime.fromtimestamp(timestamp).date()
 
         if command == 'leaderboard':
             self.print_leaderboard(channel)
         elif command == 'loserboard' or command == 'troy':
             self.print_loserboard(channel)
-        elif command == 'whole week':
-            self.print_whole_week(channel)
-        elif command == 'user week':
-            self.print_user_week(user_id, channel)
+        elif command == 'matches for week':
+            self.print_whole_week(channel, user_date)
+        elif command == 'who do i play' and channel[:1] == 'D':
+            self.print_user_week(user_id, channel, user_date)
         elif command == 'help':
             self.print_help(channel)
         elif command.startswith('group'):
