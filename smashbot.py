@@ -6,6 +6,7 @@ from match_making import gather_scores, get_player_name
 import time
 from websocket import WebSocketConnectionClosedException
 from multiprocessing import Process
+from datetime import datetime
 
 import logging, sys
 
@@ -37,6 +38,9 @@ class SmashBot():
         message = message + '\n`@sul group a` - see the current rankings of a group'
         message = message + '\n`@sul leaderboard` - see the leaderboard, sorted by winrate'
         message = message + '\n`@sul loserboard` - see the loserboard, sorted by winrate'
+        message = message + '\n`@sul who do i play` - see who you play this week (only in dms)'
+        message = message + '\n`@sul get_matches_for_week` - see all matches occuring this week in all groups'
+
         self.slack_client.api_call("chat.postMessage", channel=channel, text=message, as_user=True)
 
     def get_leaderboard(self, reverse_order=True):
@@ -51,7 +55,7 @@ class SmashBot():
                 'games_total': 0,
                 'name': player.name
             }
-        
+
         for match in matches:
             games_played = match.sets
 
@@ -69,11 +73,11 @@ class SmashBot():
 
             elif match.player_2_id == match.winner_id:
                 player_dict[match.player_2_id]['games_won'] = player_2['games_won'] + 2
-                
+
                 if games_played == 3:
                     player_dict[match.player_1_id]['games_won'] = player_1['games_won'] + 1
-                
-        
+
+
         winrate_dict = dict()
         for player_id, player in player_dict.items():
             winrate_dict[player['name']] = {
@@ -85,7 +89,7 @@ class SmashBot():
         sorted_winrates = collections.OrderedDict(sorted(winrate_dict.items(), key=lambda x: x[1]['winrate'], reverse=reverse_order))
 
         return sorted_winrates
-        
+
     def print_leaderboard(self, channel):
         sorted_winrates = self.get_leaderboard()
 
@@ -93,7 +97,7 @@ class SmashBot():
         for player_name in list(sorted_winrates)[:10]:
             player_object = sorted_winrates[player_name]
             message = message + f"\n {player_name}: {player_object['winrate']}% ({player_object['games_won']}-{player_object['games_lost']})"
-        
+
         self.slack_client.api_call("chat.postMessage", channel=channel, text=message, as_user=True)
 
     def print_loserboard(self, channel):
@@ -103,7 +107,36 @@ class SmashBot():
         for player_name in list(sorted_winrates)[:10]:
             player_object = sorted_winrates[player_name]
             message = message + f"\n {player_name}: {player_object['winrate']}% ({player_object['games_won']}-{player_object['games_lost']})"
-        
+
+        self.slack_client.api_call("chat.postMessage", channel=channel, text=message, as_user=True)
+
+    def print_whole_week(self, channel, date):
+        all_weekly_matches = db.get_matches_for_week(date)
+        players = db.get_players()
+
+        message = ""
+        for match in all_weekly_matches:
+            message = message + f"\n {get_player_name(players, match.player_1_id)} vs. {get_player_name(players, match.player_2_id)} : week: {match.week}"
+
+        self.slack_client.api_call("chat.postMessage", channel=channel, text=message, as_user=True)
+
+    def print_user_week(self, user_id, channel, date):
+        all_weekly_matches = db.get_matches_for_week(date)
+        players = db.get_players()
+
+        user_match_dict = dict()
+        for match in all_weekly_matches:
+            print(user_id)
+            print(match.player_1_id)
+            if match.player_1_id == user_id:
+                user_match_dict[get_player_name(players, match.player_2_id)] = match.week
+            elif match.player_2_id == user_id:
+                user_match_dict[get_player_name(players, match.player_1_id)] = match.week
+
+        message = ""
+        for player, week in user_match_dict.items():
+            message = message + f"\n Playing: {player} | week: {week}"
+
         self.slack_client.api_call("chat.postMessage", channel=channel, text=message, as_user=True)
 
     def print_group(self, channel, group):
@@ -130,11 +163,11 @@ class SmashBot():
 
     def parse_first_slack_id(self, message):
         return message[message.index('<@') + 2 : message.index('>')].upper()
-    
+
     def parse_second_slack_id(self, message):
         message = message[message.index('>') + 1:]
         return self.parse_first_slack_id(message)
-    
+
     def parse_score(self, message):
         dash_index = message.index('-')
         score_substring = message[dash_index - 1 : dash_index + 2]
@@ -201,7 +234,7 @@ class SmashBot():
         for message_object in message_list:
             if message_object is None:
                 continue
-            
+
             if 'text' not in message_object or 'channel' not in message_object or 'user' not in message_object or 'ts' not in message_object:
                 continue
 
@@ -225,17 +258,22 @@ class SmashBot():
                 continue
 
         return valid_messages
-    
+
     def handle_message(self, message_object):
         command = message_object["text"]
         channel = message_object["channel"]
         user_id = message_object["user"]
-        timestamp = message_object["ts"]
+        timestamp = float(message_object["ts"])
+        user_date = datetime.fromtimestamp(timestamp).date()
 
         if command == 'leaderboard':
             self.print_leaderboard(channel)
         elif command == 'loserboard' or command == 'troy':
             self.print_loserboard(channel)
+        elif command == 'matches for week':
+            self.print_whole_week(channel, user_date)
+        elif command == 'who do i play' and channel[:1] == 'D':
+            self.print_user_week(user_id, channel, user_date)
         elif command == 'help':
             self.print_help(channel)
         elif command.startswith('group'):
@@ -260,7 +298,7 @@ class SmashBot():
                 self.print_group(channel, player.grouping)
 
         return None
-    
+
     def start_bot(self):
         p = Process(target=self.keepalive)
         p.start()
