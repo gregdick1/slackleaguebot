@@ -108,6 +108,7 @@ config.json
 *.sqlite
 *.sqlite.bak
 log.txt
+.DS_Store
 
 frontend/node_modules
 /.pnp
