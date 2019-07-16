@@ -34,7 +34,7 @@ class SmashBot():
     def print_help(self, channel):
         message = 'I support the following:'
         message = message + '\n`@sul me over @them 2-2` or `@sul @them over me 2-1` - report a score'
-        message = message + '\n`@sul group a` - see the current rankings of a group, optionally include sets'
+        message = message + '\n`@sul group a` - see the current rankings of a group'
         message = message + '\n`@sul leaderboard` - see the leaderboard, sorted by winrate'
         message = message + '\n`@sul loserboard` - see the loserboard, sorted by winrate'
         self.slack_client.api_call("chat.postMessage", channel=channel, text=message, as_user=True)
@@ -108,24 +108,21 @@ class SmashBot():
 
     def print_group(self, channel, group):
         try:
-            include_sets = False
-
-            if group.endswith(' with sets'):
-                include_sets = True
-                group = group[:group.index(' with sets')].strip()
-
             season = db.get_current_season()
             all_matches = db.get_matches_for_season(season)
             all_players = db.get_players()
-            group_matches = [m for m in all_matches if m.grouping.lower() == group]
+            group_matches = [m for m in all_matches if m.grouping.lower() == group.lower()]
+
             if not len(group_matches):
                 raise Exception('Not a match')
+
             players = gather_scores(group_matches)
             message = 'Group ' + group.upper() + ':'
+
             for p in players:
                 message += '\n' + get_player_name(all_players, p['player_id']) + ' ' + str(p['m_w']) + '-' + str(p['m_l'])
-                if include_sets:
-                    message += ' ('+str(p['s_w'])+'-'+str(p['s_l'])+')'
+                message += ' ('+str(p['s_w'])+'-'+str(p['s_l'])+')'
+
             self.slack_client.api_call("chat.postMessage", channel=channel, text=message, as_user=True)
         except Exception as e:
             self.logger.debug(e)
@@ -242,7 +239,7 @@ class SmashBot():
         elif command == 'help':
             self.print_help(channel)
         elif command.startswith('group'):
-            self.print_group(channel, command[6:])
+            self.print_group(channel, command[6])
         else:
             result = None
             try:
@@ -258,6 +255,9 @@ class SmashBot():
                 self.slack_client.api_call('chat.postMessage', channel=channel, text=format_msg, as_user=True)
             elif result is not None and channel == bot_config.get_channel_slack_id():
                 self.enter_score(result['winner_id'], result['loser_id'], result['score_total'], channel, timestamp)
+
+                player = db.get_player_by_id(result['winner_id'])
+                self.print_group(channel, player.grouping)
 
         return None
     
