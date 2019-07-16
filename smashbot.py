@@ -50,7 +50,7 @@ class SmashBot():
                 'games_total': 0,
                 'name': player.name
             }
-        
+
         for match in matches:
             player_dict[match.player_1_id]['games_total'] = player_dict[match.player_1_id]['games_total'] + 1
             player_dict[match.player_2_id]['games_total'] = player_dict[match.player_2_id]['games_total'] + 1
@@ -59,7 +59,7 @@ class SmashBot():
                 player_dict[match.player_1_id]['games_won'] = player_dict[match.player_1_id]['games_won'] + 1
             else:
                 player_dict[match.player_2_id]['games_won'] = player_dict[match.player_2_id]['games_won'] + 1
-        
+
         winrate_dict = dict()
         for player_id, player in player_dict.items():
             winrate_dict[player['name']] = round((player['games_won'] / player['games_total']) * 100, 2)
@@ -67,14 +67,14 @@ class SmashBot():
         sorted_winrates = collections.OrderedDict(sorted(winrate_dict.items(), key=lambda x: x[1], reverse=True))
 
         return sorted_winrates
-        
+
     def print_leaderboard(self, channel):
         sorted_winrates = self.get_leaderboard()
 
         message = ""
         for player_name in list(sorted_winrates)[:10]:
             message = message + f"\n {player_name}: {sorted_winrates[player_name]}%"
-        
+
         self.slack_client.api_call("chat.postMessage", channel=channel, text=message, as_user=True)
 
     def print_loserboard(self, channel):
@@ -83,7 +83,32 @@ class SmashBot():
         message = ""
         for player_name, winrate in reversed(list(sorted_winrates.items())[-10:]):
             message = message + f"\n {player_name}: {winrate}%"
-        
+
+        self.slack_client.api_call("chat.postMessage", channel=channel, text=message, as_user=True)
+
+    def print_whole_week(self, channel):
+        all_weekly_matches = db.get_matches_for_week()
+
+        message = ""
+        for match in all_weekly_matches:
+            message = message + f"\n {match.player_1_id} vs. {match.player_2_id} : week: {match.week}"
+
+        self.slack_client.api_call("chat.postMessage", channel=channel, text=message, as_user=True)
+
+    def print_user_week(self, channel, user_id):
+        all_weekly_matches = db.get_matches_for_week()
+
+        user_match_dict = dict()
+        for match in all_weekly_matches:
+            if match.player_1_id == user_id
+                user_match_dict[match.player_2_id] = match.week
+            elif match.player_2_id == user_id
+                user_match_dict[match.player_1_id] = match.week
+
+        message = ""
+        for player, week in user_match_dict:
+            message = message + f"\n Playing: {player} | week: {week}"
+
         self.slack_client.api_call("chat.postMessage", channel=channel, text=message, as_user=True)
 
     def print_group(self, channel, group):
@@ -113,11 +138,11 @@ class SmashBot():
 
     def parse_first_slack_id(self, message):
         return message[message.index('<@') + 2 : message.index('>')].upper()
-    
+
     def parse_second_slack_id(self, message):
         message = message[message.index('>') + 1:]
         return self.parse_first_slack_id(message)
-    
+
     def parse_score(self, message):
         dash_index = message.index('-')
         score_substring = message[dash_index - 1 : dash_index + 2]
@@ -184,7 +209,7 @@ class SmashBot():
         for message_object in message_list:
             if message_object is None:
                 continue
-            
+
             if 'text' not in message_object or 'channel' not in message_object or 'user' not in message_object or 'ts' not in message_object:
                 continue
 
@@ -208,7 +233,7 @@ class SmashBot():
                 continue
 
         return valid_messages
-    
+
     def handle_message(self, message_object):
         command = message_object["text"]
         channel = message_object["channel"]
@@ -219,6 +244,10 @@ class SmashBot():
             self.print_leaderboard(channel)
         elif command == 'loserboard' or command == 'troy':
             self.print_loserboard(channel)
+        elif command == 'whole week':
+            self.print_whole_week(channel)
+        elif command == 'user week':
+            self.print_user_week(user_id, channel)
         elif command == 'help':
             self.print_help(channel)
         elif command.startswith('group'):
@@ -240,7 +269,7 @@ class SmashBot():
                 self.enter_score(result['winner_id'], result['loser_id'], result['score_total'], channel, timestamp)
 
         return None
-    
+
     def start_bot(self):
         p = Process(target=self.keepalive)
         p.start()
