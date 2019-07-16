@@ -214,4 +214,5 @@ def print_season_markup(season = None):
                 m = matches_by_week[week][i]
                 output += '|'+get_player_print(all_players, m.player_1_id, m)+'\\\\'+get_player_print(all_players, m.player_2_id, m)
             output+= '|\n'
+    
     return output

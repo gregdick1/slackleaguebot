@@ -45,13 +45,20 @@ def send_reminders_for_week(week, debug=True):
 
 def send_custom_to_active(message, debug=True):
     players = db.get_active_players()
+
+    if debug:
+        slack_client.chat.post_message(bot_config.get_commissioner_slack_id(), message, as_user=True)
+
+    return_message = ""
     for player in players:
-        if debug and not player.slack_id == bot_config.get_commissioner_slack_id():
-            print('Sending to', player.slack_id, ':', message)
+        if debug:
+            return_message = return_message + f"Debug sending to {player.name}: {message} \n"
         else:
             slack_client.chat.post_message(player.slack_id, message, as_user=True)
-            print('For reals sent to', player.slack_id, ':', message)
+            return_message = return_message + f"For reals sending to {player.name}: {message} \n"
         time.sleep(1.5)
+    
+    return return_message
 
 def send_custom_for_missed_games(message, num_missed, week, debug=True):
     season = db.get_current_season()

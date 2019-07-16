@@ -1,0 +1,44 @@
+html, body {
+  height: 100vh;
+  width: 100vw;
+}
+
+#main-content {
+  background-color: #282c34;
+  min-height: 100vh;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+#button-wrapper {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+}
+
+#submit-options {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+}
+
+button.btn {
+  margin: 10px;
+}
+
+.textarea-wrapper, .response-textarea-wrapper {
+  display: flex;
+  justify-content: center;
+  margin: 20px 20px;
+}
+
+.textarea-wrapper textarea {
+  max-width: 800px;
+}
+
+.response-textarea-wrapper textarea {
+  width: 90vw;
+  font-family: monospace;
+  white-space: pre;
+}
