@@ -62,60 +62,69 @@ class SmashBot():
             self.logger.debug(e)
             self.slack_client.api_call("chat.postMessage", channel=channel, text="Not a group (or I messed up).", as_user=True)
 
-    def parse_score(self, command, poster, admin=False):
-        try:
-            if admin and command.startswith('<@'):
-                winner = command[command.index('<@') + 2:command.index('>')].upper()
-                temp = command[command.index('>') + 1:]
-                loser = temp[temp.index('<@') + 2:temp.index('>')].upper()
-                score = temp[temp.index('>') + 1:].strip()
-            elif command.startswith('me over '):
-                winner = poster
-                loser = command[command.index('<@')+2:command.index('>')].upper()
-                score = command[command.index('>') + 1:].strip()
-            elif command.startswith('<@') and command.index('over me') > 0:
-                loser = poster
-                winner = command[command.index('<@')+2:command.index('>')].upper()
-                score = command[command.index('me') + 2:].strip()
-            else:
-                raise Exception('Bad format')
+    def parse_first_slack_id(self, message):
+        return message[message.index('<@') + 2 : message.index('>')].upper()
+    
+    def parse_second_slack_id(self, message):
+        message = message[message.index('>') + 1:]
+        return self.parse_first_slack_id(message)
+    
+    def parse_score(self, message):
+        dash_index = message.index('-')
+        score_substring = message[dash_index - 1 : dash_index + 2]
 
-            scores = score.split('-')
-            if(len(scores) > 2):
-                raise Exception('Malformed score')
-            score_1 = int(scores[0].strip())
-            if score_1 != 2:
-                raise Exception('Malformed score')
-            score_2 = int(scores[1].strip())
-            score_total = score_1 + score_2
-            if not (2 <= score_total <= 3):
-                raise Exception('Malformed score')
+        if score_substring != "2-0" and score_substring != "2-1":
+            raise Exception("Malformed score")
 
-            return {
-                'winner_id': winner,
-                'loser_id': loser,
-                'score_total': score_total
-            }
+        score_1 = int(score_substring[0])
+        score_2 = int(score_substring[2])
 
-        except Exception as e:
-            self.logger.error(e)
+        return score_1, score_2
+
+    def parse_message(self, command, poster):
+        isAdmin = poster == bot_config.get_commissioner_slack_id()
+
+        if isAdmin and command.startswith('<@'):
+            winner = self.parse_first_slack_id(command)
+            loser = self.parse_second_slack_id(command)
+        elif command.startswith('me over '):
+            winner = poster
+            loser = self.parse_first_slack_id(command)
+        elif command.startswith('<@') and command.index('over me') > 0:
+            winner = self.parse_first_slack_id(command)
+            loser = poster
+        else:
+            self.logger.debug('Bad message format')
             return None
+
+        try:
+            score_1, score_2 = self.parse_score(command)
+        except Exception as e:
+            self.logger.debug('Malformed score', e)
+            return None
+
+        return {
+            'winner_id': winner,
+            'loser_id': loser,
+            'score_total': (score_1 + score_2)
+        }
 
     def enter_score(self, winner_id, loser_id, score_total, channel, timestamp):
         try:
+            print(winner_id, loser_id, score_total)
+
             if not db.update_match_by_id(winner_id, loser_id, score_total):
-                self.slack_client.api_call("chat.postMessage", channel=channel,
-                                           text='Not a match I have (or I messed up).', as_user=True)
+                self.slack_client.api_call("chat.postMessage", channel=channel, text='Not a match I have (or I messed up).', as_user=True)
+                self.slack_client.api_call("reactions.add", name="x", channel=channel, timestamp=timestamp)
                 return
 
-            self.slack_client.api_call("chat.postMessage", channel=bot_config.get_commissioner_slack_id(),
-                                       text='Entered into db', as_user=True)
+            self.slack_client.api_call("chat.postMessage", channel=bot_config.get_commissioner_slack_id(), text='Entered into db', as_user=True)
             self.slack_client.api_call("reactions.add", name="white_check_mark", channel=channel, timestamp=timestamp)
 
-        except:
-            self.slack_client.api_call("chat.postMessage", channel=bot_config.get_commissioner_slack_id(),
-                                       text='Failed to enter into db', as_user=True)
-            e = sys.exc_info()[0]
+        except Exception as e:
+            self.slack_client.api_call("chat.postMessage", channel=bot_config.get_commissioner_slack_id(), text='Failed to enter into db', as_user=True)
+            self.slack_client.api_call("reactions.add", name="x", channel=channel, timestamp=timestamp)
+
             self.logger.error(e)
 
     def filter_invalid_messages(self, message_list):
@@ -149,7 +158,7 @@ class SmashBot():
 
         return valid_messages
     
-    def parse_message(self, message_object):
+    def handle_message(self, message_object):
         command = message_object["text"]
         channel = message_object["channel"]
         user_id = message_object["user"]
@@ -160,10 +169,11 @@ class SmashBot():
         elif command.startswith('group'):
             self.print_group(channel, command[6:])
         else:
-            if user_id == bot_config.get_commissioner_slack_id():
-                result = self.parse_score(command, None, admin=True)
-            else:
-                result = self.parse_score(command, user_id, admin=False)
+            result = None
+            try:
+                result = self.parse_message(command, user_id)
+            except Exception as e:
+                self.logger.debug(e)
 
             if result is None:
                 format_msg = "Didn't catch that. The format is `@sul me over @them 2-1` or `@sul @them over me 2-1`."
@@ -189,7 +199,11 @@ class SmashBot():
                     message_list = self.filter_invalid_messages(message_list)
 
                     for message in message_list:
-                        self.parse_message(message)
+                        try:
+                            self.handle_message(message)
+                        except Exception as e:
+                            self.logger.debug(e)
+                            self.slack_client.api_call("reactions.add", name="x", channel=message["channel"], timestamp=message["ts"])
 
                     time.sleep(1)
                 except Exception as e:
