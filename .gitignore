@@ -108,3 +108,4 @@ config.json
 *.sqlite
 *.sqlite.bak
 log.txt
+.DS_Store
