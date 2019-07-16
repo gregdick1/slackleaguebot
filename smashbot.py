@@ -1,6 +1,7 @@
 from slackclient import SlackClient
 import bot_config
 import db
+import collections
 from match_making import gather_scores, get_player_name
 import time
 from websocket import WebSocketConnectionClosedException
@@ -35,6 +36,54 @@ class SmashBot():
         message = message + '\n`@sul help` - see these commands'
         message = message + '\n`@sul me over @them 2-2` or `@sul @them over me 2-1` - report a score'
         message = message + '\n`@sul group a` - see the current rankings of a group, optionally include sets'
+        self.slack_client.api_call("chat.postMessage", channel=channel, text=message, as_user=True)
+
+    def get_leaderboard(self):
+        matches = db.get_matches()
+        players = db.get_players()
+
+        player_dict = dict()
+
+        for player in players:
+            player_dict[player.slack_id] = {
+                'games_won': 0,
+                'games_total': 0,
+                'name': player.name
+            }
+        
+        for match in matches:
+            player_dict[match.player_1_id]['games_total'] = player_dict[match.player_1_id]['games_total'] + 1
+            player_dict[match.player_2_id]['games_total'] = player_dict[match.player_2_id]['games_total'] + 1
+
+            if match.player_1_id == match.winner_id:
+                player_dict[match.player_1_id]['games_won'] = player_dict[match.player_1_id]['games_won'] + 1
+            else:
+                player_dict[match.player_2_id]['games_won'] = player_dict[match.player_2_id]['games_won'] + 1
+        
+        winrate_dict = dict()
+        for player_id, player in player_dict.items():
+            winrate_dict[player['name']] = round((player['games_won'] / player['games_total']) * 100, 2)
+
+        sorted_winrates = collections.OrderedDict(sorted(winrate_dict.items(), key=lambda x: x[1], reverse=True))
+
+        return sorted_winrates
+        
+    def print_leaderboard(self, channel):
+        sorted_winrates = self.get_leaderboard()
+
+        message = ""
+        for player_name in list(sorted_winrates)[:10]:
+            message = message + f"\n {player_name}: {sorted_winrates[player_name]}%"
+        
+        self.slack_client.api_call("chat.postMessage", channel=channel, text=message, as_user=True)
+
+    def print_loserboard(self, channel):
+        sorted_winrates = self.get_leaderboard()
+
+        message = ""
+        for player_name, winrate in reversed(list(sorted_winrates.items())[-10:]):
+            message = message + f"\n {player_name}: {winrate}%"
+        
         self.slack_client.api_call("chat.postMessage", channel=channel, text=message, as_user=True)
 
     def print_group(self, channel, group):
@@ -97,6 +146,10 @@ class SmashBot():
             self.logger.debug('Bad message format')
             return None
 
+        if winner == loser:
+            self.logger.debug('Cant player yourself')
+            return None
+
         try:
             score_1, score_2 = self.parse_score(command)
         except Exception as e:
@@ -111,8 +164,6 @@ class SmashBot():
 
     def enter_score(self, winner_id, loser_id, score_total, channel, timestamp):
         try:
-            print(winner_id, loser_id, score_total)
-
             if not db.update_match_by_id(winner_id, loser_id, score_total):
                 self.slack_client.api_call("chat.postMessage", channel=channel, text='Not a match I have (or I messed up).', as_user=True)
                 self.slack_client.api_call("reactions.add", name="x", channel=channel, timestamp=timestamp)
@@ -164,7 +215,11 @@ class SmashBot():
         user_id = message_object["user"]
         timestamp = message_object["ts"]
 
-        if command == 'help':
+        if command == 'leaderboard':
+            self.print_leaderboard(channel)
+        elif command == 'loserboard' or command == 'troy':
+            self.print_loserboard(channel)
+        elif command == 'help':
             self.print_help(channel)
         elif command.startswith('group'):
             self.print_group(channel, command[6:])
