@@ -106,9 +106,10 @@ venv.bak/
 config.json
 
 *.sqlite
-*.sqlite.bak
+*.sqlite*
 log.txt
 .DS_Store
+.idea/*
 
 /node_modules
 /.pnp

@@ -51,7 +51,7 @@ def create_matches(start_date, players, skip_weeks, include_byes=False):
         week += 1
 
     for week_date in week_dates:
-        for i in range(len(players)/2):
+        for i in range(int(len(players)/2)):
             matchups.append({
                 'player_1': players[i],
                 'player_2': players[-i-1],
