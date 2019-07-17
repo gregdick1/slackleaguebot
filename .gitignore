@@ -105,6 +105,8 @@ venv.bak/
 
 config.json
 
+.vscode
+
 *.sqlite
 *.sqlite*
 log.txt

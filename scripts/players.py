@@ -99,21 +99,23 @@ def update_groupings():
                     db.set_active(e.slack_id, False)
                 else:
                     db.set_active(e.slack_id, True)
+    
 
 def print_new_groups():
     season = db.get_current_season()
     all_matches = db.get_matches_for_season(season)
     all_players = db.get_players()
     groups = sorted(list(set([m.grouping for m in all_matches])))
+
     last_group_letter = ''
     last_group = []
     last_relegated = []
     last_relegated_2 = []
+
     for group in groups:
         group_matches = [m for m in all_matches if m.grouping == group]
         players = match_making.gather_scores(group_matches)
         promoted = players[:2]
-
         player_names = []
 
         if len(last_group):
@@ -125,6 +127,7 @@ def print_new_groups():
         last_relegated = players[-2:]
         last_group = players[2:len(players)-2]
         last_group_letter = group
+    
     player_names = []
     for player in last_group + last_relegated_2:
         name = [p.name for p in all_players if p.slack_id == player['player_id']][0]

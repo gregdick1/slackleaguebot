@@ -37,7 +37,7 @@ def send_match_message(message, to_user, against_user, players_dictionary, debug
 
 def send_match_messages(message, debug=True):
     today = datetime.datetime.today()
-    last_monday = today - datetime.timedelta(days=today.weekday())
+    last_monday = (today - datetime.timedelta(days=today.weekday())).date()
 
     matches = db.get_matches_for_week(last_monday)
     players_dictionary = get_players_dictionary()

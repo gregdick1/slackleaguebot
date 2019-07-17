@@ -1,3 +1,6 @@
+import os, sys
+sys.path.append(os.path.join(os.path.dirname(__file__), "../backend"))
+
 import db
 import operator
 import datetime
@@ -121,12 +124,12 @@ def get_player_print(players, id, match):
 def gather_scores(group_matches):
     player_scores = {}
     for match in group_matches:
-        if match.winner_id is None:
-            continue
         if match.player_1_id not in player_scores:
             player_scores[match.player_1_id] = [0,0,0,0] #matches won/lost, sets won/lost
         if match.player_2_id not in player_scores:
             player_scores[match.player_2_id] = [0,0,0,0]
+        if match.winner_id is None:
+            continue
         if match.player_1_id == match.winner_id:
             player_scores[match.player_1_id][0] += 1
             player_scores[match.player_2_id][1] += 1
@@ -143,6 +146,7 @@ def gather_scores(group_matches):
             if match.sets > 2:
                 player_scores[match.player_1_id][2] += match.sets - 2
                 player_scores[match.player_2_id][3] += match.sets - 2
+    
     players = [{'player_id':k, 'm_w':v[0], 'm_l':v[1], 's_w':v[2], 's_l':v[3]} for k,v in player_scores.items()]
     players = sorted(players, key=lambda k: (-k['m_w'], k['m_l'], -k['s_w'], k['s_l']))
 

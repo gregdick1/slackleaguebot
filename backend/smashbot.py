@@ -207,15 +207,15 @@ class SmashBot():
     def parse_message(self, command, poster):
         isAdmin = poster == bot_config.get_commissioner_slack_id()
 
-        if isAdmin and command.startswith('<@'):
-            winner = self.parse_first_slack_id(command)
-            loser = self.parse_second_slack_id(command)
-        elif command.startswith('me over '):
+        if command.startswith('me over '):
             winner = poster
             loser = self.parse_first_slack_id(command)
         elif command.startswith('<@') and command.index('over me') > 0:
             winner = self.parse_first_slack_id(command)
             loser = poster
+        elif isAdmin and command.startswith('<@'):
+            winner = self.parse_first_slack_id(command)
+            loser = self.parse_second_slack_id(command)
         else:
             self.logger.debug('Bad message format')
             return None
@@ -244,6 +244,7 @@ class SmashBot():
                 return
 
             self.slack_client.api_call("chat.postMessage", channel=bot_config.get_commissioner_slack_id(), text='Entered into db', as_user=True)
+            print("sending reaction", channel, timestamp)
             self.slack_client.api_call("reactions.add", name="white_check_mark", channel=channel, timestamp=timestamp)
 
         except Exception as e:
@@ -318,7 +319,7 @@ class SmashBot():
                 format_msg = "Nice try, you have to put this in the main channel"
                 self.slack_client.api_call('chat.postMessage', channel=channel, text=format_msg, as_user=True)
             elif result is not None and channel == bot_config.get_channel_slack_id():
-                self.enter_score(result['winner_id'], result['loser_id'], result['score_total'], channel, timestamp)
+                self.enter_score(result['winner_id'], result['loser_id'], result['score_total'], channel, message_object["ts"])
 
                 player = db.get_player_by_id(result['winner_id'])
                 self.print_group(channel, player.grouping)
