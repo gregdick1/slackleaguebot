@@ -122,6 +122,7 @@ frontend/node_modules
 /build
 
 # misc
+.idea/
 .DS_Store
 .env.local
 .env.development.local

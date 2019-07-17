@@ -15,10 +15,12 @@ four_game_message = "You currently have 3 unplayed matches. Friendly warning tha
 three_game_message = "Season ends Feb 1 and you currently have 3 or more unplayed matches. This is your friendly warning that you are at risk of being removed for next season. If you need to appeal for leniency, dm <@U04QW49D1>."
 new_season_message = "The next season starts July 22nd. By receiving this message, you will be entered automatically. If you don't want to participate, please let <@U04QW49D1> know asap if you haven't already."
 rankings_updated_message = "Standings for season 3 have been updated. Please finish remaining matches before July 12th. You can view them here: https://sync.hudlnet.com/pages/viewpage.action?pageId=135990683"
+new_schedule_message = "The schedule for season 4 has been generated. You can view it here: https://sync.hudlnet.com/x/bAyvC"
 
-debug = False
+debug = True
 # slack.send_custom_for_missed_games(four_game_message, 3, datetime.date(2019,3,4), debug=debug)
-slack.send_custom_to_active(new_season_message, debug=debug)
+#slack.send_custom_to_active(new_season_message, debug=debug)
+slack.send_custom_messages(new_schedule_message, debug=debug)
 
 # Monday Message
 # yyyy m d
