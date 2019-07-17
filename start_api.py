@@ -2,7 +2,7 @@
 from flask import Flask, render_template, request
 import backend.slack
 
-app = Flask(__name__, template_folder="./frontend/build", static_folder="./frontend/build/static")
+app = Flask(__name__, template_folder="./build", static_folder="./build/static")
 
 @app.route('/')
 def serve_fronted():
