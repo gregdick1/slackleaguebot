@@ -39,7 +39,8 @@ class SmashBot():
         message = message + '\n`@sul leaderboard` - see the leaderboard, sorted by winrate'
         message = message + '\n`@sul loserboard` - see the loserboard, sorted by winrate'
         message = message + '\n`@sul who do i play` - see who you play this week (only in dms)'
-        message = message + '\n`@sul get_matches_for_week` - see all matches occuring this week in all groups'
+        message = message + '\n`@sul matches for week` - see all matches occuring this week in all groups'
+        message = message + '\n`@sul my total stats` - see your total wins and losses (both games and sets)'
 
         self.slack_client.api_call("chat.postMessage", channel=channel, text=message, as_user=True)
 
@@ -126,8 +127,6 @@ class SmashBot():
 
         user_match_dict = dict()
         for match in all_weekly_matches:
-            print(user_id)
-            print(match.player_1_id)
             if match.player_1_id == user_id:
                 user_match_dict[get_player_name(players, match.player_2_id)] = match.week
             elif match.player_2_id == user_id:
@@ -137,6 +136,28 @@ class SmashBot():
         for player, week in user_match_dict.items():
             message = message + f"\n Playing: {player} | week: {week}"
 
+        self.slack_client.api_call("chat.postMessage", channel=channel, text=message, as_user=True)
+
+    def print_user_stats(self, user_id, channel):
+        all_matches = db.get_matches()
+
+        total_won_matches = 0
+        total_lost_matches = 0
+        total_won_sets = 0
+        total_lost_sets = 0
+        for match in all_matches:
+            if (match.player_1_id == user_id or match.player_2_id == user_id) and user_id == match.winner_id:
+                total_won_matches += 1
+                total_won_sets += 2
+                if match.sets > 2:
+                    total_lost_sets += match.sets - 2
+            elif (match.player_1_id == user_id or match.player_2_id == user_id) and user_id != match.winner_id:
+                total_lost_matches += 1
+                total_lost_sets += 2
+                if match.sets > 2:
+                    total_won_sets += match.sets - 2
+
+        message = f"\n Matches Won: {total_won_matches} | Matches Lost: {total_lost_matches} | Sets Won: {total_won_sets} | Sets Lost: {total_lost_sets}"
         self.slack_client.api_call("chat.postMessage", channel=channel, text=message, as_user=True)
 
     def print_group(self, channel, group):
@@ -274,6 +295,8 @@ class SmashBot():
             self.print_whole_week(channel, user_date)
         elif command == 'who do i play' and channel[:1] == 'D':
             self.print_user_week(user_id, channel, user_date)
+        elif command == 'my total stats' and channel[:1] == 'D':
+            self.print_user_stats(user_id, channel)
         elif command == 'help':
             self.print_help(channel)
         elif command.startswith('group'):
