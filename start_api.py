@@ -1,5 +1,7 @@
+
 from flask import Flask, render_template, request
-import slack
+import backend.slack
+
 app = Flask(__name__, template_folder="./frontend/build", static_folder="./frontend/build/static")
 
 @app.route('/')

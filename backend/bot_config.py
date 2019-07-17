@@ -2,9 +2,11 @@ import json
 import os
 # For first time setup, copy default_config.py to config.py and replace placeholder fields
 
+path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../config.json"))
+
 text_config={}
-if os.path.isfile('config.json'):
-    with open('config.json') as data_file:
+if os.path.isfile(path):
+    with open(path) as data_file:
         text_config = json.load(data_file)
 
 def _get_value_for_key(key):

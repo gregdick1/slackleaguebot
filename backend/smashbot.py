@@ -1,3 +1,6 @@
+import os, sys
+sys.path.append(os.path.dirname(__file__))
+
 from slackclient import SlackClient
 import bot_config
 import db

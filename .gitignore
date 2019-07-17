@@ -110,7 +110,7 @@ config.json
 log.txt
 .DS_Store
 
-frontend/node_modules
+/node_modules
 /.pnp
 .pnp.js
 
