@@ -37,8 +37,25 @@ button.btn {
   max-width: 800px;
 }
 
+.response-textarea-wrapper.loading {
+  position: relative;
+}
+
+.response-textarea-wrapper.loading .lds-roller {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.response-textarea-wrapper.loading textarea {
+  opacity: 0.5;
+  transition: 0.5s ease;
+}
+
 .response-textarea-wrapper textarea {
   width: 90vw;
   font-family: monospace;
   white-space: pre;
+  transition: 0.5s ease;
 }

@@ -10,21 +10,35 @@ def serve_fronted():
 def send_debug_message():
     message = request.get_json().get("message")
 
-    if message is None:
+    if message is None or message == "":
         return "VERY ERROR: No message received"
 
-    response = slack.send_custom_to_active(message, debug=True)
+    response = ""
+    if "@against_user" in message:
+        response = slack.send_match_messages(message, debug=True)
+    else:
+        response = slack.send_custom_messages(message, debug=True)
 
+    if response is None or response == "":
+        response = "No messages sent."
+    
     return response
 
 @app.route('/send-real-message', methods=['POST'])
 def send_real_message():
     message = request.get_json().get("message")
 
-    if message is None:
+    if message is None or message == "":
         return "VERY ERROR: No message received"
+    
+    response = ""
+    if "@against_user" in message:
+        response = slack.send_match_messages(message, debug=False)
+    else:
+        response = slack.send_custom_messages(message, debug=False)
 
-    response = slack.send_custom_to_active(message, debug=False)
+    if response is None or response == "":
+        response = "No messages sent."
 
     return response
 
