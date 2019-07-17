@@ -24,7 +24,7 @@ python start_api.py
 
 Run the Bot
 ```
-python start_bot.py
+python start_smashbot.py
 ```
 
 When you're done you can exit the environment
