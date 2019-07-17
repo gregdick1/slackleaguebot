@@ -13,12 +13,12 @@ import datetime
 
 four_game_message = "You currently have 3 unplayed matches. Friendly warning that if you don't play a match this week, you'll be booted from this season on monday."
 three_game_message = "Season ends Feb 1 and you currently have 3 or more unplayed matches. This is your friendly warning that you are at risk of being removed for next season. If you need to appeal for leniency, dm <@U04QW49D1>."
-new_season_message = "The next season starts June 3rd. By receiving this message, you will be entered automatically. If you don't want to participate, please let <@U04QW49D1> know asap if you haven't already."
+new_season_message = "The next season starts July 22nd. By receiving this message, you will be entered automatically. If you don't want to participate, please let <@U04QW49D1> know asap if you haven't already."
 rankings_updated_message = "Standings for season 3 have been updated. Please finish remaining matches before July 12th. You can view them here: https://sync.hudlnet.com/pages/viewpage.action?pageId=135990683"
 
-debug = True
+debug = False
 # slack.send_custom_for_missed_games(four_game_message, 3, datetime.date(2019,3,4), debug=debug)
-# slack.send_custom_to_active(new_season_message, debug=debug)
+slack.send_custom_to_active(new_season_message, debug=debug)
 
 # Monday Message
 # yyyy m d
@@ -28,8 +28,8 @@ debug = True
 # Thursday Messages (reminders, then rankings updated)
 # yyyy m d
 #slack.send_reminders_for_week(datetime.date(2019,7,1), debug=debug)
-#print match_making.print_season_markup()
-slack.send_custom_to_active(rankings_updated_message, debug=debug)
+#print(match_making.print_season_markup())
+#slack.send_custom_to_active(rankings_updated_message, debug=debug)
 
 # db.rm_db()
 

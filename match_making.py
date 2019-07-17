@@ -52,7 +52,7 @@ def create_matches(start_date, players, skip_weeks, include_byes=False):
         week += 1
 
     for week_date in week_dates:
-        for i in range(len(players)/2):
+        for i in range(int(len(players)/2)):
             matchups.append({
                 'player_1': players[i],
                 'player_2': players[-i-1],
@@ -214,4 +214,5 @@ def print_season_markup(season = None):
                 m = matches_by_week[week][i]
                 output += '|'+get_player_print(all_players, m.player_1_id, m)+'\\\\'+get_player_print(all_players, m.player_2_id, m)
             output+= '|\n'
+    
     return output

@@ -1,5 +1,59 @@
 # Fill player_map with player names and assignments when ready to run
-player_map = {}
+player_map = {
+
+u'Cameron Crockrom': 'A',
+u'Greg Dick': 'A',
+u'Jack Stobbe': 'A',
+u'Seth Prauner': 'A',
+u'Brian Clymer': 'A',
+u'Jordan Degner': 'A',
+
+u'Jacob Koenig': 'B',
+u'Paul Hruskoci': 'B',
+u'Jaron Ahmann': 'B',
+u'Ryan Hotovy': 'B',
+u'Brandon Collins': 'B',
+u'Jacob Kreutzer': 'B',
+
+u'Jordan Hofker': 'C',
+u'Gary Liu': 'C',
+u'Devin Schroeder': 'C',
+u'Michael Patterson': 'C',
+u'Solomon Kim':'C',
+u'Kellan Willet':'C',
+u'Doug McClure':'C',
+
+u'Levi Hassel': 'D',
+u'Caleb Cassel': 'D',
+u'Todd Prauner': 'D',
+u'Patrick Luddy': 'D',
+u'Corley Bagley': 'D',
+u'Paul Poulsen': 'D',
+u'Brad Hilligoss': 'D',
+
+u'Austin Nichols': 'E',
+u'Troy Edmison': 'E',
+u'William Voelker': 'E',
+u'Kevin Gunter': 'E',
+u'Jim Drake': 'E',
+u'Jin Yeom': 'E',
+
+
+u'Brian Coombs': 'F',
+u'Jaydn Harding': 'F',
+u'Chanse Strode': 'F',
+u'Jacob Miller': 'F',
+u'Keiyana Thomas': 'F',
+u'Zach Henry': 'F',
+
+u'Connor Vidlock': '',
+u'Jonathan Vranicar': '',
+u'Ben Buchnat': '',
+u'Derek Nosbisch': '',
+u'Sam Ervin':'',
+u'Adam Heald': '',
+u'Rees Klintworth': '',
+}
 
 import slack
 import db
@@ -20,14 +74,14 @@ def ensure_players_in_db():
     users = response.body['members']
     user_map = {}
     for user in users:
-        for name, grouping in local_player_map.iteritems():
+        for name, grouping in local_player_map.items():
 
             if user['profile']['real_name'].startswith(name) and not user['deleted']:
                 user_map[name] = user['id']
                 db.add_player(user['id'], name, grouping)
 
     if len(user_map) != len(local_player_map):
-        for key, value in user_map.iteritems():
+        for key, value in user_map.items():
             del local_player_map[key]
         print('Could not find slack ids for the following ', local_player_map)
 
@@ -35,7 +89,7 @@ def update_groupings():
     ensure_players_in_db()
     existing = db.get_players()
 
-    for name, grouping in player_map.iteritems():
+    for name, grouping in player_map.items():
         for e in existing:
             if e.name == name:
                 db.update_grouping(e.slack_id, grouping)
