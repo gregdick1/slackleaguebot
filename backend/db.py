@@ -3,13 +3,15 @@ import datetime
 import os
 import subprocess
 
+path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../smash_league.sqlite"))
+
 command_prefix = ''
 command_suffix = ''
 if True: #windows
     command_prefix = '"C:\Program Files\Git\\bin\\bash.exe" -c "'
     command_suffix = '"'
 def get_connection():
-    return sqlite3.connect('smash_league.sqlite', detect_types=sqlite3.PARSE_DECLTYPES)
+    return sqlite3.connect(path, detect_types=sqlite3.PARSE_DECLTYPES)
 
 def push_db():
     p = subprocess.Popen(command_prefix+'cp smash_league.sqlite smash_league.sqlite.bak'+command_suffix, shell=True).wait()

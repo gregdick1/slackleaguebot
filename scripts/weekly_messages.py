@@ -1,10 +1,11 @@
+import os, sys
+sys.path.append(os.path.join(os.path.dirname(__file__), "../backend"))
+
 import db
 import match_making
 import players
 import slack
-
 import datetime
-
 
 # PULL DOWN THE DB FIRST!
 # slack.send_custom_to_active('When you have a moment, please fill out this short survey for some potential changes to season 2. https://hudlresearch.typeform.com/to/bM2DK7', debug=False)

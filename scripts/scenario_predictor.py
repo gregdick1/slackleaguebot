@@ -1,4 +1,8 @@
+import os, sys
+sys.path.append(os.path.join(os.path.dirname(__file__), "../backend"))
+
 import match_making
+import db
 from math import pow
 from copy import copy
 
@@ -57,9 +61,6 @@ def run_match_combinations(group_matches):
                     player_outcomes[str(i)][player_id].append(index_by_player_id(ordered_players, player_id))
 
         a=0
-
-
-import db
 
 all_matches = db.get_matches_for_season(db.get_current_season())
 group_matches = [m for m in all_matches if m.grouping == 'B']

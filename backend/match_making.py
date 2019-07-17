@@ -4,7 +4,6 @@ import datetime
 import random
 import tie_breaker
 
-
 def rotate(list):
     return list[1:] + list[:1]
 
