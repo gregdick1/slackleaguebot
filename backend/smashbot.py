@@ -84,11 +84,18 @@ class SmashBot():
 
         winrate_dict = dict()
         for player_id, player in player_dict.items():
-            winrate_dict[player['name']] = {
-                'games_won': player['games_won'],
-                'games_lost': player['games_total'] - player['games_won'],
-                'winrate': round((player['games_won'] / player['games_total']) * 100, 2)
-            }
+            if player['games_total'] == 0:
+                winrate_dict[player['name']] = {
+                    'games_won': 0,
+                    'games_lost': 0,
+                    'winrate': round(0, 2)
+                }
+            else:
+                winrate_dict[player['name']] = {
+                    'games_won': player['games_won'],
+                    'games_lost': player['games_total'] - player['games_won'],
+                    'winrate': round((player['games_won'] / player['games_total']) * 100, 2)
+                }
 
         sorted_winrates = collections.OrderedDict(sorted(winrate_dict.items(), key=lambda x: x[1]['winrate'], reverse=reverse_order))
 
@@ -149,16 +156,22 @@ class SmashBot():
         total_won_sets = 0
         total_lost_sets = 0
         for match in all_matches:
-            if (match.player_1_id == user_id or match.player_2_id == user_id) and user_id == match.winner_id:
+            if match.winner_id is None:
+                continue
+
+            elif user_id == match.winner_id:
                 total_won_matches += 1
                 total_won_sets += 2
-                if match.sets > 2:
-                    total_lost_sets += match.sets - 2
+
+                if match.sets == 3:
+                    total_lost_sets += 1
+                
             elif (match.player_1_id == user_id or match.player_2_id == user_id) and user_id != match.winner_id:
                 total_lost_matches += 1
                 total_lost_sets += 2
-                if match.sets > 2:
-                    total_won_sets += match.sets - 2
+
+                if match.sets == 3:
+                    total_won_sets += 1
 
         message = f"\n Matches Won: {total_won_matches} | Matches Lost: {total_lost_matches} | Sets Won: {total_won_sets} | Sets Lost: {total_lost_sets}"
         self.slack_client.api_call("chat.postMessage", channel=channel, text=message, as_user=True)
@@ -244,7 +257,6 @@ class SmashBot():
                 return
 
             self.slack_client.api_call("chat.postMessage", channel=bot_config.get_commissioner_slack_id(), text='Entered into db', as_user=True)
-            print("sending reaction", channel, timestamp)
             self.slack_client.api_call("reactions.add", name="white_check_mark", channel=channel, timestamp=timestamp)
 
         except Exception as e:
