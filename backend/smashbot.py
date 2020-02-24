@@ -37,16 +37,17 @@ class SmashBot():
 
     def print_help(self, channel):
         message = 'I support the following:'
-        message = message + '\n`@sul me over @them 2-2` or `@sul @them over me 2-1` - report a score'
+        message = message + '\n`@sul me over @them 3-2` or `@sul @them over me 3-2` - report a score'
         message = message + '\n`@sul group a` - see the current rankings of a group'
-        message = message + '\n`@sul leaderboard` - see the leaderboard, sorted by winrate'
-        message = message + '\n`@sul loserboard` - see the loserboard, sorted by winrate'
+        # message = message + '\n`@sul leaderboard` - see the leaderboard, sorted by winrate'
+        # message = message + '\n`@sul loserboard` - see the loserboard, sorted by winrate'
         message = message + '\n`@sul who do i play` - see who you play this week (only in dms)'
         message = message + '\n`@sul matches for week` - see all matches occuring this week in all groups'
-        message = message + '\n`@sul my total stats` - see your total wins and losses (both games and sets)'
+        # message = message + '\n`@sul my total stats` - see your total wins and losses (both games and sets)'
 
         self.slack_client.api_call("chat.postMessage", channel=channel, text=message, as_user=True)
 
+    ### TODO Refactor so it can support Bo3 AND Bo5 across the database
     def get_leaderboard(self, reverse_order=True):
         matches = db.get_matches()
         players = db.get_players()
@@ -101,6 +102,7 @@ class SmashBot():
 
         return sorted_winrates
 
+    ### TODO Refactor so it can support Bo3 AND Bo5 across the database
     def print_leaderboard(self, channel):
         sorted_winrates = self.get_leaderboard()
 
@@ -111,6 +113,7 @@ class SmashBot():
 
         self.slack_client.api_call("chat.postMessage", channel=channel, text=message, as_user=True)
 
+    ### TODO Refactor so it can support Bo3 AND Bo5 across the database
     def print_loserboard(self, channel):
         sorted_winrates = self.get_leaderboard(False)
 
@@ -148,6 +151,7 @@ class SmashBot():
 
         self.slack_client.api_call("chat.postMessage", channel=channel, text=message, as_user=True)
 
+    ### TODO Refactor so it can support Bo3 AND Bo5 across the database
     def print_user_stats(self, user_id, channel):
         all_matches = db.get_matches()
 
@@ -209,7 +213,7 @@ class SmashBot():
         dash_index = message.index('-')
         score_substring = message[dash_index - 1 : dash_index + 2]
 
-        if score_substring != "2-0" and score_substring != "2-1":
+        if score_substring != "3-0" and score_substring != "3-1" and score_substring != "3-2":
             raise Exception("Malformed score")
 
         score_1 = int(score_substring[0])
@@ -234,7 +238,7 @@ class SmashBot():
             return None
 
         if winner == loser:
-            self.logger.debug('Cant player yourself')
+            self.logger.debug('Cant play against yourself')
             return None
 
         try:
@@ -303,16 +307,18 @@ class SmashBot():
         timestamp = float(message_object["ts"])
         user_date = datetime.fromtimestamp(timestamp).date()
 
+        """"
         if command == 'leaderboard':
             self.print_leaderboard(channel)
         elif command == 'loserboard' or command == 'troy':
             self.print_loserboard(channel)
-        elif command == 'matches for week':
+        elif command == 'my total stats' and channel[:1] == 'D':
+            self.print_user_stats(user_id, channel)
+        """
+        if command == 'matches for week':
             self.print_whole_week(channel, user_date)
         elif command == 'who do i play' and channel[:1] == 'D':
             self.print_user_week(user_id, channel, user_date)
-        elif command == 'my total stats' and channel[:1] == 'D':
-            self.print_user_stats(user_id, channel)
         elif command == 'help':
             self.print_help(channel)
         elif command.startswith('group'):
@@ -325,7 +331,7 @@ class SmashBot():
                 self.logger.debug(e)
 
             if result is None:
-                format_msg = "Didn't catch that. The format is `@sul me over @them 2-1` or `@sul @them over me 2-1`."
+                format_msg = "Didn't catch that. The format is `@sul me over @them 3-2` or `@sul @them over me 3-2`."
                 self.slack_client.api_call("chat.postMessage", channel=channel, text=format_msg, as_user=True)
             elif result is not None and channel[:1] == 'D':
                 format_msg = "Nice try, you have to put this in the main channel"

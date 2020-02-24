@@ -113,9 +113,9 @@ def get_player_print(players, id, match):
     for player in players:
         if player.slack_id == id:
             if match.winner_id == id:
-                return player.name + ' - 2'
+                return player.name + ' - 3'
             elif match.winner_id is not None:
-                return player.name + ' - ' + str(match.sets - 2)
+                return player.name + ' - ' + str(match.sets - 3)
             else:
                 return player.name
     return 'Bye'
@@ -133,19 +133,19 @@ def gather_scores(group_matches):
         if match.player_1_id == match.winner_id:
             player_scores[match.player_1_id][0] += 1
             player_scores[match.player_2_id][1] += 1
-            player_scores[match.player_1_id][2] += 2
-            player_scores[match.player_2_id][3] += 2
-            if match.sets > 2:
-                player_scores[match.player_2_id][2] += match.sets - 2
-                player_scores[match.player_1_id][3] += match.sets - 2
+            player_scores[match.player_1_id][2] += 3
+            player_scores[match.player_2_id][3] += 3
+            if match.sets > 3:
+                player_scores[match.player_2_id][2] += match.sets - 3
+                player_scores[match.player_1_id][3] += match.sets - 3
         else:
             player_scores[match.player_2_id][0] += 1
             player_scores[match.player_1_id][1] += 1
-            player_scores[match.player_2_id][2] += 2
-            player_scores[match.player_1_id][3] += 2
-            if match.sets > 2:
-                player_scores[match.player_1_id][2] += match.sets - 2
-                player_scores[match.player_2_id][3] += match.sets - 2
+            player_scores[match.player_2_id][2] += 3
+            player_scores[match.player_1_id][3] += 3
+            if match.sets > 3:
+                player_scores[match.player_1_id][2] += match.sets - 3
+                player_scores[match.player_2_id][3] += match.sets - 3
     
     players = [{'player_id':k, 'm_w':v[0], 'm_l':v[1], 's_w':v[2], 's_l':v[3]} for k,v in player_scores.items()]
     players = sorted(players, key=lambda k: (-k['m_w'], k['m_l'], -k['s_w'], k['s_l']))
