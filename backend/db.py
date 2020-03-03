@@ -297,8 +297,8 @@ def _update_match(winner, loser, sets):
         print('Could not update match')
         return False
 
-    if sets not in [2,3]:
-        print('Sets must be 2 or 3')
+    if sets not in [3,4,5]:
+        print('Sets must be best of 5')
         return False
 
     match = get_match_by_players(winner, loser)
