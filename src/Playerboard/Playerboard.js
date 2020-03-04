@@ -26,6 +26,9 @@ class Playerboard extends Component {
     var players = await axios.get(`get-active-players`);   
     var groups = groupBy(players.data, "group");
 
+    //TODO Remove after season 8 creation
+    groups.G = [];
+
     groups.Trash = [];
 
     this.setState({
