@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom';
 import { Route, Link, BrowserRouter as Router } from 'react-router-dom'
 
 import './index.css';
+import Configuration from './Configuration/Configuration';
 import App from './Reminders/App';
 import Playerboard from './Playerboard/Playerboard';
 import NotFound from './NotFound/NotFound'
@@ -16,6 +17,9 @@ const routing = (
         <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
           <ul className="navbar-nav">
             <li className="nav-item">
+              <Link className="nav-link" to="/configuration">Configuration</Link>
+            </li>
+            <li className="nav-item">
               <Link className="nav-link" to="/">Reminders</Link>
             </li>
             <li className="nav-item">
@@ -25,6 +29,7 @@ const routing = (
         </nav>
         <Route exact path="/" component={App} />
         <Route path="/playerboard" component={Playerboard} />
+        <Route path="/configuration" component={Configuration} />
         { /* <Route component={NotFound} /> */ }
       </div>
     </Router>

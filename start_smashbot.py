@@ -1,4 +1,4 @@
-from backend.smashbot import SmashBot
+from backend.leaguebot import LeagueBot
 
 if __name__ == "__main__":
-    SmashBot().start_bot()
+    LeagueBot().start_bot()

@@ -13,10 +13,10 @@ from datetime import datetime
 
 import logging, sys
 
-class SmashBot():
+class LeagueBot():
     def __init__(self):
         self.slack_client = SlackClient(bot_config.get_slack_api_key())
-        self.logger = logging.getLogger('smashbot')
+        self.logger = logging.getLogger('leaguebot')
 
         hdlr = logging.FileHandler(bot_config.get_log_path())
         formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
@@ -24,7 +24,7 @@ class SmashBot():
         self.logger.addHandler(hdlr)
         self.logger.setLevel(logging.DEBUG)
 
-        self.logger.debug('booting up smashbot file')
+        self.logger.debug('booting up leaguebot file')
 
     def keepalive(self):
         while True:
@@ -371,4 +371,4 @@ class SmashBot():
             print("Connection failed. Invalid Slack token or bot ID?")
 
 if __name__ == "__main__":
-    SmashBot().start_bot()
+    LeagueBot().start_bot()

@@ -27,6 +27,12 @@ def send_debug_message():
     
     return response
 
+@app.route('/set-config-value', methods=['POST'])
+def set_config_value():
+    temp = request.get_json()
+    print(temp)
+    return "test response"
+
 @app.route('/send-real-message', methods=['POST'])
 def send_real_message():
     message = request.get_json().get("message")
