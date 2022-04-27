@@ -1,13 +1,16 @@
-
 from flask import Flask, render_template, request, jsonify
 from backend import db, match_making, slack
 import datetime
 
+from backend.config_db import set_config
+
 app = Flask(__name__, template_folder="./build", static_folder="./build/static")
+
 
 @app.route('/')
 def serve_fronted():
     return render_template("index.html")
+
 
 @app.route('/send-debug-message', methods=['POST'])
 def send_debug_message():
@@ -24,14 +27,20 @@ def send_debug_message():
 
     if response is None or response == "":
         response = "No messages sent."
-    
+
     return response
+
 
 @app.route('/set-config-value', methods=['POST'])
 def set_config_value():
     temp = request.get_json()
     print(temp)
+
+    for  key, value in temp.items():
+        set_config(key, value);
+
     return "test response"
+
 
 @app.route('/send-real-message', methods=['POST'])
 def send_real_message():
@@ -39,7 +48,7 @@ def send_real_message():
 
     if message is None or message == "":
         return "VERY ERROR: No message received"
-    
+
     response = ""
     if "@against_user" in message:
         response = slack.send_match_messages(message, debug=False)
@@ -50,6 +59,7 @@ def send_real_message():
         response = "No messages sent."
 
     return response
+
 
 @app.route('/submit-players', methods=['POST'])
 def submit_players():
@@ -96,6 +106,7 @@ def ensure_players_in_db(players):
                 user_map[player['name']] = user['id']
                 db.add_player(user['id'], player['name'], player['group'])
 
+
 def update_groupings(group, players):
     existing = db.get_players()
 
@@ -109,17 +120,26 @@ def update_groupings(group, players):
                     db.update_grouping(e.slack_id, group)
                     db.set_active(e.slack_id, True)
 
+
 @app.route('/get-active-players', methods=['GET'])
 def get_active_players():
     players = get_ranked_players()
 
     return jsonify(players)
 
+
+@app.route('/get-current-matches', methods=['GET'])
+def get_current_matches():
+    season = db.get_current_season()
+    current_season_matches = db.get_matches_for_season(season)
+
+    return jsonify(current_season_matches)
+
+
 def get_ranked_players():
     season = db.get_current_season()
     all_matches = db.get_matches_for_season(season)
     all_players = db.get_players()
-
 
     groups = sorted(list(set([m.grouping for m in all_matches])))
     return_players = []
@@ -142,8 +162,9 @@ def get_ranked_players():
                     'group': group
                 }
             )
-    
+
     return return_players
+
 
 if __name__ == '__main__':
     app.run()
