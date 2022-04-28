@@ -7,6 +7,7 @@ import Configuration from './Configuration/Configuration';
 import App from './Reminders/App';
 import Playerboard from './Playerboard/Playerboard';
 import NotFound from './NotFound/NotFound'
+import Matches from './Matches/Matches';
 
 import * as serviceWorker from './serviceWorker';
 import 'bootstrap/dist/css/bootstrap.css';
@@ -20,6 +21,9 @@ const routing = (
               <Link className="nav-link" to="/configuration">Configuration</Link>
             </li>
             <li className="nav-item">
+              <Link className="nav-link" to="/matches">Matches</Link>
+            </li>
+            <li className="nav-item">
               <Link className="nav-link" to="/">Reminders</Link>
             </li>
             <li className="nav-item">
@@ -30,6 +34,7 @@ const routing = (
         <Route exact path="/" component={App} />
         <Route path="/playerboard" component={Playerboard} />
         <Route path="/configuration" component={Configuration} />
+        <Route path="/matches" component={Matches} />
         { /* <Route component={NotFound} /> */ }
       </div>
     </Router>

@@ -32,4 +32,4 @@ def set_config(name, value):
     conn.close()
 
 # create_table()
-set_config('test', 'test_value2')
+# set_config('test', 'test_value2')
