@@ -46,31 +46,10 @@ def create_tables():
     conn.commit()
     conn.close()
 
-def create_floor_battle_tables():
-    conn = get_connection()
-    c = conn.cursor()
-
-    c.execute('CREATE TABLE floor_player (slack_id TEXT PRIMARY KEY, name TEXT, floor TEXT)')
-    c.execute('CREATE TABLE floor_match ('
-              'winner TEXT, '
-              'loser TEXT, '
-              'sets INT, '
-              'FOREIGN KEY (winner) REFERENCES floor_player, '
-              'FOREIGN KEY (loser) REFERENCES floor_player)')
-    conn.commit()
-    conn.close()
-
 def add_player(slack_id, name, grouping):
     conn = get_connection()
     c = conn.cursor()
     c.execute("INSERT INTO player VALUES ('{}', '{}', '{}', 1)".format(slack_id, name.replace("'","''"), grouping))
-    conn.commit()
-    conn.close()
-
-def add_floor_player(slack_id, name, floor):
-    conn = get_connection()
-    c = conn.cursor()
-    c.execute("INSERT INTO floor_player VALUES ('{}', '{}', '{}')".format(slack_id, name, floor))
     conn.commit()
     conn.close()
 
@@ -91,22 +70,6 @@ class Player:
     def __repr__(self):
         return self.name + ' ' + self.slack_id + ' ' + self.grouping + ' ' + str(self.active)
 
-class FloorPlayer:
-    def __init__(self, slack_id, name, floor):
-        self.slack_id = slack_id
-        self.name = name
-        self.floor = floor
-
-    @classmethod
-    def from_db(cls, row):
-        return FloorPlayer(row[0], row[1], row[2])
-
-    def __str__(self):
-        return self.name + ' ' + self.slack_id + ' ' + self.floor + ' '
-
-    def __repr__(self):
-        return self.name + ' ' + self.slack_id + ' ' + self.floor + ' '
-
 def get_players():
     conn = get_connection()
     c = conn.cursor()
@@ -114,16 +77,9 @@ def get_players():
     rows = c.fetchall()
     conn.close()
 
+    for p in rows:
+        print(p)
     return [Player.from_db(p) for p in rows]
-
-def get_floor_players():
-    conn = get_connection()
-    c = conn.cursor()
-    c.execute('SELECT * FROM floor_player')
-    rows = c.fetchall()
-    conn.close()
-
-    return [FloorPlayer.from_db(p) for p in rows]
 
 def get_active_players():
     return [p for p in get_players() if p.active]
@@ -135,7 +91,7 @@ def get_player_by_name(name):
     row = c.fetchone()
     conn.close()
     if row is None or len(row) == 0:
-        print('Couldn not find player with name:', name)
+        print('Could not find player with name:', name)
         return None
     return Player.from_db(row)
 
@@ -149,24 +105,6 @@ def get_player_by_id(id):
         print('Couldn not find player with id:', id)
         return None
     return Player.from_db(row)
-
-def get_floor_player_by_id(id):
-    conn = get_connection()
-    c = conn.cursor()
-    c.execute("SELECT * FROM floor_player WHERE slack_id = '{}'".format(id))
-    row = c.fetchone()
-    conn.close()
-    if row == None or len(row) == 0:
-        print('Could not find player with id:', id)
-        return None
-    return FloorPlayer.from_db(row)
-
-def set_floor_for_player(slack_id, floor):
-    conn = get_connection()
-    c = conn.cursor()
-    c.execute("UPDATE floor_player SET floor = '{}' WHERE slack_id = '{}'".format(floor, slack_id))
-    conn.commit()
-    conn.close()
 
 def update_grouping(slack_id, grouping):
     conn = get_connection()
@@ -194,16 +132,9 @@ def add_match(player_1, player_2, week_date, grouping, season):
     conn.commit()
     conn.close()
 
-def add_floor_match(winner_id, loser_id, sets):
-    conn = get_connection()
-    c = conn.cursor()
-    c.execute("INSERT INTO floor_match VALUES ('{}', '{}', {})".format(winner_id, loser_id, sets))
-    conn.commit()
-    conn.close()
-    return True
-
 class Match:
-    def __init__(self, p1_id, p2_id, winner_id, week, grouping, season, sets):
+    def __init__(self, id, p1_id, p2_id, winner_id, week, grouping, season, sets):
+        self.id = id
         self.player_1_id = p1_id
         self.player_2_id = p2_id
         self.winner_id = winner_id
@@ -214,30 +145,12 @@ class Match:
 
     @classmethod
     def from_db(cls, row):
-        return Match(row[0], row[1], row[2], row[3], row[4], row[5], row[6])
-
-class FloorMatch:
-    def __init__(self, winner_id, loser_id, sets):
-        self.winner_id = winner_id
-        self.loser_id = loser_id
-        self.sets = sets
-
-    @classmethod
-    def from_db(cls, row):
-        return FloorMatch(row[0], row[1], row[2])
-
-def get_floor_matches():
-    conn = get_connection()
-    c = conn.cursor()
-    c.execute('SELECT * FROM floor_match')
-    rows = c.fetchall()
-    conn.close()
-    return [FloorMatch.from_db(m) for m in rows]
+        return Match(row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7])
 
 def get_matches():
     conn = get_connection()
     c = conn.cursor()
-    c.execute('SELECT * FROM match')
+    c.execute('SELECT rowid, * FROM match')
     rows = c.fetchall()
     conn.close()
 
@@ -310,6 +223,28 @@ def _update_match(winner, loser, sets):
     c = conn.cursor()
     c.execute("UPDATE match SET winner='{}', sets={} WHERE player_1 = '{}' and player_2 = '{}' and season={}"\
               .format(winner.slack_id, sets, match.player_1_id, match.player_2_id, match.season))
+    conn.commit()
+    conn.close()
+    return True
+
+def admin_update_match(new_match):
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute("UPDATE match SET "
+              "player_1='{}', "
+              "player_2='{}', "
+              "winner='{}', "
+              "week='{}', "
+              "grouping='{}', "
+              "sets={} "
+              "WHERE rowid={}"
+              .format(new_match.player_1_id,
+                      new_match.player_2_id,
+                      new_match.winner_id,
+                      new_match.week,
+                      new_match.grouping,
+                      new_match.sets,
+                      new_match.id))
     conn.commit()
     conn.close()
     return True
