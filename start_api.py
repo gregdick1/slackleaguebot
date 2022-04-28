@@ -1,3 +1,5 @@
+import json
+
 from flask import Flask, render_template, request, jsonify
 from backend import db, match_making, slack
 import datetime
@@ -36,8 +38,8 @@ def set_config_value():
     temp = request.get_json()
     print(temp)
 
-    for  key, value in temp.items():
-        set_config(key, value);
+    for key, value in temp.items():
+        set_config(key, value)
 
     return "test response"
 
@@ -132,8 +134,13 @@ def get_active_players():
 def get_current_matches():
     season = db.get_current_season()
     current_season_matches = db.get_matches_for_season(season)
+    return json.dumps(current_season_matches, default=default)
 
-    return jsonify(current_season_matches)
+
+def default(o):
+    if isinstance(o, (datetime.date, datetime.datetime)):
+        return o.isoformat()
+    return o.__dict__
 
 
 def get_ranked_players():

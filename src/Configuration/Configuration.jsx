@@ -31,25 +31,24 @@ function Configuration() {
 
     return (
       <div id="main-content" className="main-content">
-        <form id="form-group" className="configuration-form-group">
+        <form className="form-group col-4">
             <label>League Name</label>
-            <input name="leagueName" type="text" value={state.leagueName} onChange={handleChange} />
+            <input class="form-control" name="leagueName" type="text" value={state.leagueName} onChange={handleChange} />
 
             <label>Slack API Key</label>
-            <input name="APIKey" type="text" value={state.APIKey} onChange={handleChange}/>
+            <input class="form-control" name="APIKey" type="text" value={state.APIKey} onChange={handleChange}/>
 
             <label>Slack Bot User ID</label>
-            <input name="botUserID" type="text" value={state.botUserID} onChange={handleChange}/>
+            <input class="form-control" name="botUserID" type="text" value={state.botUserID} onChange={handleChange}/>
 
             <label>Slack Channel ID</label>
-            <input name="channelID" type="text" value={state.channelID} onChange={handleChange}/>
+            <input class="form-control" name="channelID" type="text" value={state.channelID} onChange={handleChange}/>
 
             <label>Commissioner Slack ID</label>
-            <input name="commissionerID" type="text" value={state.commissionerID} onChange={handleChange}/>
+            <input class="form-control" name="commissionerID" type="text" value={state.commissionerID} onChange={handleChange}/>
 
             <label>First to Number of Sets</label>
-            <input name="numOfSets" type="number" value={state.numOfSets} onChange={handleChange} />
-
+            <input class="form-control" name="numOfSets" type="number" value={state.numOfSets} onChange={handleChange} />
             <button id="submit-button" className="btn btn-primary btn-lg" onClick={handleSubmit}>Submit</button>
         </form>
         Configuration!

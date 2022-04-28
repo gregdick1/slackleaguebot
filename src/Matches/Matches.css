@@ -1,0 +1,25 @@
+.group-week-container {
+    background-color: #dfdfdf;
+    border: none;
+}
+
+.match-item {
+    display: flex;
+    justify-content: space-between;
+}
+
+.match-group {
+    display: flex;
+    font-weight: bold;
+    align-items: center;
+}
+
+#submit-button {
+    position: fixed;
+    bottom: 15px;
+    right: 15px;
+}
+
+.modal-body {
+    color: #000;
+}
