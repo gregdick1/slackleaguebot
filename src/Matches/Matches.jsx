@@ -93,7 +93,7 @@ class Matches extends Component {
             Object.entries(this.state.groups).map((group_object_array, index) =>
               <div className="group-wrapper">
                 <div className="group-title">
-                    <input className="group-week-container" type="text" name= {index} value={!!this.state.index ? this.state.index.date : group_object_array[0]} onChange={this.handleChange} />
+                    <input className="group-week-container" type="text" name= {index} value={!!this.state[index] ? this.state[index].date : group_object_array[0]} onChange={this.handleChange} />
                 </div>
                 {group_object_array[1] && group_object_array[1].map((match, index) => (
                 <>
