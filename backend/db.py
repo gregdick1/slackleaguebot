@@ -159,7 +159,7 @@ def get_matches():
 def get_matches_for_season(season):
     conn = get_connection()
     c = conn.cursor()
-    c.execute('SELECT * FROM match WHERE season = {}'.format(season))
+    c.execute('SELECT rowid, * FROM match WHERE season = {}'.format(season))
     rows = c.fetchall()
     conn.close()
 
@@ -175,7 +175,7 @@ def clear_matches_for_season(season):
 def get_matches_for_week(week):
     conn = get_connection()
     c = conn.cursor()
-    c.execute("SELECT * FROM match WHERE week = '{}'".format(week))
+    c.execute("SELECT rowid, * FROM match WHERE week = '{}'".format(week))
     rows = c.fetchall()
     conn.close()
 
@@ -185,7 +185,7 @@ def get_match_by_players(player_a, player_b):
     season = get_current_season()
     conn = get_connection()
     c = conn.cursor()
-    c.execute("SELECT * FROM match WHERE season = {} and (player_1 = '{}' or player_2 = '{}') and (player_1 = '{}' or player_2 = '{}')"\
+    c.execute("SELECT rowid, * FROM match WHERE season = {} and (player_1 = '{}' or player_2 = '{}') and (player_1 = '{}' or player_2 = '{}')"\
               .format(season, player_a.slack_id, player_a.slack_id, player_b.slack_id, player_b.slack_id))
     row = c.fetchone()
     conn.close()
