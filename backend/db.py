@@ -238,13 +238,13 @@ def admin_update_match(new_match):
               "grouping='{}', "
               "sets={} "
               "WHERE rowid={}"
-              .format(new_match.player_1_id,
-                      new_match.player_2_id,
-                      new_match.winner_id,
-                      new_match.week,
-                      new_match.grouping,
-                      new_match.sets,
-                      new_match.id))
+              .format(new_match['player_1_id'],
+                      new_match['player_2_id'],
+                      new_match['winner_id'],
+                      new_match['week'],
+                      new_match['grouping'],
+                      new_match['sets'],
+                      new_match['id']))
     conn.commit()
     conn.close()
     return True

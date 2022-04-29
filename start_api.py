@@ -35,13 +35,13 @@ def send_debug_message():
 
 @app.route('/set-config-value', methods=['POST'])
 def set_config_value():
-    temp = request.get_json()
-    print(temp)
+    config = request.get_json()
+    print(config)
 
-    for key, value in temp.items():
+    for key, value in config.items():
         set_config(key, value)
 
-    return "test response"
+    return "Nicely done. You configured the heck out of the configuration!"
 
 
 @app.route('/send-real-message', methods=['POST'])
@@ -80,6 +80,17 @@ def submit_players():
     match_making.create_matches_for_season(next_monday, skip_weeks=[], include_byes=False)
 
     return "We did it boys"
+
+
+@app.route('/update-match-info', methods=['POST'])
+def update_match_info():
+    updated_match_info = request.get_json();
+    print(updated_match_info);
+
+    db.admin_update_match(updated_match_info);
+
+    return "The commissioner has spoken. The match has been updated."
+
 
 
 def ensure_players_in_db(players):
@@ -135,6 +146,12 @@ def get_current_matches():
     season = db.get_current_season()
     current_season_matches = db.get_matches_for_season(season)
     return json.dumps(current_season_matches, default=default)
+
+
+@app.route('/get-current-config', methods=['GET'])
+def get_current_config():
+    config = get_current_config()
+    return jsonify(config)
 
 
 def default(o):

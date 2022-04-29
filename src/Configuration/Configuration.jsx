@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import axios from 'axios'
 
 import './Configuration.css'
@@ -25,9 +25,8 @@ function Configuration() {
         e.preventDefault()
         // TODO: Add check to ensure all keys have values
         console.log({...state})
-        await axios.post('/set-config-value', { ...state })
-
-        alert("success")
+        const response = await axios.post('set-config-value', { ...state })
+        alert(response.data)
     }
 
     return (
