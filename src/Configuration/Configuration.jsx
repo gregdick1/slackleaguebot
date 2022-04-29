@@ -21,7 +21,8 @@ function Configuration() {
         })
     }
 
-    const handleSubmit = async () => {
+    const handleSubmit = async (e) => {
+        e.preventDefault()
         // TODO: Add check to ensure all keys have values
         console.log({...state})
         await axios.post('/set-config-value', { ...state })
