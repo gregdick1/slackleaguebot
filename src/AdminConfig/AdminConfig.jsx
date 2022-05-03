@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import axios from 'axios'
 
+import { LeagueContext } from "../contexts/League"
 import EdiText from 'react-editext';
 import './AdminConfig.css'
 
@@ -13,31 +14,25 @@ function AdminConfig() {
         BOT_COMMAND: 'python'
     }
     const [state, setState] = useState({
-        selectedLeague: "",
-        leagues:[],
         leagueAdminConfigs:{...blankConfigs},
         newLeagueName:""
     })
 
+    const [ leagueState, dispatch ] = React.useContext(LeagueContext)
+
     useEffect(() => {
       const fetchData = async () => {
         // get the data from the api
-        var leaguesResponse = await axios.get(`get-leagues-to-admin`);
-        var currentLeagueResponse = await axios.get('get-current-league');
-        var leagues = leaguesResponse.data;
-        var selectedLeague = currentLeagueResponse.data;
-        var configsResponse = await axios.get('get-league-admin-configs', { params: { leagueName: selectedLeague } })
+        var configsResponse = await axios.get('get-league-admin-configs', { params: { leagueName: leagueState.selectedLeague } })
         var leagueAdminConfigs = configsResponse.data;
         setState({
           ...state,
-          selectedLeague,
-          leagues,
           leagueAdminConfigs
         });
       }
 
       fetchData().catch(console.error);
-    }, []);
+    }, [leagueState.selectedLeague]);
 
     const handleLeagueChange = (e) => {
       const { value } = e.target;
@@ -47,9 +42,9 @@ function AdminConfig() {
         var leagueAdminConfigs = configsResponse.data;
         setState({
           ...state,
-          selectedLeague: value,
           leagueAdminConfigs
         });
+        dispatch({ type: "league_changed", selectedLeague: value, leagues: leagueState.leagues })
       }
 
       updateServer().catch(console.error);
@@ -61,7 +56,7 @@ function AdminConfig() {
       if (newLeagueName === "") {
         alert("Must enter a name for the league.");
         return;
-      } else if (state.leagues.includes(newLeagueName)) {
+      } else if (leagueState.leagues.includes(newLeagueName)) {
         alert("You already have a league with that name.");
         return;
       }
@@ -71,16 +66,15 @@ function AdminConfig() {
       const updateServer = async () => {
         await axios.post(`add-league`, { newLeagueName, leagueAdminConfigs });
         await axios.post(`set-current-league`, { selectedLeague: newLeagueName });
-        var leagues = [...state.leagues]
+        var leagues = [...leagueState.leagues]
         leagues.push(newLeagueName)
 
         setState({
           ...state,
-          selectedLeague: newLeagueName,
           leagueAdminConfigs,
-          leagues,
           newLeagueName: ""
         });
+        dispatch({ type: "league_changed", selectedLeague: newLeagueName, leagues })
       }
       updateServer().catch(console.error);
     }
@@ -92,13 +86,11 @@ function AdminConfig() {
           leagueAdminConfigs
         })
         const response = await axios.post('set-league-admin-config', {
-                selectedLeague: state.selectedLeague,
+                selectedLeague: leagueState.selectedLeague,
                 configKey: inputProps.name,
                 configValue: val
             });
     }
-
-    console.log(state)
 
     const editor = (label, config) => {
       return (
@@ -116,17 +108,10 @@ function AdminConfig() {
       );
     }
 
-    const editExisting = state.leagues.length > 0;
+    const editExisting = leagueState.leagues.length > 0;
 
     return (
       <div id="main-content" className="main-content">
-        <div id="league-selector">
-          <label>Select League to Admin</label>
-          <select name='selectedLeague' value={state.selectedLeague} onChange={handleLeagueChange}>
-            {state.leagues.map((league) => (
-              <option value={league}>{league}</option>
-            ))}
-          </select>
           <div className="new-league-inputs">
             <div>
               <label>Create New League</label>
@@ -146,8 +131,9 @@ function AdminConfig() {
               }
             </div>
           </div>
+        <div className="tab-header">
+          <label>Admin Configuration for League: {leagueState.selectedLeague}</label>
         </div>
-
         { editExisting && editor('Server Host', 'SERVER_HOST') }
         { editExisting && editor('Server Port', 'SERVER_PORT') }
         { editExisting && editor('Server User', 'SERVER_USER') }

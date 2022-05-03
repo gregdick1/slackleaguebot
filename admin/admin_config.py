@@ -127,7 +127,3 @@ def print_db():
     print(rows)
     conn.close()
 
-
-
-# set_config('darts', 'SERVER_HOST', 'test_host')
-print_db()

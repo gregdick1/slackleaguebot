@@ -9,11 +9,14 @@ import App from './Reminders/App';
 import Playerboard from './Playerboard/Playerboard';
 import NotFound from './NotFound/NotFound'
 import Matches from './Matches/Matches';
+import LeagueSelector from './Components/LeagueSelector';
 
 import * as serviceWorker from './serviceWorker';
 import 'bootstrap/dist/css/bootstrap.css';
+import { LeagueProvider } from "./contexts/League"
 
 const routing = (
+    <LeagueProvider>
     <Router>
       <div>
         <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
@@ -33,8 +36,12 @@ const routing = (
             <li className="nav-item">
               <Link className="nav-link" to="/playerboard">Playerboard</Link>
             </li>
+            <li className="nav-item">
+              <LeagueSelector />
+            </li>
           </ul>
         </nav>
+
         <Route exact path="/" component={App} />
         <Route path="/playerboard" component={Playerboard} />
         <Route path="/configuration" component={Configuration} />
@@ -43,6 +50,7 @@ const routing = (
         { /* <Route component={NotFound} /> */ }
       </div>
     </Router>
+    </LeagueProvider>
   )
 
 ReactDOM.render(routing, document.getElementById('root'));
