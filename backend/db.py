@@ -25,6 +25,7 @@ def initialize(lctx):
               'grouping TEXT, '
               'season INT, '
               'sets INT, '
+              'sets_needed INT, '
               'FOREIGN KEY (player_1) REFERENCES player, '
               'FOREIGN KEY (player_2) REFERENCES player, '
               'FOREIGN KEY (winner) REFERENCES player)')
@@ -90,9 +91,6 @@ def get_players(lctx):
     c.execute('SELECT * FROM player')
     rows = c.fetchall()
     conn.close()
-
-    for p in rows:
-        print(p)
     return [Player.from_db(p) for p in rows]
 
 
@@ -118,8 +116,8 @@ def get_player_by_id(lctx, id):
     c.execute("SELECT * FROM player WHERE slack_id = '{}'".format(id))
     row = c.fetchone()
     conn.close()
-    if len(row) == 0:
-        print('Couldn not find player with id:', id)
+    if row is None or len(row) == 0:
+        print('Could not find player with id:', id)
         return None
     return Player.from_db(row)
 
@@ -141,20 +139,20 @@ def set_active(lctx, slack_id, active):
     conn.close()
 
 
-def add_match(lctx, player_1, player_2, week_date, grouping, season):
+def add_match(lctx, player_1, player_2, week_date, grouping, season, sets_needed):
     conn = get_connection(lctx)
     c = conn.cursor()
     if player_1 is None or player_2 is None:
         p_id = player_1.slack_id if player_1 is not None else player_2.slack_id
-        c.execute("INSERT INTO match VALUES ('{}', null, null, '{}', '{}', {}, 0)".format(p_id, str(week_date), grouping, season))
+        c.execute("INSERT INTO match VALUES ('{}', null, null, '{}', '{}', {}, 0, {})".format(p_id, str(week_date), grouping, season, sets_needed))
     else:
-        c.execute("INSERT INTO match VALUES ('{}', '{}', null, '{}', '{}', {}, 0)".format(player_1.slack_id, player_2.slack_id, str(week_date), grouping, season))
+        c.execute("INSERT INTO match VALUES ('{}', '{}', null, '{}', '{}', {}, 0, {})".format(player_1.slack_id, player_2.slack_id, str(week_date), grouping, season, sets_needed))
     conn.commit()
     conn.close()
 
 
 class Match:
-    def __init__(self, id, p1_id, p2_id, winner_id, week, grouping, season, sets):
+    def __init__(self, id, p1_id, p2_id, winner_id, week, grouping, season, sets, sets_needed):
         self.id = id
         self.player_1_id = p1_id
         self.player_2_id = p2_id
@@ -163,10 +161,11 @@ class Match:
         self.grouping = grouping
         self.season = season
         self.sets = sets
+        self.sets_needed = sets_needed
 
     @classmethod
     def from_db(cls, row):
-        return Match(row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7])
+        return Match(row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8])
 
 
 def get_matches(lctx):
@@ -208,6 +207,8 @@ def get_matches_for_week(lctx, week):
 
 
 def get_match_by_players(lctx, player_a, player_b):
+    if player_a.slack_id == player_b.slack_id:
+        return None
     season = get_current_season(lctx)
     conn = get_connection(lctx)
     c = conn.cursor()
@@ -216,7 +217,7 @@ def get_match_by_players(lctx, player_a, player_b):
     row = c.fetchone()
     conn.close()
 
-    if len(row) == 0:
+    if row is None or len(row) == 0:
         print("No match for players:", player_a.name, player_b.name)
         return None
     return Match.from_db(row)
@@ -225,13 +226,13 @@ def get_match_by_players(lctx, player_a, player_b):
 def update_match(lctx, winner_name, loser_name, sets):
     winner = get_player_by_name(lctx, winner_name)
     loser = get_player_by_name(lctx, loser_name)
-    return _update_match(winner, loser, sets)
+    return _update_match(lctx, winner, loser, sets)
 
 
 def update_match_by_id(lctx, winner_id, loser_id, sets):
     winner = get_player_by_id(lctx, winner_id)
     loser = get_player_by_id(lctx, loser_id)
-    return _update_match(winner, loser, sets)
+    return _update_match(lctx, winner, loser, sets)
 
 
 def _update_match(lctx, winner, loser, sets):
@@ -239,13 +240,13 @@ def _update_match(lctx, winner, loser, sets):
         print('Could not update match')
         return False
 
-    if sets not in [3,4,5]:
-        print('Sets must be best of 5')
-        return False
-
     match = get_match_by_players(lctx, winner, loser)
     if match is None:
         print('Could not update match')
+        return False
+
+    if sets < match.sets_needed or sets > (match.sets_needed*2-1):
+        print('Sets out of range, was {}, but must be between {} and {}'.format(sets, match.sets_needed, match.sets_needed*2-1))
         return False
 
     conn = get_connection(lctx)
@@ -260,21 +261,15 @@ def _update_match(lctx, winner, loser, sets):
 def admin_update_match(lctx, new_match):
     conn = get_connection(lctx)
     c = conn.cursor()
-    c.execute("UPDATE match SET "
-              "player_1='{}', "
-              "player_2='{}', "
-              "winner='{}', "
-              "week='{}', "
-              "grouping='{}', "
-              "sets={} "
-              "WHERE rowid={}"
-              .format(new_match['player_1_id'],
-                      new_match['player_2_id'],
-                      new_match['winner_id'],
-                      new_match['week'],
-                      new_match['grouping'],
-                      new_match['sets'],
-                      new_match['id']))
+    c.execute("UPDATE match SET " +
+              "player_1='{}', ".format(new_match.player_1_id) +
+              "player_2='{}', ".format(new_match.player_2_id) +
+              ("winner='{}', ".format(new_match.winner_id) if new_match.winner_id is not None else "winner=null, ") +
+              "week='{}', ".format(new_match.week) +
+              "grouping='{}', ".format(new_match.grouping) +
+              "sets={}, ".format(new_match.sets) +
+              "sets_needed={} ".format(new_match.sets_needed) +
+              "WHERE rowid={}".format(new_match.id))
     conn.commit()
     conn.close()
     return True

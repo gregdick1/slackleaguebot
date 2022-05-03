@@ -81,10 +81,11 @@ def add_player_to_group(lctx, player_name, season_num):
     dates = sorted(list(set(dates)))
     first = True
     for week in dates:
+        # TODO use config for sets needed
         if first:
-            db.add_match(lctx, player, group_players.pop(0), week, player.grouping, season_num)
+            db.add_match(lctx, player, group_players.pop(0), week, player.grouping, season_num, 3)
             first = False
-        db.add_match(lctx, player, group_players.pop(0), week, player.grouping, season_num)
+        db.add_match(lctx, player, group_players.pop(0), week, player.grouping, season_num, 3)
 
 
 def create_matches_for_season(lctx, start_date, skip_weeks=[], include_byes=False):
@@ -104,7 +105,8 @@ def create_matches_for_season(lctx, start_date, skip_weeks=[], include_byes=Fals
     season = db.get_current_season(lctx)
     season += 1
     for match in all_matches:
-        db.add_match(lctx, match['player_1'], match['player_2'], match['week'], match['grouping'], season)
+        # TODO use config for sets needed
+        db.add_match(lctx, match['player_1'], match['player_2'], match['week'], match['grouping'], season, 3)
 
 
 def get_player_name(players, id):
