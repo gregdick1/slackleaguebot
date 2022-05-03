@@ -5,7 +5,7 @@ from slackclient import SlackClient
 from bot_config import BotConfig
 import db
 import collections
-from match_making import gather_scores, get_player_name
+from backend.utility import get_player_name, gather_scores
 import time
 from websocket import WebSocketConnectionClosedException
 from multiprocessing import Process

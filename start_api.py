@@ -1,6 +1,8 @@
 import json
 
 from flask import Flask, render_template, request, jsonify
+
+import backend.utility
 from backend import db, match_making, slack, league_context, bot_config
 from admin import admin_config
 import datetime
@@ -79,7 +81,8 @@ def submit_players():
     next_monday = (last_monday + datetime.timedelta(days=7)).date()
 
     lctx = _get_league_context()
-    match_making.create_matches_for_season(lctx, next_monday, skip_weeks=[], include_byes=False)
+    # TODO use the config for sets needed
+    match_making.create_matches_for_season(lctx, next_monday, 3, skip_weeks=[], include_byes=False)
 
     return "We did it boys"
 
@@ -176,7 +179,7 @@ def get_ranked_players():
     for group in groups:
         group_matches = [m for m in all_matches if m.grouping == group]
 
-        players = match_making.gather_scores(group_matches)
+        players = backend.utility.gather_scores(group_matches)
 
         for player in players:
             name = [p.name for p in all_players if p.slack_id == player['player_id']][0]

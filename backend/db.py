@@ -1,5 +1,4 @@
 import sqlite3
-import datetime
 import os
 
 
@@ -83,6 +82,11 @@ class Player:
 
     def __repr__(self):
         return self.name + ' ' + self.slack_id + ' ' + self.grouping + ' ' + str(self.active)
+
+    def __eq__(self, other):
+        if other is None:
+            return False
+        return self.slack_id == other.slack_id and self.name == other.name
 
 
 def get_players(lctx):
