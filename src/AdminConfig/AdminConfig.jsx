@@ -1,59 +1,161 @@
 import React, { useState, useEffect } from 'react'
 import axios from 'axios'
 
-import './Configuration.css'
+import EdiText from 'react-editext';
+import './AdminConfig.css'
 
-function Configuration() {
+function AdminConfig() {
+
+    const blankConfigs = {
+        SERVER_HOST: 'hostname',
+        SERVER_PORT: '22',
+        SERVER_USER: 'user',
+        BOT_COMMAND: 'python'
+    }
     const [state, setState] = useState({
-        leagueName: "",
-        APIKey: "",
-        botUserID: "",
-        channelID: "",
-        commissionerID: "",
-        numOfSets: "",
+        selectedLeague: "",
+        leagues:[],
+        leagueAdminConfigs:{...blankConfigs},
+        newLeagueName:""
     })
 
-    const handleChange = (e) => {
-        const { value, name } = e.target;
+    useEffect(() => {
+      const fetchData = async () => {
+        // get the data from the api
+        var leaguesResponse = await axios.get(`get-leagues-to-admin`);
+        var currentLeagueResponse = await axios.get('get-current-league');
+        var leagues = leaguesResponse.data;
+        var selectedLeague = currentLeagueResponse.data;
+        var configsResponse = await axios.get('get-league-admin-configs', { params: { leagueName: selectedLeague } })
+        var leagueAdminConfigs = configsResponse.data;
         setState({
-            ...state,
-            [name]: value
-        })
+          ...state,
+          selectedLeague,
+          leagues,
+          leagueAdminConfigs
+        });
+      }
+
+      fetchData().catch(console.error);
+    }, []);
+
+    const handleLeagueChange = (e) => {
+      const { value } = e.target;
+      const updateServer = async () => {
+        await axios.post(`set-current-league`, { selectedLeague: value });
+        var configsResponse = await axios.get('get-league-admin-configs', { params: { leagueName: value } })
+        var leagueAdminConfigs = configsResponse.data;
+        setState({
+          ...state,
+          selectedLeague: value,
+          leagueAdminConfigs
+        });
+      }
+
+      updateServer().catch(console.error);
     }
 
-    const handleSubmit = async (e) => {
-        e.preventDefault()
-        // TODO: Add check to ensure all keys have values
-        console.log({...state})
-        const response = await axios.post('set-config-value', { ...state })
-        alert(response.data)
+    const handleNewLeague = (e) => {
+      const { value, name } = e.target;
+      let newLeagueName = state.newLeagueName
+      if (newLeagueName === "") {
+        alert("Must enter a name for the league.");
+        return;
+      } else if (state.leagues.includes(newLeagueName)) {
+        alert("You already have a league with that name.");
+        return;
+      }
+
+      let leagueAdminConfigs = name === 'copyLeague' ? {...state.leagueAdminConfigs} : {...blankConfigs}
+
+      const updateServer = async () => {
+        await axios.post(`add-league`, { newLeagueName, leagueAdminConfigs });
+        await axios.post(`set-current-league`, { selectedLeague: newLeagueName });
+        var leagues = [...state.leagues]
+        leagues.push(newLeagueName)
+
+        setState({
+          ...state,
+          selectedLeague: newLeagueName,
+          leagueAdminConfigs,
+          leagues,
+          newLeagueName: ""
+        });
+      }
+      updateServer().catch(console.error);
     }
+
+    const handleSave = async (val, inputProps) => {
+        var leagueAdminConfigs = {...state.leagueAdminConfigs, [inputProps.name]: val}
+        setState({
+          ...state,
+          leagueAdminConfigs
+        })
+        const response = await axios.post('set-league-admin-config', {
+                selectedLeague: state.selectedLeague,
+                configKey: inputProps.name,
+                configValue: val
+            });
+    }
+
+    console.log(state)
+
+    const editor = (label, config) => {
+      return (
+      <div className="inline-editor">
+        <label>{label}:</label>
+        <EdiText
+          className="editext-editor"
+          type="text"
+          value={state.leagueAdminConfigs[config]}
+          onSave={handleSave}
+          inputProps={{ name: config }}
+          containerProps={{ style: { display: 'inline-block' } }}
+        />
+      </div>
+      );
+    }
+
+    const editExisting = state.leagues.length > 0;
 
     return (
       <div id="main-content" className="main-content">
-        <form className="form-group col-4">
-            <label>League Name</label>
-            <input class="form-control" name="leagueName" type="text" value={state.leagueName} onChange={handleChange} />
+        <div id="league-selector">
+          <label>Select League to Admin</label>
+          <select name='selectedLeague' value={state.selectedLeague} onChange={handleLeagueChange}>
+            {state.leagues.map((league) => (
+              <option value={league}>{league}</option>
+            ))}
+          </select>
+          <div className="new-league-inputs">
+            <div>
+              <label>Create New League</label>
+              <input type="text" value={state.newLeagueName}
+                    onChange={e =>
+                          setState({
+                            ...state,
+                            newLeagueName: e.target.value
+                          })
+                    }
+              />
+            </div>
+            <div>
+              <button name="newLeague" className="btn btn-primary btn-lg" onClick={handleNewLeague}>Create League</button>
+              {editExisting &&
+              <button name="copyLeague" className="btn btn-primary btn-lg" onClick={handleNewLeague}>Copy Current League</button>
+              }
+            </div>
+          </div>
+        </div>
 
-            <label>Slack API Key</label>
-            <input class="form-control" name="APIKey" type="text" value={state.APIKey} onChange={handleChange}/>
+        { editExisting && editor('Server Host', 'SERVER_HOST') }
+        { editExisting && editor('Server Port', 'SERVER_PORT') }
+        { editExisting && editor('Server User', 'SERVER_USER') }
+        { editExisting && editor('Bot Command', 'BOT_COMMAND') }
 
-            <label>Slack Bot User ID</label>
-            <input class="form-control" name="botUserID" type="text" value={state.botUserID} onChange={handleChange}/>
 
-            <label>Slack Channel ID</label>
-            <input class="form-control" name="channelID" type="text" value={state.channelID} onChange={handleChange}/>
-
-            <label>Commissioner Slack ID</label>
-            <input class="form-control" name="commissionerID" type="text" value={state.commissionerID} onChange={handleChange}/>
-
-            <label>First to Number of Sets</label>
-            <input class="form-control" name="numOfSets" type="number" value={state.numOfSets} onChange={handleChange} />
-            <button id="submit-button" className="btn btn-primary btn-lg" onClick={handleSubmit}>Submit</button>
-        </form>
-        Configuration!
       </div>
     );
 }
 
-export default Configuration;
+export default AdminConfig;

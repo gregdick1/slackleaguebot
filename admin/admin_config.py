@@ -9,6 +9,7 @@ SERVER_PORT = 'SERVER_PORT'
 BOT_COMMAND = 'BOT_COMMAND'
 CURRENT_LEAGUE = 'CURRENT_LEAGUE'
 
+LEAGUE_CONFIGS = [SERVER_HOST, SERVER_USER, SERVER_PORT, BOT_COMMAND]
 
 def _get_connection():
     return sqlite3.connect(path, detect_types=sqlite3.PARSE_DECLTYPES)
@@ -56,7 +57,7 @@ def _get_universal_config(name):
     return None
 
 
-def _set_config(league_name, config_name, value):
+def set_config(league_name, config_name, value):
     existing = _get_config(league_name, config_name)
 
     conn = _get_connection()
@@ -103,7 +104,14 @@ def set_current_league(league_name):
 def add_league(league_name, server_options):
     initialize()
     for config_name, value in server_options.items():
-        _set_config(league_name, config_name, str(value))
+        set_config(league_name, config_name, str(value))
+
+
+def get_league_configs(league_name):
+    configs = {}
+    for config_key in LEAGUE_CONFIGS:
+        configs[config_key] = _get_config(league_name, config_key)
+    return configs
 
 
 # useful for debugging
@@ -121,3 +129,5 @@ def print_db():
 
 
 
+# set_config('darts', 'SERVER_HOST', 'test_host')
+print_db()

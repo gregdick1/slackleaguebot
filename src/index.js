@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom';
 import { Route, Link, HashRouter as Router } from 'react-router-dom'
 
 import './index.css';
+import AdminConfig from './AdminConfig/AdminConfig';
 import Configuration from './Configuration/Configuration';
 import App from './Reminders/App';
 import Playerboard from './Playerboard/Playerboard';
@@ -17,6 +18,9 @@ const routing = (
       <div>
         <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
           <ul className="navbar-nav">
+            <li className="nav-item">
+              <Link className="nav-link" to="/admin">Admin</Link>
+            </li>
             <li className="nav-item">
               <Link className="nav-link" to="/configuration">Configuration</Link>
             </li>
@@ -34,6 +38,7 @@ const routing = (
         <Route exact path="/" component={App} />
         <Route path="/playerboard" component={Playerboard} />
         <Route path="/configuration" component={Configuration} />
+        <Route path="/admin" component={AdminConfig} />
         <Route path="/matches" component={Matches} />
         { /* <Route component={NotFound} /> */ }
       </div>

@@ -2,11 +2,14 @@ import json
 
 from flask import Flask, render_template, request, jsonify
 from backend import db, match_making, slack
+from admin import admin_config
 import datetime
 
 from backend.config_db import set_config
 
 app = Flask(__name__, template_folder="./build", static_folder="./build/static")
+
+current_league = ''
 
 
 @app.route('/')
@@ -90,7 +93,6 @@ def update_match_info():
     db.admin_update_match(updated_match_info);
 
     return "The commissioner has spoken. The match has been updated."
-
 
 
 def ensure_players_in_db(players):
@@ -189,6 +191,50 @@ def get_ranked_players():
 
     return return_players
 
+
+@app.route('/get-leagues-to-admin', methods=['GET'])
+def get_leagues_to_admin():
+    leagues = admin_config.get_leagues()
+    return jsonify(leagues)
+
+
+@app.route('/get-current-league', methods=['GET'])
+def get_current_league():
+    return jsonify(admin_config.get_current_league())
+
+
+@app.route('/set-current-league', methods=['POST'])
+def set_current_league():
+    league_name = request.get_json().get("selectedLeague")
+    admin_config.set_current_league(league_name)
+    return "Success"
+
+
+@app.route('/get-league-admin-configs', methods=['GET'])
+def get_league_admin_configs():
+    league_name = request.args.get("leagueName", default="", type=str)
+    configs = admin_config.get_league_configs(league_name)
+    return jsonify(configs)
+
+
+@app.route('/set-league-admin-config', methods=['POST'])
+def set_league_admin_config():
+    data = request.get_json()
+    league_name = data.get('selectedLeague')
+    config_key = data.get('configKey')
+    config_value = data.get('configValue')
+    admin_config.set_config(league_name, config_key, config_value)
+    return "Success"
+
+
+@app.route('/add-league', methods=['POST'])
+def add_league():
+    data = request.get_json()
+    league_name = data.get('newLeagueName')
+    server_options = data.get('leagueAdminConfigs')
+    print('Adding League:', league_name, server_options)
+    admin_config.add_league(league_name, server_options)
+    return "Success"
 
 if __name__ == '__main__':
     app.run()
