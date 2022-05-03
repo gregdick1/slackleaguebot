@@ -8,17 +8,20 @@ def get_tied_players(players):
             tied_groups.append(temp)
     return tied_groups
 
+
 def _check_more_of_player_attribute(players, attribute):
     temp = sorted(players, key=lambda x: x[attribute], reverse=True)
     if temp[0][attribute] > temp[1][attribute]:
         return temp[0]
     return None
 
+
 def _check_less_of_player_attribute(players, attribute):
     temp = sorted(players, key=lambda x: x[attribute])
     if temp[0][attribute] < temp[1][attribute]:
         return temp[0]
     return None
+
 
 def check_h2h_won_all(players, group_matches):
     player_ids = [p['player_id'] for p in players]
@@ -27,6 +30,7 @@ def check_h2h_won_all(players, group_matches):
         if len([m for m in applicable_matches if m.winner_id == player['player_id']]) == len(players)-1:
             return player
     return None
+
 
 def check_h2h_lost_all(players, group_matches):
     player_ids = [p['player_id'] for p in players]
@@ -39,22 +43,28 @@ def check_h2h_lost_all(players, group_matches):
             return player
     return None
 
+
 def check_more_sets_won(players):
     return _check_more_of_player_attribute(players, 's_w')
+
 
 def check_less_sets_won(players):
     return _check_less_of_player_attribute(players, 's_w')
 
+
 def check_more_sets_lost(players):
     return _check_more_of_player_attribute(players, 's_l')
+
 
 def check_less_sets_lost(players):
     return _check_less_of_player_attribute(players, 's_l')
 
+
 def resolve_group_tie(players, group_matches):
     tied_players = players[:]
     moved_up = []
-    moved_down = [] #will have to reverse this one when putting the two together
+    # will have to reverse this one when putting the two together
+    moved_down = []
     while len(tied_players) > 1:
         move_up = check_h2h_won_all(tied_players, group_matches)
         if move_up:
@@ -92,12 +102,13 @@ def resolve_group_tie(players, group_matches):
             tied_players.remove(move_down)
             continue
 
-        #just take whoever
+        # just take whoever
         move_up = tied_players[0]
         moved_up.append(move_up)
         tied_players.remove(move_up)
     moved_down.reverse()
     return moved_up + tied_players + moved_down
+
 
 def order_players(group_players, group_matches):
     final_order = []

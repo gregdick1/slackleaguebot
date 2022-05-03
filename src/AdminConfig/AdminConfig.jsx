@@ -34,22 +34,6 @@ function AdminConfig() {
       fetchData().catch(console.error);
     }, [leagueState.selectedLeague]);
 
-    const handleLeagueChange = (e) => {
-      const { value } = e.target;
-      const updateServer = async () => {
-        await axios.post(`set-current-league`, { selectedLeague: value });
-        var configsResponse = await axios.get('get-league-admin-configs', { params: { leagueName: value } })
-        var leagueAdminConfigs = configsResponse.data;
-        setState({
-          ...state,
-          leagueAdminConfigs
-        });
-        dispatch({ type: "league_changed", selectedLeague: value, leagues: leagueState.leagues })
-      }
-
-      updateServer().catch(console.error);
-    }
-
     const handleNewLeague = (e) => {
       const { value, name } = e.target;
       let newLeagueName = state.newLeagueName

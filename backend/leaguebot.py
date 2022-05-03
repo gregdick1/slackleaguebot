@@ -2,7 +2,7 @@ import os, sys
 sys.path.append(os.path.dirname(__file__))
 
 from slackclient import SlackClient
-import bot_config
+from bot_config import BotConfig
 import db
 import collections
 from match_making import gather_scores, get_player_name
@@ -10,15 +10,18 @@ import time
 from websocket import WebSocketConnectionClosedException
 from multiprocessing import Process
 from datetime import datetime
-
 import logging, sys
+from league_context import LeagueContext
 
-class LeagueBot():
-    def __init__(self):
-        self.slack_client = SlackClient(bot_config.get_slack_api_key())
+
+class LeagueBot:
+    def __init__(self, league_name):
+        self.lctx = LeagueContext(league_name)
+        self.bot_config = BotConfig(league_name)
+        self.slack_client = SlackClient(self.bot_config.slack_api_key)
         self.logger = logging.getLogger('leaguebot')
 
-        hdlr = logging.FileHandler(bot_config.get_log_path())
+        hdlr = logging.FileHandler(self.bot_config.log_path)
         formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
         hdlr.setFormatter(formatter)
         self.logger.addHandler(hdlr)
@@ -49,8 +52,8 @@ class LeagueBot():
 
     ### TODO Refactor so it can support Bo3 AND Bo5 across the database
     def get_leaderboard(self, reverse_order=True):
-        matches = db.get_matches()
-        players = db.get_players()
+        matches = db.get_matches(self.lctx)
+        players = db.get_players(self.lctx)
 
         player_dict = dict()
 
@@ -125,8 +128,8 @@ class LeagueBot():
         self.slack_client.api_call("chat.postMessage", channel=channel, text=message, as_user=True)
 
     def print_whole_week(self, channel, date):
-        all_weekly_matches = db.get_matches_for_week(date)
-        players = db.get_players()
+        all_weekly_matches = db.get_matches_for_week(self.lctx, date)
+        players = db.get_players(self.lctx)
 
         message = ""
         for match in all_weekly_matches:
@@ -135,8 +138,8 @@ class LeagueBot():
         self.slack_client.api_call("chat.postMessage", channel=channel, text=message, as_user=True)
 
     def print_user_week(self, user_id, channel, date):
-        all_weekly_matches = db.get_matches_for_week(date)
-        players = db.get_players()
+        all_weekly_matches = db.get_matches_for_week(self.lctx, date)
+        players = db.get_players(self.lctx)
 
         user_match_dict = dict()
         for match in all_weekly_matches:
@@ -153,7 +156,7 @@ class LeagueBot():
 
     ### TODO Refactor so it can support Bo3 AND Bo5 across the database
     def print_user_stats(self, user_id, channel):
-        all_matches = db.get_matches()
+        all_matches = db.get_matches(self.lctx)
 
         total_won_matches = 0
         total_lost_matches = 0
@@ -182,9 +185,9 @@ class LeagueBot():
 
     def print_group(self, channel, group):
         try:
-            season = db.get_current_season()
-            all_matches = db.get_matches_for_season(season)
-            all_players = db.get_players()
+            season = db.get_current_season(self.lctx)
+            all_matches = db.get_matches_for_season(self.lctx, season)
+            all_players = db.get_players(self.lctx)
             group_matches = [m for m in all_matches if m.grouping.lower() == group.lower()]
 
             if not len(group_matches):
@@ -222,7 +225,7 @@ class LeagueBot():
         return score_1, score_2
 
     def parse_message(self, command, poster):
-        isAdmin = poster == bot_config.get_commissioner_slack_id()
+        isAdmin = poster == self.bot_config.commissioner_slack_id
 
         if command.startswith('me over '):
             winner = poster
@@ -255,16 +258,16 @@ class LeagueBot():
 
     def enter_score(self, winner_id, loser_id, score_total, channel, timestamp):
         try:
-            if not db.update_match_by_id(winner_id, loser_id, score_total):
+            if not db.update_match_by_id(self.lctx, winner_id, loser_id, score_total):
                 self.slack_client.api_call("chat.postMessage", channel=channel, text='Not a match I have (or I messed up).', as_user=True)
                 self.slack_client.api_call("reactions.add", name="x", channel=channel, timestamp=timestamp)
                 return
 
-            self.slack_client.api_call("chat.postMessage", channel=bot_config.get_commissioner_slack_id(), text='Entered into db', as_user=True)
+            self.slack_client.api_call("chat.postMessage", channel=self.bot_config.commissioner_slack_id, text='Entered into db', as_user=True)
             self.slack_client.api_call("reactions.add", name="white_check_mark", channel=channel, timestamp=timestamp)
 
         except Exception as e:
-            self.slack_client.api_call("chat.postMessage", channel=bot_config.get_commissioner_slack_id(), text='Failed to enter into db', as_user=True)
+            self.slack_client.api_call("chat.postMessage", channel=self.bot_config.commissioner_slack_id, text='Failed to enter into db', as_user=True)
             self.slack_client.api_call("reactions.add", name="x", channel=channel, timestamp=timestamp)
 
             self.logger.error(e)
@@ -284,14 +287,14 @@ class LeagueBot():
 
             message_text = message_object['text']
             if message_object['channel'][:1] == 'D':
-                if message_text.startswith('<@' + bot_config.get_bot_slack_user_id() + '>'):
+                if message_text.startswith('<@' + self.bot_config.bot_slack_user_id + '>'):
                     message_text = message_text[message_text.index(">") + 1:].strip()
 
                 message_object['text'] = message_text
                 valid_messages.append(message_object)
                 continue
 
-            if message_object['channel'] == bot_config.get_channel_slack_id() and message_text.startswith('<@' + bot_config.get_bot_slack_user_id() + '>'):
+            if message_object['channel'] == self.bot_config.channel_slack_id and message_text.startswith('<@' + self.bot_config.bot_slack_user_id + '>'):
                 message_text = message_text[message_text.index(">") + 1:].strip()
 
                 message_object['text'] = message_text
@@ -336,12 +339,11 @@ class LeagueBot():
             elif result is not None and channel[:1] == 'D':
                 format_msg = "Nice try, you have to put this in the main channel"
                 self.slack_client.api_call('chat.postMessage', channel=channel, text=format_msg, as_user=True)
-            elif result is not None and channel == bot_config.get_channel_slack_id():
+            elif result is not None and channel == self.bot_config.channel_slack_id:
                 self.enter_score(result['winner_id'], result['loser_id'], result['score_total'], channel, message_object["ts"])
 
-                player = db.get_player_by_id(result['winner_id'])
+                player = db.get_player_by_id(self.lctx, result['winner_id'])
                 self.print_group(channel, player.grouping)
-
         return None
 
     def start_bot(self):
@@ -370,5 +372,3 @@ class LeagueBot():
         else:
             print("Connection failed. Invalid Slack token or bot ID?")
 
-if __name__ == "__main__":
-    LeagueBot().start_bot()

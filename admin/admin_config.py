@@ -122,7 +122,7 @@ def print_db():
     rows = c.fetchall()
     print(rows)
 
-    c.execute(("SELECT * FROM universal_config"))
+    c.execute("SELECT * FROM universal_config")
     rows = c.fetchall()
     print(rows)
     conn.close()

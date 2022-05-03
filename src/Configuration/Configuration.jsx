@@ -1,57 +1,70 @@
 import React, { useState, useEffect } from 'react'
 import axios from 'axios'
 
+import { LeagueContext } from "../contexts/League"
+import EdiText from 'react-editext';
 import './Configuration.css'
 
 function Configuration() {
     const [state, setState] = useState({
-        leagueName: "",
-        APIKey: "",
-        botUserID: "",
-        channelID: "",
-        commissionerID: "",
-        numOfSets: "",
+        leagueConfigs: {}
     })
 
-    const handleChange = (e) => {
-        const { value, name } = e.target;
+    const [ leagueState, dispatch ] = React.useContext(LeagueContext)
+
+    useEffect(() => {
+      const fetchData = async () => {
+        // get the data from the api
+        var configsResponse = await axios.get('get-league-configs', { params: { leagueName: leagueState.selectedLeague } })
+        var leagueConfigs = configsResponse.data;
         setState({
-            ...state,
-            [name]: value
+          ...state,
+          leagueConfigs
+        });
+      }
+
+      fetchData().catch(console.error);
+    }, [leagueState.selectedLeague]);
+
+    const handleSave = async (val, inputProps) => {
+        var leagueConfigs = {...state.leagueConfigs, [inputProps.name]: val}
+        setState({
+          ...state,
+          leagueConfigs
         })
+        const response = await axios.post('set-league-config', {
+                selectedLeague: leagueState.selectedLeague,
+                configKey: inputProps.name,
+                configValue: val
+            });
     }
 
-    const handleSubmit = async (e) => {
-        e.preventDefault()
-        // TODO: Add check to ensure all keys have values
-        console.log({...state})
-        const response = await axios.post('set-config-value', { ...state })
-        alert(response.data)
+    const editor = (label, config) => {
+      return (
+      <div className="inline-editor">
+        <label>{label}:</label>
+        <EdiText
+          className="editext-editor"
+          type="text"
+          value={state.leagueConfigs[config]}
+          onSave={handleSave}
+          inputProps={{ name: config }}
+          containerProps={{ style: { display: 'inline-block' } }}
+        />
+      </div>
+      );
     }
 
+    const editExisting = leagueState.leagues.length > 0;
     return (
       <div id="main-content" className="main-content">
-        <form className="form-group col-4">
-            <label>League Name</label>
-            <input class="form-control" name="leagueName" type="text" value={state.leagueName} onChange={handleChange} />
-
-            <label>Slack API Key</label>
-            <input class="form-control" name="APIKey" type="text" value={state.APIKey} onChange={handleChange}/>
-
-            <label>Slack Bot User ID</label>
-            <input class="form-control" name="botUserID" type="text" value={state.botUserID} onChange={handleChange}/>
-
-            <label>Slack Channel ID</label>
-            <input class="form-control" name="channelID" type="text" value={state.channelID} onChange={handleChange}/>
-
-            <label>Commissioner Slack ID</label>
-            <input class="form-control" name="commissionerID" type="text" value={state.commissionerID} onChange={handleChange}/>
-
-            <label>First to Number of Sets</label>
-            <input class="form-control" name="numOfSets" type="number" value={state.numOfSets} onChange={handleChange} />
-            <button id="submit-button" className="btn btn-primary btn-lg" onClick={handleSubmit}>Submit</button>
-        </form>
-        Configuration!
+        { !editExisting &&
+            <div>Please select or create a League first</div>
+        }
+        { editExisting && editor('Slack API Key', 'SLACK_API_KEY') }
+        { editExisting && editor('Competition Channel Slack ID', 'COMPETITION_CHANNEL_SLACK_ID') }
+        { editExisting && editor('Bot Slack User ID', 'BOT_SLACK_USER_ID') }
+        { editExisting && editor('Commissioner Slack ID', 'COMMISSIONER_SLACK_ID') }
       </div>
     );
 }

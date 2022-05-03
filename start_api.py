@@ -1,15 +1,22 @@
 import json
 
 from flask import Flask, render_template, request, jsonify
-from backend import db, match_making, slack
+from backend import db, match_making, slack, league_context, bot_config
 from admin import admin_config
 import datetime
 
-from backend.config_db import set_config
 
 app = Flask(__name__, template_folder="./build", static_folder="./build/static")
 
-current_league = ''
+
+def _get_league_context():
+    lctx = league_context.LeagueContext(get_current_league())
+    return lctx
+
+
+def _get_slack_client():
+    slack_client = slack.LeagueSlackClient(get_current_league())
+    return slack_client
 
 
 @app.route('/')
@@ -24,27 +31,17 @@ def send_debug_message():
     if message is None or message == "":
         return "VERY ERROR: No message received"
 
+    slack_client = _get_slack_client()
     response = ""
     if "@against_user" in message:
-        response = slack.send_match_messages(message, debug=True)
+        response = slack_client.send_match_messages(message, debug=True)
     else:
-        response = slack.send_custom_messages(message, debug=True)
+        response = slack_client.send_custom_messages(message, debug=True)
 
     if response is None or response == "":
         response = "No messages sent."
 
     return response
-
-
-@app.route('/set-config-value', methods=['POST'])
-def set_config_value():
-    config = request.get_json()
-    print(config)
-
-    for key, value in config.items():
-        set_config(key, value)
-
-    return "Nicely done. You configured the heck out of the configuration!"
 
 
 @app.route('/send-real-message', methods=['POST'])
@@ -54,11 +51,12 @@ def send_real_message():
     if message is None or message == "":
         return "VERY ERROR: No message received"
 
+    slack_client = _get_slack_client()
     response = ""
     if "@against_user" in message:
-        response = slack.send_match_messages(message, debug=False)
+        response = slack_client.send_match_messages(message, debug=False)
     else:
-        response = slack.send_custom_messages(message, debug=False)
+        response = slack_client.send_custom_messages(message, debug=False)
 
     if response is None or response == "":
         response = "No messages sent."
@@ -80,24 +78,27 @@ def submit_players():
     last_monday = today - datetime.timedelta(days=today.weekday())
     next_monday = (last_monday + datetime.timedelta(days=7)).date()
 
-    match_making.create_matches_for_season(next_monday, skip_weeks=[], include_byes=False)
+    lctx = _get_league_context()
+    match_making.create_matches_for_season(lctx, next_monday, skip_weeks=[], include_byes=False)
 
     return "We did it boys"
 
 
 @app.route('/update-match-info', methods=['POST'])
 def update_match_info():
-    updated_match_info = request.get_json();
-    print(updated_match_info);
+    updated_match_info = request.get_json()
+    print(updated_match_info)
 
-    db.admin_update_match(updated_match_info);
+    lctx = _get_league_context()
+    db.admin_update_match(lctx, updated_match_info)
 
     return "The commissioner has spoken. The match has been updated."
 
 
 def ensure_players_in_db(players):
+    lctx = _get_league_context()
     existing_players_dict = dict()
-    existing_players = db.get_players()
+    existing_players = db.get_players(lctx)
 
     for existing_player in existing_players:
         existing_players_dict[existing_player.name] = existing_player
@@ -111,29 +112,29 @@ def ensure_players_in_db(players):
     if len(players_to_add) == 0:
         return
 
-    # Get users list
-    response = slack.slack_client.users.list()
-    users = response.body['members']
+    response = _get_slack_client().slack_client.api_call('users.list')
+    users = response['members']
     user_map = {}
     for user in users:
         for player in players_to_add:
             if user['profile']['real_name'].startswith(player['name']) and not user['deleted']:
                 user_map[player['name']] = user['id']
-                db.add_player(user['id'], player['name'], player['group'])
+                db.add_player(lctx, user['id'], player['name'], player['group'])
 
 
 def update_groupings(group, players):
-    existing = db.get_players()
+    lctx = _get_league_context()
+    existing = db.get_players(lctx)
 
     for player in players:
         for e in existing:
             if e.name == player['name']:
                 if group == 'Trash':
-                    db.update_grouping(e.slack_id, "")
-                    db.set_active(e.slack_id, False)
+                    db.update_grouping(lctx, e.slack_id, "")
+                    db.set_active(lctx, e.slack_id, False)
                 else:
-                    db.update_grouping(e.slack_id, group)
-                    db.set_active(e.slack_id, True)
+                    db.update_grouping(lctx, e.slack_id, group)
+                    db.set_active(lctx, e.slack_id, True)
 
 
 @app.route('/get-active-players', methods=['GET'])
@@ -145,8 +146,9 @@ def get_active_players():
 
 @app.route('/get-current-matches', methods=['GET'])
 def get_current_matches():
-    season = db.get_current_season()
-    current_season_matches = db.get_matches_for_season(season)
+    lctx = _get_league_context()
+    season = db.get_current_season(lctx, )
+    current_season_matches = db.get_matches_for_season(lctx, season)
     return json.dumps(current_season_matches, default=default)
 
 
@@ -163,9 +165,10 @@ def default(o):
 
 
 def get_ranked_players():
-    season = db.get_current_season()
-    all_matches = db.get_matches_for_season(season)
-    all_players = db.get_players()
+    lctx = _get_league_context()
+    season = db.get_current_season(lctx)
+    all_matches = db.get_matches_for_season(lctx, season)
+    all_players = db.get_players(lctx)
 
     groups = sorted(list(set([m.grouping for m in all_matches])))
     return_players = []
@@ -232,9 +235,28 @@ def add_league():
     data = request.get_json()
     league_name = data.get('newLeagueName')
     server_options = data.get('leagueAdminConfigs')
-    print('Adding League:', league_name, server_options)
     admin_config.add_league(league_name, server_options)
     return "Success"
+
+
+@app.route('/get-league-configs', methods=['GET'])
+def get_league_configs():
+    league_name = request.args.get("leagueName", default="", type=str)
+    if not league_name:
+        return jsonify({})
+    configs = bot_config.BotConfig(league_name).get_all_configs()
+    return jsonify(configs)
+
+
+@app.route('/set-league-config', methods=['POST'])
+def set_league_config():
+    data = request.get_json()
+    league_name = data.get('selectedLeague')
+    config_key = data.get('configKey')
+    config_value = data.get('configValue')
+    db.set_config(league_context.LeagueContext(league_name), config_key, config_value)
+    return "Success"
+
 
 if __name__ == '__main__':
     app.run()

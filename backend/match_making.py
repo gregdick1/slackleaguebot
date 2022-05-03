@@ -7,14 +7,17 @@ import datetime
 import random
 import tie_breaker
 
+
 def rotate(list):
     return list[1:] + list[:1]
+
 
 def remove_byes(start_date, matchups):
     """
     Removes byes from a round robin schedule. This effectively shortens the season by two weeks
     by taking the last two weeks of matches and filling them in the rest of the season in place
     of bye matches. This means each player will have one week where they are assigned two matches
+    :param start_date: the first date of the matchups
     :param matchups: the matches for the group
     :return: the new list of matches
     """
@@ -65,28 +68,29 @@ def create_matches(start_date, players, skip_weeks, include_byes=False):
         return matchups
     return remove_byes(start_date, matchups)
 
-#This method will add a player to a gruop. It assumes a few things:
-#1) The season does not include byes
-#2) The group currently has an even number of players
-#This will effectively create two new matches for the person being added for the first week, and then one additional
-#match for the player the remaining weeks to simulate an odd number group season.
-def add_player_to_group(player_name, season_num):
-    player = db.get_player_by_name(player_name)
-    group_players = [p for p in db.get_active_players() if p.grouping == player.grouping and p.name != player_name]
-    dates = [m.week for m in db.get_matches_for_season(season_num)]
+
+# This method will add a player to a gruop. It assumes a few things:
+# 1) The season does not include byes
+# 2) The group currently has an even number of players
+# This will effectively create two new matches for the person being added for the first week, and then one additional
+# match for the player the remaining weeks to simulate an odd number group season.
+def add_player_to_group(lctx, player_name, season_num):
+    player = db.get_player_by_name(lctx, player_name)
+    group_players = [p for p in db.get_active_players(lctx) if p.grouping == player.grouping and p.name != player_name]
+    dates = [m.week for m in db.get_matches_for_season(lctx, season_num)]
     dates = sorted(list(set(dates)))
     first = True
     for week in dates:
         if first:
-            db.add_match(player, group_players.pop(0), week, player.grouping, season_num)
+            db.add_match(lctx, player, group_players.pop(0), week, player.grouping, season_num)
             first = False
-        db.add_match(player, group_players.pop(0), week, player.grouping, season_num)
+        db.add_match(lctx, player, group_players.pop(0), week, player.grouping, season_num)
 
 
-def create_matches_for_season(start_date, skip_weeks=[], include_byes=False):
-    all_players = db.get_active_players()
+def create_matches_for_season(lctx, start_date, skip_weeks=[], include_byes=False):
+    all_players = db.get_active_players(lctx)
 
-    groupings = list(set(map(lambda player:player.grouping, all_players)))
+    groupings = list(set(map(lambda player: player.grouping, all_players)))
     groupings.sort()
 
     all_matches = []
@@ -97,17 +101,18 @@ def create_matches_for_season(start_date, skip_weeks=[], include_byes=False):
         for match in group_matches:
             match['grouping'] = grouping
         all_matches.extend(group_matches)
-    season = db.get_current_season()
+    season = db.get_current_season(lctx)
     season += 1
     for match in all_matches:
-        db.add_match(match['player_1'], match['player_2'], match['week'], match['grouping'], season)
-        a=0
+        db.add_match(lctx, match['player_1'], match['player_2'], match['week'], match['grouping'], season)
+
 
 def get_player_name(players, id):
     for player in players:
         if player.slack_id == id:
             return player.name
     return 'Bye'
+
 
 def get_player_print(players, id, match):
     for player in players:
@@ -152,11 +157,12 @@ def gather_scores(group_matches):
 
     return tie_breaker.order_players(players, group_matches)
 
-def print_season_markup(season = None):
+
+def print_season_markup(lctx, season = None):
     if season is None:
-        season = db.get_current_season()
-    all_matches = db.get_matches_for_season(season)
-    all_players = db.get_players()
+        season = db.get_current_season(lctx)
+    all_matches = db.get_matches_for_season(lctx, season)
+    all_players = db.get_players(lctx)
     groupings = list(set(map(lambda match:match.grouping, all_matches)))
     weeks = list(set(map(lambda match:match.week, all_matches)))
     groupings.sort()
