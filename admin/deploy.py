@@ -1,7 +1,7 @@
 import sftp
 import os
 import sqlite3
-from context import Context
+from admin_context import Context
 
 server_folders = ['backend']
 
@@ -31,8 +31,8 @@ def create_and_deploy_start_bot_file(context):
     f.write("""from backend.leaguebot import LeagueBot
 
 if __name__ == "__main__":
-    LeagueBot().start_bot()
-""")
+    LeagueBot({}).start_bot()
+""".format(context.league_name))
     f.close()
 
     sftp.upload_file(context, context.bot_name)
@@ -42,29 +42,8 @@ if __name__ == "__main__":
 def create_and_deploy_bot_db(context):
     # Connecting to the database file
     db_path = "../{}_league.sqlite".format(context.league_name)
-    path = os.path.abspath(os.path.join(os.path.dirname(__file__), db_path))
-    conn = sqlite3.connect(path, detect_types=sqlite3.PARSE_DECLTYPES)
-    c = conn.cursor()
-    c.execute('CREATE TABLE player (slack_id TEXT PRIMARY KEY, name TEXT, grouping TEXT, active INT)')
-    c.execute('CREATE TABLE match ('
-              'player_1 TEXT, '
-              'player_2 TEXT, '
-              'winner TEXT, '
-              'week DATE, '
-              'grouping TEXT, '
-              'season INT, '
-              'sets INT, '
-              'FOREIGN KEY (player_1) REFERENCES player, '
-              'FOREIGN KEY (player_2) REFERENCES player, '
-              'FOREIGN KEY (winner) REFERENCES player)')
-    c.execute('CREATE TABLE config ('
-              'name TEXT PRIMARY KEY, '
-              'value TEXT)')
+    # path = os.path.abspath(os.path.join(os.path.dirname(__file__), db_path))
 
-    c.execute("INSERT INTO config VALUES ('{}', '{}')".format('LEAGUE_NAME', context.league_name))
-
-    conn.commit()
-    conn.close()
     sftp.upload_file(context, context.league_name + '_league.sqlite')
 
     # remove the db from local because we always want to grab fresh from the server
