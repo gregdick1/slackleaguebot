@@ -14,7 +14,7 @@ class Context:
 
     @classmethod
     def load_from_db(cls, league_name):
-        configs = admin_config.get_leagues()
+        configs = admin_config.get_league_configs(league_name)
         return Context(league_name,
                        configs[admin_config.BOT_COMMAND],
                        configs[admin_config.SERVER_HOST],

@@ -15,8 +15,11 @@ function AdminConfig() {
     }
     const [state, setState] = useState({
         leagueAdminConfigs:{...blankConfigs},
-        newLeagueName:""
+        newLeagueName:"",
+        checkingConnection:false
     })
+
+    const [connecting, setConnecting] = useState(false)
 
     const [ leagueState, dispatch ] = React.useContext(LeagueContext)
 
@@ -76,6 +79,21 @@ function AdminConfig() {
             });
     }
 
+    const handleTestConnection = (e) => {
+      setConnecting(true)
+      const fetchData = async () => {
+        var response = await axios.get(`check-server-connection`, { params: { leagueName: leagueState.selectedLeague }});
+        setConnecting(false)
+        if (response.data['success']) {
+          alert("Connection Succeeded!")
+        } else {
+          alert("Connect failed: "+response.data['message'])
+        }
+      }
+
+      fetchData().catch(console.error);
+    }
+
     const editor = (label, config) => {
       return (
       <div className="inline-editor">
@@ -123,6 +141,13 @@ function AdminConfig() {
         { editExisting && editor('Server User', 'SERVER_USER') }
         { editExisting && editor('Bot Command', 'BOT_COMMAND') }
 
+        <button name="testConnection" disabled={connecting} className="btn btn-primary btn-lg" onClick={handleTestConnection}>Test Connection</button>
+        { connecting &&
+            <div className="spinner-container">
+              <div className="loading-spinner">
+              </div>
+            </div>
+        }
 
       </div>
     );

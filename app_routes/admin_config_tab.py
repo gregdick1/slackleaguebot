@@ -33,8 +33,9 @@ def add_league():
 
 @admin_api.route('/check-server-connection', methods=['GET'])
 def check_server_connection():
-    data = request.get_json()
-    league_name = data.get('selectedLeague')
-    success = sftp.can_connect_to_server(admin_context.Context.load_from_db(league_name))
-    print(success)
-    return jsonify(success)
+    league_name = request.args.get("leagueName", default="", type=str)
+    try:
+        sftp.try_connect_to_server(admin_context.Context.load_from_db(league_name))
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)})
