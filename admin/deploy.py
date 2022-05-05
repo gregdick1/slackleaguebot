@@ -1,12 +1,13 @@
-import sftp
 import os
-import sqlite3
+
+from admin import sftp
 from admin.admin_context import Context
+from backend import db, league_context
 
 server_folders = ['backend']
+root_path = os.path.join( os.path.dirname( __file__ ), '..' )
 
-
-def create_league_folders(context):
+def _create_league_folders(context):
     ssh_client = sftp.get_ssh_client(context)
     sftp.create_folder_on_server(context, context.league_folder)
     for folder in server_folders:
@@ -14,20 +15,20 @@ def create_league_folders(context):
     ssh_client.close()
 
 
-def move_files_to_server(context):
+def _move_files_to_server(context):
     ssh_client = sftp.get_ssh_client(context)
     for folder in server_folders:
-        for item in os.listdir('../'+folder):
-            if os.path.isfile('../'+folder+'/'+item):
+        for item in os.listdir(os.path.join(root_path, folder)):
+            if os.path.isfile(os.path.join(root_path, folder, item)):
                 sftp.upload_file(context, folder + '/' + item, ssh_client)
     ssh_client.close()
 
 
-def create_and_deploy_start_bot_file(context):
+def _create_and_deploy_start_bot_file(context):
     if sftp.file_exists(context, context.bot_name):
         return True
 
-    f = open('../'+context.bot_name, "w")
+    f = open(os.path.join(root_path, context.bot_name), "w")
     f.write("""from backend.leaguebot import LeagueBot
 
 if __name__ == "__main__":
@@ -36,24 +37,24 @@ if __name__ == "__main__":
     f.close()
 
     sftp.upload_file(context, context.bot_name)
-    os.remove('../'+context.bot_name)
+    os.remove(os.path.join(root_path, context.bot_name))
 
 
-def create_and_deploy_bot_db(context):
-    # Connecting to the database file
-    db_path = "../{}_league.sqlite".format(context.league_name)
-    # path = os.path.abspath(os.path.join(os.path.dirname(__file__), db_path))
-
+def _create_and_deploy_bot_db(context, lctx):
+    db.initialize(lctx)
     sftp.upload_file(context, context.league_name + '_league.sqlite')
 
-    # remove the db from local because we always want to grab fresh from the server
-    os.remove(db_path)
 
+def deploy_league(league_name):
+    context = Context.load_from_db(league_name)
+    if sftp.file_exists(context, context.league_name + '_league.sqlite'):
+        return "Connected to Existing"
 
-def create_league(context):
-    create_league_folders(context)
-    create_and_deploy_start_bot_file(context)
-    create_and_deploy_bot_db(context)
-    move_files_to_server(context)
+    lctx = league_context.LeagueContext(league_name)
+    _create_league_folders(context)
+    _create_and_deploy_start_bot_file(context)
+    _move_files_to_server(context)
+    _create_and_deploy_bot_db(context, lctx)
+    return "Deploy Successful"
     #TODO set up cron job for reminder messages
 

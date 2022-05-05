@@ -15,11 +15,12 @@ function AdminConfig() {
     }
     const [state, setState] = useState({
         leagueAdminConfigs:{...blankConfigs},
-        newLeagueName:"",
-        checkingConnection:false
+        newLeagueName:""
     })
 
     const [connecting, setConnecting] = useState(false)
+    const [deploying, setDeploying] = useState(false)
+    const [reload, setReload] = useState(false)
 
     const [ leagueState, dispatch ] = React.useContext(LeagueContext)
 
@@ -32,10 +33,11 @@ function AdminConfig() {
           ...state,
           leagueAdminConfigs
         });
+        setReload(false)
       }
 
       fetchData().catch(console.error);
-    }, [leagueState.selectedLeague]);
+    }, [leagueState.selectedLeague, reload]);
 
     const handleNewLeague = (e) => {
       const { value, name } = e.target;
@@ -77,15 +79,33 @@ function AdminConfig() {
                 configKey: inputProps.name,
                 configValue: val
             });
+        if (leagueAdminConfigs['HAS_CONNECTED'] === 'True') setReload(true)
     }
 
     const handleTestConnection = (e) => {
       setConnecting(true)
       const fetchData = async () => {
-        var response = await axios.get(`check-server-connection`, { params: { leagueName: leagueState.selectedLeague }});
+        var response = await axios.post(`check-server-connection`, { leagueName: leagueState.selectedLeague });
         setConnecting(false)
         if (response.data['success']) {
           alert("Connection Succeeded!")
+          setReload(true)
+        } else {
+          alert("Connect failed: "+response.data['message'])
+        }
+      }
+
+      fetchData().catch(console.error);
+    }
+
+    const handleDeploy = (e) => {
+      setDeploying(true)
+      const fetchData = async () => {
+        var response = await axios.post(`deploy-to-server`, { leagueName: leagueState.selectedLeague });
+        setDeploying(false)
+        if (response.data['success']) {
+          alert(response.data['message'])
+          setReload(true)
         } else {
           alert("Connect failed: "+response.data['message'])
         }
@@ -105,11 +125,14 @@ function AdminConfig() {
           onSave={handleSave}
           inputProps={{ name: config }}
           containerProps={{ style: { display: 'inline-block' } }}
+          // TODO smaller buttons
+//           saveButtonClassName="inline-save-button"
+//           editButtonClassName="inline-edit-button"
+//           cancelButtonClassName="inline-cancel-button"
         />
       </div>
       );
     }
-
     const editExisting = leagueState.leagues.length > 0;
 
     return (
@@ -136,16 +159,42 @@ function AdminConfig() {
         <div className="tab-header">
           <label>Admin Configuration for League: {leagueState.selectedLeague}</label>
         </div>
-        { editExisting && editor('Server Host', 'SERVER_HOST') }
-        { editExisting && editor('Server Port', 'SERVER_PORT') }
-        { editExisting && editor('Server User', 'SERVER_USER') }
-        { editExisting && editor('Bot Command', 'BOT_COMMAND') }
+        { editExisting &&
+            <div>
+                {editor('Server Host', 'SERVER_HOST')}
+                {editor('Server Port', 'SERVER_PORT')}
+                {editor('Server User', 'SERVER_USER')}
+                {editor('Bot Command', 'BOT_COMMAND')}
+                <div>
+                  <label>Has Connected?:</label>
+                  {state.leagueAdminConfigs['HAS_CONNECTED'] === 'True' ? <span>Yes</span> : <span>No</span>}
+                </div>
 
-        <button name="testConnection" disabled={connecting} className="btn btn-primary btn-lg" onClick={handleTestConnection}>Test Connection</button>
-        { connecting &&
-            <div className="spinner-container">
-              <div className="loading-spinner">
-              </div>
+                <div>
+                    <button name="testConnection" disabled={connecting} className="btn btn-primary btn-lg" onClick={handleTestConnection}>Test Connection</button>
+                    { connecting &&
+                        <div className="spinner-container">
+                          <div className="loading-spinner">
+                          </div>
+                        </div>
+                    }
+                </div>
+                <div>
+                  <label>Has Deployed?:</label>
+                  {state.leagueAdminConfigs['HAS_DEPLOYED'] === 'True' ? <span>Yes</span> : <span>No</span>}
+                </div>
+                { state.leagueAdminConfigs['HAS_CONNECTED'] === 'True' &&
+                  <div>
+                    <button name="deploy" disabled={deploying} className="btn btn-primary btn-lg" onClick={handleDeploy}>Deploy or Connect To Existing</button>
+                    { deploying &&
+                        <div className="spinner-container">
+                          <div className="loading-spinner">
+                          </div>
+                        </div>
+                    }
+                  </div>
+                }
+
             </div>
         }
 

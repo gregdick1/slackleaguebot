@@ -1,6 +1,7 @@
 import os
 import paramiko
 
+root_path = os.path.join( os.path.dirname( __file__ ), '..' )
 
 def get_ssh_client(context):
     ssh_client = paramiko.SSHClient()
@@ -107,8 +108,7 @@ def file_exists(context, local_path_from_project_root, ssh_client=None):
 def upload_file(context, local_path_from_project_root, ssh_client=None):
     local_ssh_client = ssh_client if ssh_client is not None else get_ssh_client(context)
     sftp = local_ssh_client.open_sftp()
-    # ../ needed assuming this file is one folder deep from project root
-    sftp.put('../{}'.format(local_path_from_project_root), '{}/{}'.format(context.league_folder, local_path_from_project_root))
+    sftp.put(os.path.join(root_path, local_path_from_project_root), '{}/{}'.format(context.league_folder, local_path_from_project_root))
     sftp.close()
     if ssh_client is None:
         local_ssh_client.close()
@@ -117,8 +117,7 @@ def upload_file(context, local_path_from_project_root, ssh_client=None):
 def _download_file(context, local_path_from_project_root):
     ssh_client = get_ssh_client(context)
     sftp = ssh_client.open_sftp()
-    # ../ needed assuming this file is one folder deep from project root
-    sftp.get('{}/{}'.format(context.league_folder, local_path_from_project_root), '../{}'.format(local_path_from_project_root))
+    sftp.get('{}/{}'.format(context.league_folder, local_path_from_project_root), os.path.join(root_path, local_path_from_project_root))
     sftp.close()
     ssh_client.close()
 
