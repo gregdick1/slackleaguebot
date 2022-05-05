@@ -1,5 +1,5 @@
-import db
-from league_context import LeagueContext
+from backend import db
+from backend.league_context import LeagueContext
 
 KEY_SLACK_API_KEY = 'SLACK_API_KEY'
 KEY_BOT_SLACK_USER_ID = 'BOT_SLACK_USER_ID'

@@ -1,8 +1,8 @@
+import datetime
 from unittest import TestCase
 
-from backend import db, league_context, match_making
 import test_league_setup
-import datetime
+from backend import db, league_context, match_making
 
 lctx = league_context.LeagueContext('test')
 

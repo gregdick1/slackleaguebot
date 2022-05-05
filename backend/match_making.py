@@ -1,5 +1,7 @@
+import datetime
+import random
+
 from backend import db
-import datetime, random
 
 
 def remove_byes(start_date, matchups):

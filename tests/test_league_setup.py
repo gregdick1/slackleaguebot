@@ -1,5 +1,6 @@
 import os
-from backend import db, league_context, match_making
+
+from backend import db, league_context
 
 lctx = league_context.LeagueContext("test")
 

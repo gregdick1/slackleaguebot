@@ -1,17 +1,16 @@
-import os, sys
-sys.path.append(os.path.dirname(__file__))
+import collections
+import logging
+import time
+from datetime import datetime
+from multiprocessing import Process
 
 from slackclient import SlackClient
-from bot_config import BotConfig
-import db
-import collections
-from backend.utility import get_player_name, gather_scores
-import time
 from websocket import WebSocketConnectionClosedException
-from multiprocessing import Process
-from datetime import datetime
-import logging, sys
-from league_context import LeagueContext
+
+from backend import db
+from backend.bot_config import BotConfig
+from backend.league_context import LeagueContext
+from backend.utility import get_player_name, gather_scores
 
 
 class LeagueBot:
@@ -84,7 +83,6 @@ class LeagueBot:
 
                 if games_played == 3:
                     player_dict[match.player_1_id]['games_won'] = player_1['games_won'] + 1
-
 
         winrate_dict = dict()
         for player_id, player in player_dict.items():
@@ -172,7 +170,7 @@ class LeagueBot:
 
                 if match.sets == 3:
                     total_lost_sets += 1
-                
+
             elif (match.player_1_id == user_id or match.player_2_id == user_id) and user_id != match.winner_id:
                 total_lost_matches += 1
                 total_lost_sets += 2
@@ -198,7 +196,7 @@ class LeagueBot:
 
             for p in players:
                 message += '\n' + get_player_name(all_players, p['player_id']) + ' ' + str(p['m_w']) + '-' + str(p['m_l'])
-                message += ' ('+str(p['s_w'])+'-'+str(p['s_l'])+')'
+                message += ' (' + str(p['s_w']) + '-' + str(p['s_l']) + ')'
 
             self.slack_client.api_call("chat.postMessage", channel=channel, text=message, as_user=True)
         except Exception as e:
@@ -206,7 +204,7 @@ class LeagueBot:
             self.slack_client.api_call("chat.postMessage", channel=channel, text="Not a group (or I messed up).", as_user=True)
 
     def parse_first_slack_id(self, message):
-        return message[message.index('<@') + 2 : message.index('>')].upper()
+        return message[message.index('<@') + 2: message.index('>')].upper()
 
     def parse_second_slack_id(self, message):
         message = message[message.index('>') + 1:]
@@ -214,7 +212,7 @@ class LeagueBot:
 
     def parse_score(self, message):
         dash_index = message.index('-')
-        score_substring = message[dash_index - 1 : dash_index + 2]
+        score_substring = message[dash_index - 1: dash_index + 2]
 
         if score_substring != "3-0" and score_substring != "3-1" and score_substring != "3-2":
             raise Exception("Malformed score")

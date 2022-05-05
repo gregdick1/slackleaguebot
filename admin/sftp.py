@@ -12,6 +12,13 @@ def get_ssh_client(context):
     return ssh_client
 
 
+def can_connect_to_server(context):
+    ssh_client = get_ssh_client(context)
+    stdin, stdout, stderror = ssh_client.exec_command('ls')
+    stdin.close()  # necessary quirk
+    return len(stdout) > 0
+
+
 def is_bot_running(context, ssh_client=None):
     bot_ids = _get_running_bot_ids(context, ssh_client)
     # should always be 2

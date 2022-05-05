@@ -1,8 +1,9 @@
-from unittest import TestCase
-import sqlite3
 import datetime
-from backend import db, league_context
+import sqlite3
+from unittest import TestCase
+
 import test_league_setup
+from backend import db, league_context
 
 lctx = league_context.LeagueContext('test')
 

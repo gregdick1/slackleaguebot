@@ -1,11 +1,11 @@
-import os, sys
-sys.path.append(os.path.dirname(__file__))
+import datetime
+import time
 
-import db
-import time, datetime, bot_config
 from slackclient import SlackClient
-from league_context import LeagueContext
-from bot_config import BotConfig
+
+from backend import db
+from backend.bot_config import BotConfig
+from backend.league_context import LeagueContext
 
 
 class LeagueSlackClient:
@@ -71,7 +71,7 @@ class LeagueSlackClient:
                 sent_messages = sent_messages + "Debug sent to " + player.name + ": " + message + "\n"
             else:
                 self.slack_client.api_call("chat.postMessage", channel=player.slack_id, text=message, as_user=True)
-                sent_messages = sent_messages + "For reals sent to " + player.name + ": " + message +"\n"
+                sent_messages = sent_messages + "For reals sent to " + player.name + ": " + message + "\n"
 
             time.sleep(1.5)
 

@@ -171,6 +171,10 @@ class Match:
     def from_db(cls, row):
         return Match(row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8])
 
+    @classmethod
+    def from_dict(cls, d):
+        return Match(d['id'], d['player_1_id'], d['player_2_id'], d['winner_id'], d['week'], d['grouping'], d['season'], d['sets'], d['sets_needed'])
+
 
 def get_matches(lctx):
     conn = get_connection(lctx)
