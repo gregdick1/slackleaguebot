@@ -6,7 +6,11 @@ export const reducer = (state, action) => {
         selectedLeague: action.selectedLeague,
         leagues: action.leagues
       }
-
+    case "db_refreshed":
+      return {
+        ...state,
+        lastRefreshed: action.lastRefreshed
+      }
     default:
       return state
   }
@@ -14,5 +18,6 @@ export const reducer = (state, action) => {
 
 export const initialState = {
   selectedLeague: "",
-  leagues: []
+  leagues: [],
+  lastRefreshed: null
 }

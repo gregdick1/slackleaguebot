@@ -9,9 +9,11 @@ SERVER_PORT = 'SERVER_PORT'
 BOT_COMMAND = 'BOT_COMMAND'
 HAS_CONNECTED = 'HAS_CONNECTED'
 HAS_DEPLOYED = 'HAS_DEPLOYED'
+LAST_DOWNLOADED = 'LAST_DOWNLOADED'
 CURRENT_LEAGUE = 'CURRENT_LEAGUE'
 
 LEAGUE_CONFIGS = [SERVER_HOST, SERVER_USER, SERVER_PORT, BOT_COMMAND, HAS_CONNECTED, HAS_DEPLOYED]
+
 
 def _get_connection():
     return sqlite3.connect(path, detect_types=sqlite3.PARSE_DECLTYPES)
@@ -60,7 +62,7 @@ def _get_universal_config(name):
 
 
 def set_config(league_name, config_name, value):
-    existing = _get_config(league_name, config_name)
+    existing = get_config(league_name, config_name)
 
     conn = _get_connection()
     c = conn.cursor()
@@ -72,7 +74,7 @@ def set_config(league_name, config_name, value):
     conn.close()
 
 
-def _get_config(league_name, config_name):
+def get_config(league_name, config_name):
     conn = _get_connection()
     c = conn.cursor()
     c.execute("SELECT value FROM config WHERE league_name='{}' and config_name = '{}'".format(league_name, config_name))
@@ -112,7 +114,7 @@ def add_league(league_name, server_options):
 def get_league_configs(league_name):
     configs = {}
     for config_key in LEAGUE_CONFIGS:
-        configs[config_key] = _get_config(league_name, config_key)
+        configs[config_key] = get_config(league_name, config_key)
     return configs
 
 
@@ -128,4 +130,3 @@ def print_db():
     rows = c.fetchall()
     print(rows)
     conn.close()
-

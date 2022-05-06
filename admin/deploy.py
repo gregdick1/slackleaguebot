@@ -42,12 +42,12 @@ if __name__ == "__main__":
 
 def _create_and_deploy_bot_db(context, lctx):
     db.initialize(lctx)
-    sftp.upload_file(context, context.league_name + '_league.sqlite')
+    sftp.upload_file(context, context.db_name)
 
 
 def deploy_league(league_name):
     context = Context.load_from_db(league_name)
-    if sftp.file_exists(context, context.league_name + '_league.sqlite'):
+    if sftp.file_exists(context, context.db_name):
         return "Connected to Existing"
 
     lctx = league_context.LeagueContext(league_name)

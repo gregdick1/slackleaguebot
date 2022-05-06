@@ -114,7 +114,7 @@ def upload_file(context, local_path_from_project_root, ssh_client=None):
         local_ssh_client.close()
 
 
-def _download_file(context, local_path_from_project_root):
+def download_file(context, local_path_from_project_root):
     ssh_client = get_ssh_client(context)
     sftp = ssh_client.open_sftp()
     sftp.get('{}/{}'.format(context.league_folder, local_path_from_project_root), os.path.join(root_path, local_path_from_project_root))

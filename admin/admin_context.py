@@ -7,6 +7,7 @@ class Context:
         self.league_name = league_name
         self.bot_name = "start_{}_league.py".format(league_name)
         self.league_folder = "{}_league".format(league_name)
+        self.db_name = '{}_league.sqlite'.format(league_name)
         self.bot_command = bot_command
         self.server_host = server_host
         self.server_port = server_port
