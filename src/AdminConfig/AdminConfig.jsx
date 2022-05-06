@@ -89,6 +89,7 @@ function AdminConfig() {
         setConnecting(false)
         if (response.data['success']) {
           alert("Connection Succeeded!")
+          dispatch({ type: "db_connection_status", hasConnected: true, hasDeployed: state.leagueAdminConfigs['HAS_DEPLOYED']})
           setReload(true)
         } else {
           alert("Connect failed: "+response.data['message'])
@@ -105,6 +106,7 @@ function AdminConfig() {
         setDeploying(false)
         if (response.data['success']) {
           alert(response.data['message'])
+          dispatch({ type: "db_connection_status", hasConnected: state.leagueAdminConfigs['HAS_CONNECTED'], hasDeployed: true})
           setReload(true)
         } else {
           alert("Connect failed: "+response.data['message'])

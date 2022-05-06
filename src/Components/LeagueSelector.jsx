@@ -19,14 +19,18 @@ function LeagueSelector() {
         var selectedLeague = currentLeagueResponse.data;
 
         var lastRefreshedResponse = await axios.get('get-last-db-refresh', { params: { leagueName: selectedLeague }});
+        var leagueConfigsResponse = await axios.get('get-league-admin-configs', { params: { leagueName: selectedLeague }});
+
         var lastRefreshed = lastRefreshedResponse.data;
+        var leagueConfigs = leagueConfigsResponse.data;
 
         dispatch({ type: "league_changed", selectedLeague, leagues })
         dispatch({ type: "db_refreshed", lastRefreshed})
+        dispatch({ type: "db_connection_status", hasConnected: leagueConfigs['HAS_CONNECTED'], hasDeployed: leagueConfigs['HAS_DEPLOYED']})
       }
 
       fetchData().catch(console.error);
-    }, []);
+    }, [leagueState.selectedLeague, leagueState.hasDeployed]);
 
     const handleLeagueChange = (e) => {
       const { value } = e.target;
@@ -64,14 +68,19 @@ function LeagueSelector() {
               <option value={league}>{league}</option>
             ))}
           </select>
-          <button name='refresh_db' onClick={handleRefreshDb}>Refresh DB</button>
-          { refreshing &&
-            <div className="spinner-container">
-              <div className="loading-spinner">
+          { leagueState.hasConnected && leagueState.hasDeployed &&
+            <div>
+            <button name='refresh_db' onClick={handleRefreshDb}>Refresh DB</button>
+            { refreshing &&
+              <div className="spinner-container">
+                <div className="loading-spinner">
+                </div>
               </div>
+            }
+            <LastRefresh />
             </div>
           }
-          <LastRefresh />
+
       </span>
     );
 }

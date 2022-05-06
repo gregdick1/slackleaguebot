@@ -11,6 +11,12 @@ export const reducer = (state, action) => {
         ...state,
         lastRefreshed: action.lastRefreshed
       }
+    case "db_connection_status":
+      return {
+        ...state,
+        hasConnected: action.hasConnected,
+        hasDeployed: action.hasDeployed
+      }
     default:
       return state
   }
@@ -19,5 +25,7 @@ export const reducer = (state, action) => {
 export const initialState = {
   selectedLeague: "",
   leagues: [],
-  lastRefreshed: null
+  lastRefreshed: null,
+  hasConnected: false,
+  hasDeployed: false
 }

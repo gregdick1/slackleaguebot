@@ -1,11 +1,13 @@
 import os
+from datetime import datetime
 
-from admin import sftp
+from admin import sftp, admin_config
 from admin.admin_context import Context
 from backend import db, league_context
 
 server_folders = ['backend']
-root_path = os.path.join( os.path.dirname( __file__ ), '..' )
+root_path = os.path.join(os.path.dirname(__file__), '..')
+
 
 def _create_league_folders(context):
     ssh_client = sftp.get_ssh_client(context)
@@ -55,6 +57,7 @@ def deploy_league(league_name):
     _create_and_deploy_start_bot_file(context)
     _move_files_to_server(context)
     _create_and_deploy_bot_db(context, lctx)
+    admin_config.set_config(context.league_name, admin_config.LAST_DOWNLOADED, datetime.now())
     return "Deploy Successful"
     #TODO set up cron job for reminder messages
 
