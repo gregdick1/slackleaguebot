@@ -1,6 +1,25 @@
 import sqlite3
 import os
 
+# TODO commands per league? Need to handle league switches gracefully
+_commands_to_run = {}
+
+
+def get_commands_to_run(lctx):
+    if lctx.league_name not in _commands_to_run:
+        return []
+    return _commands_to_run[lctx.league_name]
+
+
+def add_command_to_run(lctx, command):
+    if lctx.league_name not in _commands_to_run:
+        _commands_to_run[lctx.league_name] = []
+    _commands_to_run[lctx.league_name].append(command)
+
+
+def clear_commands_to_run(lctx):
+    _commands_to_run[lctx.league_name] = []
+
 
 def path(lctx):
     return os.path.abspath(os.path.join(os.path.dirname(__file__), "../{}_league.sqlite".format(lctx.league_name)))
@@ -37,11 +56,13 @@ def initialize(lctx):
 
 
 def set_config(lctx, name, value):
+    command = "INSERT INTO config VALUES ('{}', '{}') " \
+              "ON CONFLICT(name) DO UPDATE SET value='{}' where name='{}'".format(name, value, value, name)
+    add_command_to_run(lctx, command)
+
     conn = get_connection(lctx)
     c = conn.cursor()
-
-    c.execute("INSERT INTO config VALUES ('{}', '{}') "
-              "ON CONFLICT(name) DO UPDATE SET value='{}' where name='{}'".format(name, value, value, name))
+    c.execute(command)
     conn.commit()
     conn.close()
 
@@ -59,9 +80,12 @@ def get_config(lctx, name):
 
 
 def add_player(lctx, slack_id, name, grouping):
+    command = "INSERT INTO player VALUES ('{}', '{}', '{}', 1)".format(slack_id, name.replace("'","''"), grouping)
+    add_command_to_run(lctx, command)
+
     conn = get_connection(lctx)
     c = conn.cursor()
-    c.execute("INSERT INTO player VALUES ('{}', '{}', '{}', 1)".format(slack_id, name.replace("'","''"), grouping))
+    c.execute(command)
     conn.commit()
     conn.close()
 
@@ -127,30 +151,38 @@ def get_player_by_id(lctx, id):
 
 
 def update_grouping(lctx, slack_id, grouping):
+    command = "UPDATE player SET grouping='{}' WHERE slack_id = '{}'".format(grouping, slack_id)
+    add_command_to_run(lctx, command)
     conn = get_connection(lctx)
     c = conn.cursor()
-    c.execute("UPDATE player SET grouping='{}' WHERE slack_id = '{}'".format(grouping, slack_id))
+    c.execute(command)
     conn.commit()
     conn.close()
 
 
 def set_active(lctx, slack_id, active):
+    active_int = 1 if active else 0
+    command = "UPDATE player SET active={} WHERE slack_id = '{}'".format(active_int, slack_id)
+    add_command_to_run(lctx, command)
     conn = get_connection(lctx)
     c = conn.cursor()
-    active_int = 1 if active else 0
-    c.execute("UPDATE player SET active={} WHERE slack_id = '{}'".format(active_int, slack_id))
+    c.execute(command)
     conn.commit()
     conn.close()
 
 
 def add_match(lctx, player_1, player_2, week_date, grouping, season, sets_needed):
-    conn = get_connection(lctx)
-    c = conn.cursor()
+
     if player_1 is None or player_2 is None:
         p_id = player_1.slack_id if player_1 is not None else player_2.slack_id
-        c.execute("INSERT INTO match VALUES ('{}', null, null, '{}', '{}', {}, 0, {})".format(p_id, str(week_date), grouping, season, sets_needed))
+        command = "INSERT INTO match VALUES ('{}', null, null, '{}', '{}', {}, 0, {})".format(p_id, str(week_date), grouping, season, sets_needed)
     else:
-        c.execute("INSERT INTO match VALUES ('{}', '{}', null, '{}', '{}', {}, 0, {})".format(player_1.slack_id, player_2.slack_id, str(week_date), grouping, season, sets_needed))
+        command = "INSERT INTO match VALUES ('{}', '{}', null, '{}', '{}', {}, 0, {})".format(player_1.slack_id, player_2.slack_id, str(week_date), grouping, season, sets_needed)
+
+    add_command_to_run(lctx, command)
+    conn = get_connection(lctx)
+    c = conn.cursor()
+    c.execute(command)
     conn.commit()
     conn.close()
 
@@ -197,9 +229,11 @@ def get_matches_for_season(lctx, season):
 
 
 def clear_matches_for_season(lctx, season):
+    command = 'DELETE FROM match WHERE season = {}'.format(season)
+    add_command_to_run(lctx, command)
     conn = get_connection(lctx)
     c = conn.cursor()
-    c.execute('DELETE FROM match WHERE season = {}'.format(season))
+    c.execute(command)
     conn.commit()
     conn.close()
 
@@ -257,27 +291,31 @@ def _update_match(lctx, winner, loser, sets):
         print('Sets out of range, was {}, but must be between {} and {}'.format(sets, match.sets_needed, match.sets_needed*2-1))
         return False
 
+    command = "UPDATE match SET winner='{}', sets={} WHERE player_1 = '{}' and player_2 = '{}' and season={}"\
+              .format(winner.slack_id, sets, match.player_1_id, match.player_2_id, match.season)
+    add_command_to_run(lctx, command)
     conn = get_connection(lctx)
     c = conn.cursor()
-    c.execute("UPDATE match SET winner='{}', sets={} WHERE player_1 = '{}' and player_2 = '{}' and season={}"\
-              .format(winner.slack_id, sets, match.player_1_id, match.player_2_id, match.season))
+    c.execute(command)
     conn.commit()
     conn.close()
     return True
 
 
 def admin_update_match(lctx, new_match):
+    command = "UPDATE match SET " +\
+              "player_1='{}', ".format(new_match.player_1_id) +\
+              "player_2='{}', ".format(new_match.player_2_id) +\
+              ("winner='{}', ".format(new_match.winner_id) if new_match.winner_id is not None else "winner=null, ") +\
+              "week='{}', ".format(new_match.week) +\
+              "grouping='{}', ".format(new_match.grouping) +\
+              "sets={}, ".format(new_match.sets) +\
+              "sets_needed={} ".format(new_match.sets_needed) +\
+              "WHERE rowid={}".format(new_match.id)
+    add_command_to_run(lctx, command)
     conn = get_connection(lctx)
     c = conn.cursor()
-    c.execute("UPDATE match SET " +
-              "player_1='{}', ".format(new_match.player_1_id) +
-              "player_2='{}', ".format(new_match.player_2_id) +
-              ("winner='{}', ".format(new_match.winner_id) if new_match.winner_id is not None else "winner=null, ") +
-              "week='{}', ".format(new_match.week) +
-              "grouping='{}', ".format(new_match.grouping) +
-              "sets={}, ".format(new_match.sets) +
-              "sets_needed={} ".format(new_match.sets_needed) +
-              "WHERE rowid={}".format(new_match.id))
+    c.execute(command)
     conn.commit()
     conn.close()
     return True

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import axios from 'axios'
 import { LeagueContext } from "../contexts/League"
 import LastRefresh from "./LastRefresh"
+import CommandCommit from "./CommandCommit"
 
 import './LeagueSelector.css'
 
@@ -38,20 +39,27 @@ function LeagueSelector() {
         await axios.post(`set-current-league`, { selectedLeague: value });
 
         dispatch({ type: "league_changed", selectedLeague: value, leagues: [...leagueState.leagues] })
+        dispatch({ type: "need_to_check_for_commands", checkForCommandsToRun:true})
       }
 
       updateServer().catch(console.error);
     }
 
     const handleRefreshDb = (e) => {
-      setRefreshing(true)
       const updateServer = async () => {
+        var commandsResponse = await axios.get('get-commands-to-run', { params: { leagueName: leagueState.selectedLeague }});
+        var commands = commandsResponse.data;
+        var doRefresh = commands === 0 || window.confirm("You have unsaved updates locally. This will overwrite them with the db from the server.")
+        if (!doRefresh) return
+
+        setRefreshing(true)
         let response = await axios.post('refresh-db', { leagueName: leagueState.selectedLeague })
         setRefreshing(false)
         if (response.data['success']) {
           var lastRefreshedResponse = await axios.get('get-last-db-refresh', { params: { leagueName: leagueState.selectedLeague }});
           var lastRefreshed = lastRefreshedResponse.data;
           dispatch({ type: "db_refreshed", lastRefreshed})
+          dispatch({ type: "need_to_check_for_commands", checkForCommandsToRun:true})
         } else {
           alert("Refresh failed: "+response.data['message'])
         }
@@ -70,7 +78,7 @@ function LeagueSelector() {
           </select>
           { leagueState.hasConnected && leagueState.hasDeployed &&
             <div>
-            <button name='refresh_db' onClick={handleRefreshDb}>Refresh DB</button>
+            <button name='refresh_db' disabled={refreshing} onClick={handleRefreshDb}>Refresh DB</button>
             { refreshing &&
               <div className="spinner-container">
                 <div className="loading-spinner">
@@ -78,6 +86,7 @@ function LeagueSelector() {
               </div>
             }
             <LastRefresh />
+            <CommandCommit />
             </div>
           }
 

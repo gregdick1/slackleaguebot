@@ -1,7 +1,8 @@
 import os
 import paramiko
 
-root_path = os.path.join( os.path.dirname( __file__ ), '..' )
+root_path = os.path.join(os.path.dirname(__file__), '..')
+
 
 def get_ssh_client(context):
     ssh_client = paramiko.SSHClient()
@@ -18,7 +19,6 @@ def try_connect_to_server(context):
     stdin, stdout, stderror = ssh_client.exec_command('ls')
     stdin.close()  # necessary quirk
     return len(stdout.readlines()) > 0
-
 
 
 def is_bot_running(context, ssh_client=None):
@@ -122,7 +122,43 @@ def download_file(context, local_path_from_project_root):
     ssh_client.close()
 
 
-#TODO set up cron job for match and reminder messages
+def delete_file_on_server(context, local_path_from_project_root, ssh_client=None):
+    local_ssh_client = ssh_client if ssh_client is not None else get_ssh_client(context)
+    if not file_exists(context, local_path_from_project_root, local_ssh_client):
+        return True
+    stdin, stdout, stderror = local_ssh_client.exec_command('rm {}/{}'.format(context.league_folder, local_path_from_project_root))
+    stdin.close()  # necessary quirk
+    success = not file_exists(context, local_path_from_project_root, local_ssh_client)
+    if ssh_client is None:
+        local_ssh_client.close()
+    return success
+
+
+def rename_file_on_server(context, local_path_from_project_root, new_path, ssh_client=None):
+    return _rename_or_copy_file(context, 'mv', local_path_from_project_root, new_path, ssh_client)
+
+
+def copy_file_on_server(context, local_path_from_project_root, new_path, ssh_client=None):
+    return _rename_or_copy_file(context, 'cp', local_path_from_project_root, new_path, ssh_client)
+
+
+def _rename_or_copy_file(context, command, local_path_from_project_root, new_path, ssh_client=None):
+    local_ssh_client = ssh_client if ssh_client is not None else get_ssh_client(context)
+    if not file_exists(context, local_path_from_project_root, local_ssh_client):
+        print("Can't rename file. Original name file doesn't exist on server. {} -> {}".format(local_path_from_project_root, new_path))
+        return False
+    if file_exists(context, new_path, local_ssh_client):
+        print("Can't rename file. New path already exists on server. {} -> {}".format(local_path_from_project_root, new_path))
+        return False
+    stdin, stdout, stderror = local_ssh_client.exec_command('{} {}/{} {}/{}'.format(command, context.league_folder, local_path_from_project_root, context.league_folder, new_path))
+    stdin.close()  # necessary quirk
+    success = file_exists(context, new_path, local_ssh_client)
+    if ssh_client is None:
+        local_ssh_client.close()
+    return success
+
+
+# TODO set up cron job for match and reminder messages
 def _get_cron_list(context, ssh_client=None):
     local_ssh_client = ssh_client if ssh_client is not None else get_ssh_client(context)
     stdin, stdout, stderror = local_ssh_client.exec_command('crontab -l')

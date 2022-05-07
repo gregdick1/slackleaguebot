@@ -24,7 +24,7 @@ function Configuration() {
       }
 
       fetchData().catch(console.error);
-    }, [leagueState.selectedLeague]);
+    }, [leagueState.selectedLeague, leagueState.lastRefreshed]);
 
     const handleSave = async (val, inputProps) => {
         var leagueConfigs = {...state.leagueConfigs, [inputProps.name]: val}
@@ -37,6 +37,7 @@ function Configuration() {
                 configKey: inputProps.name,
                 configValue: val
             });
+        dispatch({ type: "need_to_check_for_commands", checkForCommandsToRun:true})
     }
 
     const editor = (label, config) => {

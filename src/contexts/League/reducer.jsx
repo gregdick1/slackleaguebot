@@ -17,6 +17,11 @@ export const reducer = (state, action) => {
         hasConnected: action.hasConnected,
         hasDeployed: action.hasDeployed
       }
+    case "need_to_check_for_commands":
+      return {
+        ...state,
+        checkForCommandsToRun: action.checkForCommandsToRun
+      }
     default:
       return state
   }
@@ -27,5 +32,6 @@ export const initialState = {
   leagues: [],
   lastRefreshed: null,
   hasConnected: false,
-  hasDeployed: false
+  hasDeployed: false,
+  checkForCommandsToRun: false
 }

@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify
 
 from admin import admin_config, db_management, admin_context
+from backend import db, league_context
 
 league_selector_api = Blueprint('league_selector_api', __name__)
 
@@ -36,6 +37,24 @@ def refresh_db():
     try:
         context = admin_context.Context.load_from_db(league_name)
         db_management.download_db(context)
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)})
+
+
+@league_selector_api.route('/get-commands-to-run', methods=['GET'])
+def get_commands_to_run():
+    league_name = request.args.get("leagueName", default="", type=str)
+    ctr = db.get_commands_to_run(league_context.LeagueContext(league_name))
+    return jsonify(len(ctr))
+
+
+@league_selector_api.route('/push-updates-to-server', methods=['POST'])
+def push_updates_to_server():
+    league_name = request.get_json().get("leagueName")
+    try:
+        context = admin_context.Context.load_from_db(league_name)
+        db_management.commit_commands(context)
         return jsonify({'success': True})
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)})
