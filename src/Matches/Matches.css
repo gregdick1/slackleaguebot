@@ -3,11 +3,6 @@
     border: none;
 }
 
-.match-item {
-    display: flex;
-    justify-content: space-between;
-}
-
 .match-group {
     display: flex;
     font-weight: bold;

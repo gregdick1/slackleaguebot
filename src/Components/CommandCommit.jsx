@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import axios from 'axios'
 import { LeagueContext } from "../contexts/League"
+import Spinner from "./Spinner"
 
 import './CommandCommit.css'
 
@@ -48,10 +49,7 @@ function CommandCommit() {
           <label>Updates to commit: </label><span>{numCommands}</span>
           <button disabled={committing} onClick={handleCommit}>Push to server</button>
           { committing &&
-              <div className="spinner-container">
-                <div className="loading-spinner">
-                </div>
-              </div>
+              <Spinner />
           }
       </span>
     );

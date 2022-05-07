@@ -3,12 +3,14 @@ import axios from 'axios'
 
 import './Matches.css'
 import groupBy from '../helpers.js'
+import MatchDisplay from './MatchDisplay'
 
 class Matches extends Component {
     constructor(props) {
         super(props);
         this.state = {
             groups: [],
+            allPlayers: [],
             player_1_id: '',
             player_1_id_input_open: false,
             player_2_id: '',
@@ -27,9 +29,12 @@ class Matches extends Component {
     async componentDidMount() {
         const matches = await axios.get('/get-current-matches');
         const groups = groupBy(matches.data, "week")
+        const allPlayersResponse = await axios.get('/get-all-players')
+        const allPlayers = allPlayersResponse.data
 
         this.setState({
-            groups
+            groups,
+            allPlayers
         })
 
          Object.entries(groups).map((group, index) => {
@@ -126,14 +131,9 @@ class Matches extends Component {
                 {group_object_array[1] && group_object_array[1].map((match, index) => (
                 <>
                     <div className="match-box" data-toggle="modal" data-target={`#modal-${group_object_array[0]}-${index}`}>
-                        <div className="match-item">
-                            <div>
-                                <div>{match.player_1_id}</div>
-                                <div>{match.player_2_id}</div>
-                            </div>
-                            <div className="match-group">{match.grouping}</div>
-                        </div>
+                      <MatchDisplay match={match} allPlayers={this.state.allPlayers} />
                     </div>
+
                     <div class="modal show" id={`modal-${group_object_array[0]}-${index}`} tabIndex="-1" role="dialog" aria-labelledBy="modalLabel" aria-hidden="true">
                       <div class="modal-dialog modal-dialog-centered" role="document">
                         <div class="modal-content">

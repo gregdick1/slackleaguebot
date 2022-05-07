@@ -3,6 +3,8 @@ import axios from 'axios'
 
 import { LeagueContext } from "../contexts/League"
 import EdiText from 'react-editext';
+import Spinner from "../Components/Spinner"
+
 import './AdminConfig.css'
 
 function AdminConfig() {
@@ -175,10 +177,7 @@ function AdminConfig() {
                 <div>
                     <button name="testConnection" disabled={connecting} className="btn btn-primary btn-lg" onClick={handleTestConnection}>Test Connection</button>
                     { connecting &&
-                        <div className="spinner-container">
-                          <div className="loading-spinner">
-                          </div>
-                        </div>
+                        <Spinner />
                     }
                 </div>
                 <div>
@@ -189,10 +188,7 @@ function AdminConfig() {
                   <div>
                     <button name="deploy" disabled={deploying} className="btn btn-primary btn-lg" onClick={handleDeploy}>Deploy or Connect To Existing</button>
                     { deploying &&
-                        <div className="spinner-container">
-                          <div className="loading-spinner">
-                          </div>
-                        </div>
+                        <Spinner />
                     }
                   </div>
                 }

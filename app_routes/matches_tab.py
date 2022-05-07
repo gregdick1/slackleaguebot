@@ -1,7 +1,7 @@
 import datetime
 import json
 
-from flask import Blueprint, request
+from flask import Blueprint, request, jsonify
 
 from admin import admin_config
 from backend import db, league_context
@@ -33,9 +33,17 @@ def get_current_matches():
     lctx = _get_league_context()
     season = db.get_current_season(lctx)
     current_season_matches = db.get_matches_for_season(lctx, season)
+    return json.dumps(current_season_matches, default=match_player_serializer)
 
-    def default(o):
-        if isinstance(o, (datetime.date, datetime.datetime)):
-            return o.isoformat()
-        return o.__dict__
-    return json.dumps(current_season_matches, default=default)
+
+@matches_api.route('/get-all-players', methods=['GET'])
+def get_all_players():
+    lctx = _get_league_context()
+    players = db.get_players(lctx)
+    return json.dumps(players, default=match_player_serializer)
+
+
+def match_player_serializer(o):
+    if isinstance(o, (datetime.date, datetime.datetime)):
+        return o.isoformat()
+    return o.__dict__

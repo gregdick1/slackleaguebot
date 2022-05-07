@@ -38,6 +38,7 @@ def submit_players():
 
     return "We did it boys"
 
+
 @playerboard_api.route('/get-active-players', methods=['GET'])
 def get_active_players():
     players = get_ranked_players()

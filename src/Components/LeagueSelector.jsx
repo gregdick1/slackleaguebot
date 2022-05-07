@@ -3,6 +3,7 @@ import axios from 'axios'
 import { LeagueContext } from "../contexts/League"
 import LastRefresh from "./LastRefresh"
 import CommandCommit from "./CommandCommit"
+import Spinner from "./Spinner"
 
 import './LeagueSelector.css'
 
@@ -80,10 +81,7 @@ function LeagueSelector() {
             <div>
             <button name='refresh_db' disabled={refreshing} onClick={handleRefreshDb}>Refresh DB</button>
             { refreshing &&
-              <div className="spinner-container">
-                <div className="loading-spinner">
-                </div>
-              </div>
+              <Spinner />
             }
             <LastRefresh />
             <CommandCommit />
