@@ -38,10 +38,10 @@ function LastRefresh() {
         return toReturn
     }
     return (
-      <span>
-          <label>Last Refresh: </label>
-          <span>{prettyTime(now.getTime() - d.getTime())}</span>
-      </span>
+      <div className="last-refresh nav-control">
+          <div>Last Refresh</div>
+          <div>{prettyTime(now.getTime() - d.getTime())}</div>
+      </div>
     );
 }
 

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { Upload } from 'react-bootstrap-icons';
 import axios from 'axios'
 import { LeagueContext } from "../contexts/League"
 import Spinner from "./Spinner"
@@ -45,13 +46,26 @@ function CommandCommit() {
     }
 
     return (
-      <span>
-          <label>Updates to commit: </label><span>{numCommands}</span>
-          <button disabled={committing} onClick={handleCommit}>Push to server</button>
-          { committing &&
-              <Spinner />
-          }
-      </span>
+      <div className="nav-control">
+          <div>Updates to Commit</div>
+          <div className="push-control">
+            <span>{numCommands}</span>
+            <button
+              name='refresh_db'
+              className="btn btn-nav-control"
+              disabled={numCommands === 0 || committing}
+              onClick={handleCommit}
+              style={{ padding: "0px 5px 2px 5px" }}
+              title="This will download the db from the server, apply the updates to it, then upload it back to the server.">
+              { committing &&
+                <Spinner size={14}/>
+              }
+              { !committing &&
+                <Upload size={14} />
+              }
+            </button>
+          </div>
+      </div>
     );
 }
 

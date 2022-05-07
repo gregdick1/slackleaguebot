@@ -11,10 +11,6 @@
   justify-content: center;
 }
 
-button.btn {
-  margin: 10px;
-}
-
 .textarea-wrapper, .response-textarea-wrapper {
   display: flex;
   justify-content: center;

@@ -49,7 +49,13 @@ def commit_commands(context):
     # local backup of db
     db_path = os.path.join(root_path, context.db_name)
     os.rename(db_path, db_path+'.bak')
-    sftp.download_file(context, context.db_name)
+    try:
+        sftp.download_file(context, context.db_name)
+    except Exception as e:
+        print('Error connecting to server. Canceling that process and restoring local db.')
+        print(e)
+        os.rename(db_path+'.bak', db_path)
+        return "There was an error connecting to the server. The process was rolled back. The db on the server is unchanged."
 
     lctx = league_context.LeagueContext(context.league_name)
 

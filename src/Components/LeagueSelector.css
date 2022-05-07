@@ -1,0 +1,16 @@
+.league-controls {
+    display: flex;
+    justify-content: space-around;
+    font-size: 0.7rem;
+}
+.nav-control {
+    padding: 0.5rem;
+}
+.refresh-control {
+    align-self: center;
+}
+.btn-nav-control {
+    color: #fff;
+    background-color: #007bff;
+    border-color: #007bff;
+}

@@ -54,7 +54,9 @@ def push_updates_to_server():
     league_name = request.get_json().get("leagueName")
     try:
         context = admin_context.Context.load_from_db(league_name)
-        db_management.commit_commands(context)
+        message = db_management.commit_commands(context)
+        if message:
+            return jsonify({'success': False, 'message': message})
         return jsonify({'success': True})
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)})

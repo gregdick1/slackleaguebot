@@ -9,6 +9,7 @@
     "popper.js": "^1.16.1",
     "react": "^16.8.6",
     "react-beautiful-dnd": "^11.0.4",
+    "react-bootstrap-icons": "^1.8.2",
     "react-confirm-alert": "^2.4.1",
     "react-dom": "^16.8.6",
     "react-editext": "^4.2.1",

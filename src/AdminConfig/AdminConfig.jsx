@@ -175,10 +175,13 @@ function AdminConfig() {
                 </div>
 
                 <div>
-                    <button name="testConnection" disabled={connecting} className="btn btn-primary btn-lg" onClick={handleTestConnection}>Test Connection</button>
-                    { connecting &&
-                        <Spinner />
-                    }
+                    <button name="testConnection" disabled={connecting} className="btn btn-primary" onClick={handleTestConnection}>
+                      { connecting &&
+                        <Spinner size={20} />
+                      }
+                      <span>Test Connection</span>
+                    </button>
+
                 </div>
                 <div>
                   <label>Has Deployed?:</label>
@@ -186,10 +189,12 @@ function AdminConfig() {
                 </div>
                 { state.leagueAdminConfigs['HAS_CONNECTED'] === 'True' &&
                   <div>
-                    <button name="deploy" disabled={deploying} className="btn btn-primary btn-lg" onClick={handleDeploy}>Deploy or Connect To Existing</button>
-                    { deploying &&
-                        <Spinner />
-                    }
+                    <button name="deploy" disabled={deploying} className="btn btn-primary" onClick={handleDeploy}>
+                      { deploying &&
+                        <Spinner size={20} />
+                      }
+                      <span>Deploy or Connect To Existing</span>
+                    </button>
                   </div>
                 }
 

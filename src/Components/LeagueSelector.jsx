@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { Download } from 'react-bootstrap-icons';
 import axios from 'axios'
 import { LeagueContext } from "../contexts/League"
 import LastRefresh from "./LastRefresh"
@@ -70,25 +71,42 @@ function LeagueSelector() {
     }
 
     return (
-      <span>
-          <label>Current League: </label>
-          <select name='selectedLeague' value={leagueState.selectedLeague} onChange={handleLeagueChange}>
-            {leagueState.leagues.map((league) => (
-              <option value={league}>{league}</option>
-            ))}
-          </select>
-          { leagueState.hasConnected && leagueState.hasDeployed &&
-            <div>
-            <button name='refresh_db' disabled={refreshing} onClick={handleRefreshDb}>Refresh DB</button>
+      <div className="league-controls">
+        <div className="league-selector nav-control">
+          <div>Current League</div>
+          <div>
+            <select name='selectedLeague' value={leagueState.selectedLeague} onChange={handleLeagueChange}>
+              {leagueState.leagues.map((league) => (
+                <option value={league}>{league}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+        { leagueState.hasConnected && leagueState.hasDeployed &&
+        <div className="nav-control refresh-control">
+          <button
+            name='refresh_db'
+            className="btn btn-nav-control"
+            disabled={refreshing}
+            onClick={handleRefreshDb}
+            title="Download the db from the server to get the most up to date data.">
             { refreshing &&
-              <Spinner />
+              <Spinner size={20} />
             }
-            <LastRefresh />
-            <CommandCommit />
-            </div>
-          }
+            { !refreshing &&
+              <Download size={20} />
+            }
 
-      </span>
+          </button>
+        </div>
+        }
+        { leagueState.hasConnected && leagueState.hasDeployed &&
+          <LastRefresh />
+        }
+        { leagueState.hasConnected && leagueState.hasDeployed &&
+          <CommandCommit />
+        }
+      </div>
     );
 }
 
