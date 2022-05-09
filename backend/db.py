@@ -331,3 +331,16 @@ def get_current_season(lctx):
     if current_season is None:
         return 0
     return current_season
+
+
+def get_all_seasons(lctx):
+    conn = get_connection(lctx)
+    c = conn.cursor()
+    c.execute("SELECT distinct season FROM match")
+    rows = c.fetchall()
+    conn.close()
+    if rows is None or len(rows) == 0:
+        return []
+    seasons = [x[0] for x in rows]
+    seasons.sort()
+    return seasons

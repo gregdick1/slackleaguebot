@@ -38,7 +38,8 @@ def get_current_matches():
 
 @matches_api.route('/get-all-players', methods=['GET'])
 def get_all_players():
-    lctx = _get_league_context()
+    league_name = request.args.get("leagueName", default="", type=str)
+    lctx = league_context.LeagueContext(league_name) if league_name else _get_league_context()
     players = db.get_players(lctx)
     return json.dumps(players, default=match_player_serializer)
 

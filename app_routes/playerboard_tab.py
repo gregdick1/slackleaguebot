@@ -45,6 +45,43 @@ def get_active_players():
     return jsonify(players)
 
 
+@playerboard_api.route('/get-players-from-season', methods=['GET'])
+def get_players_from_season():
+    league_name = request.args.get("leagueName", default="", type=str)
+    season = request.args.get("season", default=0, type=int)
+    players = get_ranked_players(league_name, season)
+    return jsonify(players)
+
+
+@playerboard_api.route('/get-all-seasons', methods=['GET'])
+def get_all_seasons():
+    league_name = request.args.get("leagueName", default="", type=str)
+    all_seasons = db.get_all_seasons(league_context.LeagueContext(league_name))
+    return jsonify(all_seasons)
+
+
+@playerboard_api.route('/inactivate-player', methods=['POST'])
+def inactivate_player():
+    league_name = request.get_json().get("leagueName")
+    player_id = request.get_json().get("playerId")
+    lctx = league_context.LeagueContext(league_name)
+    db.update_grouping(lctx, player_id, '')
+    db.set_active(lctx, player_id, False)
+    return "success"
+
+
+@playerboard_api.route('/update-player-grouping', methods=['POST'])
+def update_player_grouping():
+    data = request.get_json()
+    league_name = data.get("leagueName")
+    player_id = data.get("playerId")
+    grouping = data.get("grouping")
+    lctx = league_context.LeagueContext(league_name)
+    db.update_grouping(lctx, player_id, grouping)
+    db.set_active(lctx, player_id, True)
+    return "success"
+
+
 def ensure_players_in_db(players):
     lctx = _get_league_context()
     existing_players_dict = dict()
@@ -87,9 +124,10 @@ def update_groupings(group, players):
                     db.set_active(lctx, e.slack_id, True)
 
 
-def get_ranked_players():
-    lctx = _get_league_context()
-    season = db.get_current_season(lctx)
+def get_ranked_players(league_name=None, season=None):
+    lctx = _get_league_context() if league_name is None else league_context.LeagueContext(league_name)
+    if season is None:
+        season = db.get_current_season(lctx)
     all_matches = db.get_matches_for_season(lctx, season)
     all_players = db.get_players(lctx)
 

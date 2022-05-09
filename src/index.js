@@ -7,6 +7,7 @@ import AdminConfig from './AdminConfig/AdminConfig';
 import Configuration from './Configuration/Configuration';
 import App from './Reminders/App';
 import Playerboard from './Playerboard/Playerboard';
+import Playerboard2 from './Playerboard2/Playerboard2';
 import NotFound from './NotFound/NotFound'
 import Matches from './Matches/Matches';
 import LeagueSelector from './Components/LeagueSelector';
@@ -37,6 +38,9 @@ const routing = (
               <Link className="nav-link" to="/playerboard">Playerboard</Link>
             </li>
             <li className="nav-item">
+              <Link className="nav-link" to="/playerboard2">Playerboard2</Link>
+            </li>
+            <li className="nav-item">
               <LeagueSelector />
             </li>
           </ul>
@@ -44,6 +48,7 @@ const routing = (
 
         <Route exact path="/" component={App} />
         <Route path="/playerboard" component={Playerboard} />
+        <Route path="/playerboard2" component={Playerboard2} />
         <Route path="/configuration" component={Configuration} />
         <Route path="/admin" component={AdminConfig} />
         <Route path="/matches" component={Matches} />
