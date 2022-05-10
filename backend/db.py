@@ -1,5 +1,6 @@
 import sqlite3
 import os
+import datetime
 
 LATEST_VERSION = 1
 
@@ -326,9 +327,8 @@ def _update_match(lctx, winner, loser, sets):
         print('Sets out of range, was {}, but must be between {} and {}'.format(sets, match.sets_needed, match.sets_needed*2-1))
         return False
 
-    # TODO set the date played to today
-    command = "UPDATE match SET winner='{}', sets={} WHERE player_1 = '{}' and player_2 = '{}' and season={}"\
-              .format(winner.slack_id, sets, match.player_1_id, match.player_2_id, match.season)
+    command = "UPDATE match SET winner='{}', sets={}, date_played='{}' WHERE player_1 = '{}' and player_2 = '{}' and season={}"\
+              .format(winner.slack_id, sets, str(datetime.date.today()), match.player_1_id, match.player_2_id, match.season)
     add_command_to_run(lctx, command)
     conn = get_connection(lctx)
     c = conn.cursor()

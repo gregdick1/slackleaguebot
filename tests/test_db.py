@@ -179,6 +179,7 @@ class Test(TestCase):
 
         self.assertEqual(0, db.get_match_by_players(lctx, p1, p2).sets)
         self.assertIsNone(db.get_match_by_players(lctx, p1, p2).winner_id)
+        self.assertIsNone(db.get_match_by_players(lctx, p1, p2).date_played)
 
         # sets out of range
         num_commands = len(db.get_commands_to_run(lctx))
@@ -194,6 +195,7 @@ class Test(TestCase):
         self.assertEqual(1, len(db.get_commands_to_run(lctx))-num_commands)
         self.assertEqual(5, db.get_match_by_players(lctx, p1, p2).sets)
         self.assertEqual(p1.slack_id, db.get_match_by_players(lctx, p1, p2).winner_id)
+        self.assertEqual(datetime.date.today(), db.get_match_by_players(lctx, p1, p2).date_played)
 
         db._update_match(lctx, p2, p1, 3)
         self.assertEqual(3, db.get_match_by_players(lctx, p1, p2).sets)
