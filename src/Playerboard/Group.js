@@ -51,7 +51,7 @@ export default class Group extends Component {
                     {this.props.players && this.props.players.map((player, index) => (
                     <Draggable key={player.slack_id} draggableId={player.slack_id} index={index} className="player-box">
                         {(provided, snapshot) => (
-                            <div
+                            <div className='player-in-group'
                                 ref={provided.innerRef}
                                 {...provided.draggableProps}
                                 {...provided.dragHandleProps}

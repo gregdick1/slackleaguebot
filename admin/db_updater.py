@@ -1,10 +1,25 @@
 from backend import db, bot_config, utility
 
 
+def needs_updated(lctx):
+    current_version = db.get_config(lctx, bot_config.LEAGUE_VERSION)
+    if current_version is None:
+        raise Exception("Can't update a db without a version")
+    if current_version != str(db.LATEST_VERSION):  # If the db doesn't have the config, we should just error out instead
+        return True
+    return False
+
+
+# TODO figure out how to trigger this automatically on startup?
+# TODO figure out how to handle downloading a db that is out of date. This doesn't hook into the commands to push system
+def run_updates(lctx):
+    _update_from_0_to_1(lctx)
+
+
 # Adds the ordering index to players
 # Adds date played on match
 # Adds message sent flag on match
-def update_from_0_to_1(lctx):
+def _update_from_0_to_1(lctx):
     current_version = db.get_config(lctx, bot_config.LEAGUE_VERSION)
     if not current_version or current_version != '0':
         return False

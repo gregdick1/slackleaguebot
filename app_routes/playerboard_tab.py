@@ -1,4 +1,4 @@
-import datetime
+import datetime, json
 
 from flask import Blueprint, request, jsonify
 
@@ -70,16 +70,41 @@ def inactivate_player():
     return "success"
 
 
-@playerboard_api.route('/update-player-grouping', methods=['POST'])
+@playerboard_api.route('/update-player-grouping-and-orders', methods=['POST'])
 def update_player_grouping():
     data = request.get_json()
     league_name = data.get("leagueName")
-    player_id = data.get("playerId")
+    grouping = data.get("grouping")
+    players = data.get("players")
+    lctx = league_context.LeagueContext(league_name)
+    db.updating_grouping_and_orders(lctx, players, grouping)
+    return "success"
+
+
+@playerboard_api.route('/add-player', methods=['POST'])
+def add_player():
+    data = request.get_json()
+    league_name = data.get("leagueName")
+    player_name = data.get("playerName")
     grouping = data.get("grouping")
     lctx = league_context.LeagueContext(league_name)
-    db.update_grouping(lctx, player_id, grouping)
-    db.set_active(lctx, player_id, True)
-    return "success"
+    league_slack = slack.LeagueSlackClient(league_name)
+    slack_id = league_slack.get_slack_id(player_name)
+    if slack_id is None:
+        return jsonify({'success': False, 'message': 'Could not find slack id for {}'.format(player_name)})
+    try:
+        db.add_player(lctx, slack_id, player_name, grouping)
+        p = db.get_player_by_id(lctx, slack_id)
+        return jsonify({'success': True, 'player': json.dumps(p, default=match_player_serializer)})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)})
+
+
+@playerboard_api.route('/get-deactivated-players', methods=['GET'])
+def get_deactivated_players():
+    league_name = request.args.get("leagueName", default="", type=str)
+    league_slack = slack.LeagueSlackClient(league_name)
+    return jsonify(league_slack.get_deactivated_slack_ids())
 
 
 def ensure_players_in_db(players):
@@ -154,3 +179,9 @@ def get_ranked_players(league_name=None, season=None):
             )
 
     return return_players
+
+
+def match_player_serializer(o):
+    if isinstance(o, (datetime.date, datetime.datetime)):
+        return o.isoformat()
+    return o.__dict__

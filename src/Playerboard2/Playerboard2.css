@@ -40,11 +40,30 @@ body {
     background-color: white;
 }
 .group-marker {
-    background-color: greenyellow;
+    background-color: lightskyblue;
+}
+.pending-player {
+    background-color: yellow;
+}
+.deactivated-player {
+    text-decoration: line-through;
+    background-color: violet;
+}
+.promoted-player {
+    background-color: palegreen;
+}
+.demoted-player {
+    background-color: tomato;
 }
 
 #submit-button {
     position: fixed;
     bottom: 15px;
+    right: 15px;
+}
+
+#playerboard-legend {
+    position: fixed;
+    top: 70px;
     right: 15px;
 }

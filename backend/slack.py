@@ -21,6 +21,23 @@ class LeagueSlackClient:
             players_dictionary[player.slack_id] = player.name
         return players_dictionary
 
+    # Good for adding a player at a time. Inefficient for many players at once
+    def get_slack_id(self, player_name):
+        response = self.slack_client.api_call('users.list')
+        users = response['members']
+        for user in users:
+            if user['profile']['real_name'].startswith(player_name) and not user['deleted']:
+                return user['id']
+        return None
+
+    def get_deactivated_slack_ids(self):
+        response = self.slack_client.api_call('users.list')
+        users = response['members']
+        deactivated = [x['id'] for x in users if x['deleted']]
+        players = db.get_players(self.lctx)
+        deactivated_players = [x.slack_id for x in players if x.slack_id in deactivated]
+        return deactivated_players
+
     def send_match_message(self, message, to_user, against_user, players_dictionary, debug=True):
         if to_user is None:
             return

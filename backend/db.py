@@ -33,6 +33,7 @@ def get_connection(lctx):
 def initialize(lctx):
     if os.path.exists(path(lctx)):
         return
+
     conn = get_connection(lctx)
     c = conn.cursor()
     c.execute('CREATE TABLE player ('
@@ -40,7 +41,7 @@ def initialize(lctx):
               'name TEXT, '
               'grouping TEXT, '
               'active INT, '
-              'order_idx INT)')
+              'order_idx INT DEFAULT 0)')
     c.execute('CREATE TABLE match ('
               'player_1 TEXT, '
               'player_2 TEXT, '
@@ -51,7 +52,7 @@ def initialize(lctx):
               'sets INT, '
               'sets_needed INT, '
               'date_played DATE, '
-              'message_sent INT, '
+              'message_sent INT DEFAULT 0, '
               'FOREIGN KEY (player_1) REFERENCES player, '
               'FOREIGN KEY (player_2) REFERENCES player, '
               'FOREIGN KEY (winner) REFERENCES player)')
@@ -166,6 +167,18 @@ def update_grouping(lctx, slack_id, grouping):
     conn = get_connection(lctx)
     c = conn.cursor()
     c.execute(command)
+    conn.commit()
+    conn.close()
+
+
+def updating_grouping_and_orders(lctx, slack_ids, grouping):
+    conn = get_connection(lctx)
+    c = conn.cursor()
+
+    for idx, slack_id in enumerate(slack_ids):
+        command = "UPDATE player SET grouping='{}', order_idx={}, active=1 WHERE slack_id = '{}'".format(grouping, idx, slack_id)
+        add_command_to_run(lctx, command)
+        c.execute(command)
     conn.commit()
     conn.close()
 

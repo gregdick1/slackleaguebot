@@ -9,6 +9,10 @@
     align-items: center;
 }
 
+.match-box {
+    background-color: white;
+}
+
 #submit-button {
     position: fixed;
     bottom: 15px;
