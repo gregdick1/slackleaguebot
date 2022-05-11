@@ -3,7 +3,7 @@ from datetime import datetime
 
 from admin import sftp, admin_config
 from admin.admin_context import Context
-from backend import db, league_context
+from backend import db
 
 server_folders = ['backend']
 root_path = os.path.join(os.path.dirname(__file__), '..')
@@ -42,8 +42,8 @@ if __name__ == "__main__":
     os.remove(os.path.join(root_path, context.bot_name))
 
 
-def _create_and_deploy_bot_db(context, lctx):
-    db.initialize(lctx)
+def _create_and_deploy_bot_db(context):
+    db.initialize(context.league_name)
     sftp.upload_file(context, context.db_name)
 
 
@@ -52,11 +52,10 @@ def deploy_league(league_name):
     if sftp.file_exists(context, context.db_name):
         return "Connected to Existing"
 
-    lctx = league_context.LeagueContext(league_name)
     _create_league_folders(context)
     _create_and_deploy_start_bot_file(context)
     _move_files_to_server(context)
-    _create_and_deploy_bot_db(context, lctx)
+    _create_and_deploy_bot_db(context)
     admin_config.set_config(context.league_name, admin_config.LAST_DOWNLOADED, datetime.now())
     return "Deploy Successful"
     #TODO set up cron job for reminder messages

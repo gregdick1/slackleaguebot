@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 
-from backend import db, bot_config, league_context
+from backend import db, bot_config
 
 league_config_api = Blueprint('league_config_api', __name__)
 
@@ -18,7 +18,9 @@ def get_league_configs():
 def set_league_config():
     data = request.get_json()
     league_name = data.get('selectedLeague')
+    if not league_name:
+        return "no-op"
     config_key = data.get('configKey')
     config_value = data.get('configValue')
-    db.set_config(league_context.LeagueContext(league_name), config_key, config_value)
+    db.set_config(league_name, config_key, config_value)
     return "Success"

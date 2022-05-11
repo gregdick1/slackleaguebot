@@ -1,21 +1,13 @@
 from flask import Blueprint, request
 
 from admin import admin_config
-from backend import league_context, slack
+from backend import slack_util
+from backend.league_context import LeagueContext
 
 messages_api = Blueprint('messages_api', __name__)
 
 
-def _get_league_context():
-    lctx = league_context.LeagueContext(admin_config.get_current_league())
-    return lctx
-
-
-def _get_slack_client():
-    slack_client = slack.LeagueSlackClient(admin_config.get_current_league())
-    return slack_client
-
-
+# TODO download the db before sending messages
 @messages_api.route('/send-debug-message', methods=['POST'])
 def send_debug_message():
     message = request.get_json().get("message")
@@ -23,11 +15,12 @@ def send_debug_message():
     if message is None or message == "":
         return "VERY ERROR: No message received"
 
-    slack_client = _get_slack_client()
+    league_name = admin_config.get_current_league()
+    lctx = LeagueContext.load_from_db(league_name)
     if "@against_user" in message:
-        response = slack_client.send_match_messages(message, debug=True)
+        response = slack_util.send_match_messages(lctx, message, debug=True)
     else:
-        response = slack_client.send_custom_messages(message, debug=True)
+        response = slack_util.send_custom_messages(lctx, message, debug=True)
 
     if response is None or response == "":
         response = "No messages sent."
@@ -42,11 +35,12 @@ def send_real_message():
     if message is None or message == "":
         return "VERY ERROR: No message received"
 
-    slack_client = _get_slack_client()
+    league_name = admin_config.get_current_league()
+    lctx = LeagueContext.load_from_db(league_name)
     if "@against_user" in message:
-        response = slack_client.send_match_messages(message, debug=False)
+        response = slack_util.send_match_messages(lctx, message, debug=False)
     else:
-        response = slack_client.send_custom_messages(message, debug=False)
+        response = slack_util.send_custom_messages(lctx, message, debug=False)
 
     if response is None or response == "":
         response = "No messages sent."

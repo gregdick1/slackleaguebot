@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 
 from admin import admin_config, db_management, admin_context
-from backend import db, league_context
+from backend import db
 
 league_selector_api = Blueprint('league_selector_api', __name__)
 
@@ -45,7 +45,9 @@ def refresh_db():
 @league_selector_api.route('/get-commands-to-run', methods=['GET'])
 def get_commands_to_run():
     league_name = request.args.get("leagueName", default="", type=str)
-    ctr = db.get_commands_to_run(league_context.LeagueContext(league_name))
+    if not league_name:
+        return jsonify('')
+    ctr = db.get_commands_to_run(league_name)
     return jsonify(len(ctr))
 
 

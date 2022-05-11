@@ -1,17 +1,17 @@
 import os
 
-from backend import db, league_context
+from backend import db
 
-lctx = league_context.LeagueContext("test")
+league_name = "test"
 
 
 def teardown_test_league():
-    if os.path.exists(db.path(lctx)):
-        os.remove(db.path(lctx))
+    if os.path.exists(db.path(league_name)):
+        os.remove(db.path(league_name))
 
 
 def create_test_league():
-    db.initialize(lctx)
+    db.initialize(league_name)
 
 
 def add_players():
@@ -19,11 +19,11 @@ def add_players():
     groupsOdd = ['B', 'D', 'F']
     for group in groupsEven:
         for i in range(0, 8):
-            db.add_player(lctx, u'player{}{}'.format(group, i), 'Player {}{}'.format(group, i), group)
+            db.add_player(league_name, u'player{}{}'.format(group, i), 'Player {}{}'.format(group, i), group)
     for group in groupsOdd:
         for i in range(0, 9):
-            db.add_player(lctx, u'player{}{}'.format(group, i), 'Player {}{}'.format(group, i), group)
-    print(db.get_players(lctx))
+            db.add_player(league_name, u'player{}{}'.format(group, i), 'Player {}{}'.format(group, i), group)
+    print(db.get_players(league_name))
 
 
 # create_test_league()

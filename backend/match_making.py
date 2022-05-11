@@ -66,24 +66,24 @@ def create_matches(start_date, players, skip_weeks, include_byes=False):
 # 2) The group currently has an even number of players
 # This will effectively create two new matches for the person being added for the first week, and then one additional
 # match for the player the remaining weeks to simulate an odd number group season.
-def add_player_to_group(lctx, player_name, season_num):
-    player = db.get_player_by_name(lctx, player_name)
-    group_players = [p for p in db.get_active_players(lctx) if p.grouping == player.grouping and p.name != player_name]
-    dates = [m.week for m in db.get_matches_for_season(lctx, season_num)]
+def add_player_to_group(league_name, player_name, season_num):
+    player = db.get_player_by_name(league_name, player_name)
+    group_players = [p for p in db.get_active_players(league_name) if p.grouping == player.grouping and p.name != player_name]
+    dates = [m.week for m in db.get_matches_for_season(league_name, season_num)]
     dates = sorted(list(set(dates)))
     first = True
     for week in dates:
         # TODO use config for sets needed
         if first:
-            db.add_match(lctx, player, group_players.pop(0), week, player.grouping, season_num, 3)
+            db.add_match(league_name, player, group_players.pop(0), week, player.grouping, season_num, 3)
             first = False
-        db.add_match(lctx, player, group_players.pop(0), week, player.grouping, season_num, 3)
+        db.add_match(league_name, player, group_players.pop(0), week, player.grouping, season_num, 3)
 
 
-def create_matches_for_season(lctx, start_date, sets_needed, skip_weeks=None, include_byes=False):
+def create_matches_for_season(league_name, start_date, sets_needed, skip_weeks=None, include_byes=False):
     if skip_weeks is None:
         skip_weeks = []
-    all_players = db.get_active_players(lctx)
+    all_players = db.get_active_players(league_name)
 
     groupings = list(set(map(lambda player: player.grouping, all_players)))
     groupings.sort()
@@ -96,7 +96,7 @@ def create_matches_for_season(lctx, start_date, sets_needed, skip_weeks=None, in
         for match in group_matches:
             match['grouping'] = grouping
         all_matches.extend(group_matches)
-    season = db.get_current_season(lctx)
+    season = db.get_current_season(league_name)
     season += 1
     for match in all_matches:
-        db.add_match(lctx, match['player_1'], match['player_2'], match['week'], match['grouping'], season, sets_needed)
+        db.add_match(league_name, match['player_1'], match['player_2'], match['week'], match['grouping'], season, sets_needed)

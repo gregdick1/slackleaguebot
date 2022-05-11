@@ -2,7 +2,7 @@ import os
 from datetime import datetime
 
 from admin import sftp, admin_config
-from backend import db, league_context
+from backend import db
 
 root_path = os.path.join(os.path.dirname(__file__), '..')
 
@@ -11,7 +11,7 @@ def download_db(context):
     sftp.download_file(context, context.db_name)
     # Update admin config for the time
     admin_config.set_config(context.league_name, admin_config.LAST_DOWNLOADED, datetime.now())
-    db.clear_commands_to_run(league_context.LeagueContext(context.league_name))
+    db.clear_commands_to_run(context.league_name)
 
 
 def _upload_db(context):
@@ -57,12 +57,10 @@ def commit_commands(context):
         os.rename(db_path+'.bak', db_path)
         return "There was an error connecting to the server. The process was rolled back. The db on the server is unchanged."
 
-    lctx = league_context.LeagueContext(context.league_name)
-
     try:
-        conn = db.get_connection(lctx)
+        conn = db.get_connection(context.league_name)
         c = conn.cursor()
-        for command in db.get_commands_to_run(lctx):
+        for command in db.get_commands_to_run(context.league_name):
             c.execute(command)
         conn.commit()
         conn.close()
@@ -75,5 +73,5 @@ def commit_commands(context):
 
     _upload_db(context)
     os.remove(db_path+'.bak')
-    db.clear_commands_to_run(lctx)
+    db.clear_commands_to_run(context.league_name)
     admin_config.set_config(context.league_name, admin_config.LAST_DOWNLOADED, datetime.now())

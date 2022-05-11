@@ -11,6 +11,7 @@ import Playerboard2 from './Playerboard2/Playerboard2';
 import NotFound from './NotFound/NotFound'
 import Matches from './Matches/Matches';
 import LeagueSelector from './Components/LeagueSelector';
+import MarkupPrintout from './MarkupPrintout/MarkupPrintout'
 
 import * as serviceWorker from './serviceWorker';
 import 'bootstrap/dist/css/bootstrap.css';
@@ -41,6 +42,9 @@ const routing = (
               <Link className="nav-link" to="/playerboard2">Playerboard2</Link>
             </li>
             <li className="nav-item">
+              <Link className="nav-link" to="/markup">Markup Printout</Link>
+            </li>
+            <li className="nav-item">
               <LeagueSelector />
             </li>
           </ul>
@@ -52,6 +56,7 @@ const routing = (
         <Route path="/configuration" component={Configuration} />
         <Route path="/admin" component={AdminConfig} />
         <Route path="/matches" component={Matches} />
+        <Route path="/markup" component={MarkupPrintout} />
         { /* <Route component={NotFound} /> */ }
       </div>
     </Router>

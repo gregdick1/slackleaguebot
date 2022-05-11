@@ -54,9 +54,9 @@ def gather_scores(group_matches):
 
 def print_season_markup(lctx, season = None):
     if season is None:
-        season = db.get_current_season(lctx)
-    all_matches = db.get_matches_for_season(lctx, season)
-    all_players = db.get_players(lctx)
+        season = db.get_current_season(lctx.league_name)
+    all_matches = db.get_matches_for_season(lctx.league_name, season)
+    all_players = db.get_players(lctx.league_name)
     groupings = list(set(map(lambda match: match.grouping, all_matches)))
     weeks = list(set(map(lambda match: match.week, all_matches)))
     groupings.sort()
@@ -117,3 +117,11 @@ def print_season_markup(lctx, season = None):
             output += '|\n'
 
     return output
+
+
+def get_players_dictionary(lctx):
+    players = db.get_players(lctx.league_name)
+    players_dictionary = dict()
+    for player in players:
+        players_dictionary[player.slack_id] = player.name
+    return players_dictionary

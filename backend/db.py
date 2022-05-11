@@ -7,35 +7,35 @@ LATEST_VERSION = 1
 _commands_to_run = {}
 
 
-def get_commands_to_run(lctx):
-    if lctx.league_name not in _commands_to_run:
+def get_commands_to_run(league_name):
+    if league_name not in _commands_to_run:
         return []
-    return _commands_to_run[lctx.league_name]
+    return _commands_to_run[league_name]
 
 
-def add_command_to_run(lctx, command):
-    if lctx.league_name not in _commands_to_run:
-        _commands_to_run[lctx.league_name] = []
-    _commands_to_run[lctx.league_name].append(command)
+def add_command_to_run(league_name, command):
+    if league_name not in _commands_to_run:
+        _commands_to_run[league_name] = []
+    _commands_to_run[league_name].append(command)
 
 
-def clear_commands_to_run(lctx):
-    _commands_to_run[lctx.league_name] = []
+def clear_commands_to_run(league_name):
+    _commands_to_run[league_name] = []
 
 
-def path(lctx):
-    return os.path.abspath(os.path.join(os.path.dirname(__file__), "../{}_league.sqlite".format(lctx.league_name)))
+def path(league_name):
+    return os.path.abspath(os.path.join(os.path.dirname(__file__), "../{}_league.sqlite".format(league_name)))
 
 
-def get_connection(lctx):
-    return sqlite3.connect(path(lctx), detect_types=sqlite3.PARSE_DECLTYPES)
+def get_connection(league_name):
+    return sqlite3.connect(path(league_name), detect_types=sqlite3.PARSE_DECLTYPES)
 
 
-def initialize(lctx):
-    if os.path.exists(path(lctx)):
+def initialize(league_name):
+    if os.path.exists(path(league_name)):
         return
 
-    conn = get_connection(lctx)
+    conn = get_connection(league_name)
     c = conn.cursor()
     c.execute('CREATE TABLE player ('
               'slack_id TEXT PRIMARY KEY, '
@@ -63,24 +63,24 @@ def initialize(lctx):
 
     conn.commit()
     conn.close()
-    set_config(lctx, 'LEAGUE_VERSION', str(LATEST_VERSION))
+    set_config(league_name, 'LEAGUE_VERSION', str(LATEST_VERSION))
 
 
-def set_config(lctx, name, value):
+def set_config(league_name, name, value):
     command = "INSERT INTO config VALUES ('{}', '{}') " \
               "ON CONFLICT(name) DO UPDATE SET value='{}' where name='{}'".format(name, value, value, name)
-    add_command_to_run(lctx, command)
+    add_command_to_run(league_name, command)
 
-    conn = get_connection(lctx)
+    conn = get_connection(league_name)
     c = conn.cursor()
     c.execute(command)
     conn.commit()
     conn.close()
 
 
-def get_config(lctx, name):
-    initialize(lctx)
-    conn = get_connection(lctx)
+def get_config(league_name, name):
+    initialize(league_name)
+    conn = get_connection(league_name)
     c = conn.cursor()
     c.execute("SELECT value FROM config WHERE name = '{}'".format(name))
     rows = c.fetchall()
@@ -90,11 +90,11 @@ def get_config(lctx, name):
     return None
 
 
-def add_player(lctx, slack_id, name, grouping):
+def add_player(league_name, slack_id, name, grouping):
     command = "INSERT INTO player (slack_id, name, grouping, active) VALUES ('{}', '{}', '{}', 1)".format(slack_id, name.replace("'","''"), grouping)
-    add_command_to_run(lctx, command)
+    add_command_to_run(league_name, command)
 
-    conn = get_connection(lctx)
+    conn = get_connection(league_name)
     c = conn.cursor()
     c.execute(command)
     conn.commit()
@@ -125,8 +125,8 @@ class Player:
         return self.slack_id == other.slack_id and self.name == other.name
 
 
-def get_players(lctx):
-    conn = get_connection(lctx)
+def get_players(league_name):
+    conn = get_connection(league_name)
     c = conn.cursor()
     c.execute('SELECT * FROM player')
     rows = c.fetchall()
@@ -134,12 +134,12 @@ def get_players(lctx):
     return [Player.from_db(p) for p in rows]
 
 
-def get_active_players(lctx):
-    return [p for p in get_players(lctx) if p.active]
+def get_active_players(league_name):
+    return [p for p in get_players(league_name) if p.active]
 
 
-def get_player_by_name(lctx, name):
-    conn = get_connection(lctx)
+def get_player_by_name(league_name, name):
+    conn = get_connection(league_name)
     c = conn.cursor()
     c.execute("SELECT * FROM player WHERE name = '{}'".format(name))
     row = c.fetchone()
@@ -150,8 +150,8 @@ def get_player_by_name(lctx, name):
     return Player.from_db(row)
 
 
-def get_player_by_id(lctx, id):
-    conn = get_connection(lctx)
+def get_player_by_id(league_name, id):
+    conn = get_connection(league_name)
     c = conn.cursor()
     c.execute("SELECT * FROM player WHERE slack_id = '{}'".format(id))
     row = c.fetchone()
@@ -162,50 +162,50 @@ def get_player_by_id(lctx, id):
     return Player.from_db(row)
 
 
-def update_grouping(lctx, slack_id, grouping):
+def update_grouping(league_name, slack_id, grouping):
     command = "UPDATE player SET grouping='{}' WHERE slack_id = '{}'".format(grouping, slack_id)
-    add_command_to_run(lctx, command)
-    conn = get_connection(lctx)
+    add_command_to_run(league_name, command)
+    conn = get_connection(league_name)
     c = conn.cursor()
     c.execute(command)
     conn.commit()
     conn.close()
 
 
-def updating_grouping_and_orders(lctx, slack_ids, grouping):
-    conn = get_connection(lctx)
+def updating_grouping_and_orders(league_name, slack_ids, grouping):
+    conn = get_connection(league_name)
     c = conn.cursor()
 
     for idx, slack_id in enumerate(slack_ids):
         command = "UPDATE player SET grouping='{}', order_idx={}, active=1 WHERE slack_id = '{}'".format(grouping, idx, slack_id)
-        add_command_to_run(lctx, command)
+        add_command_to_run(league_name, command)
         c.execute(command)
     conn.commit()
     conn.close()
 
 
-def update_player_order_idx(lctx, slack_id, order_idx):
+def update_player_order_idx(league_name, slack_id, order_idx):
     command = "UPDATE player set order_idx={} WHERE slack_id = '{}'".format(order_idx, slack_id)
-    add_command_to_run(lctx, command)
-    conn = get_connection(lctx)
+    add_command_to_run(league_name, command)
+    conn = get_connection(league_name)
     c = conn.cursor()
     c.execute(command)
     conn.commit()
     conn.close()
 
 
-def set_active(lctx, slack_id, active):
+def set_active(league_name, slack_id, active):
     active_int = 1 if active else 0
     command = "UPDATE player SET active={} WHERE slack_id = '{}'".format(active_int, slack_id)
-    add_command_to_run(lctx, command)
-    conn = get_connection(lctx)
+    add_command_to_run(league_name, command)
+    conn = get_connection(league_name)
     c = conn.cursor()
     c.execute(command)
     conn.commit()
     conn.close()
 
 
-def add_match(lctx, player_1, player_2, week_date, grouping, season, sets_needed):
+def add_match(league_name, player_1, player_2, week_date, grouping, season, sets_needed):
 
     if player_1 is None or player_2 is None:
         p_id = player_1.slack_id if player_1 is not None else player_2.slack_id
@@ -213,8 +213,8 @@ def add_match(lctx, player_1, player_2, week_date, grouping, season, sets_needed
     else:
         command = "INSERT INTO match (player_1, player_2, week, grouping, season, sets, sets_needed) VALUES ('{}', '{}', '{}', '{}', {}, 0, {})".format(player_1.slack_id, player_2.slack_id, str(week_date), grouping, season, sets_needed)
 
-    add_command_to_run(lctx, command)
-    conn = get_connection(lctx)
+    add_command_to_run(league_name, command)
+    conn = get_connection(league_name)
     c = conn.cursor()
     c.execute(command)
     conn.commit()
@@ -244,8 +244,8 @@ class Match:
         return Match(d['id'], d['player_1_id'], d['player_2_id'], d['winner_id'], d['week'], d['grouping'], d['season'], d['sets'], d['sets_needed'])
 
 
-def get_matches(lctx):
-    conn = get_connection(lctx)
+def get_matches(league_name):
+    conn = get_connection(league_name)
     c = conn.cursor()
     c.execute('SELECT rowid, * FROM match')
     rows = c.fetchall()
@@ -254,8 +254,8 @@ def get_matches(lctx):
     return [Match.from_db(m) for m in rows]
 
 
-def get_matches_for_season(lctx, season):
-    conn = get_connection(lctx)
+def get_matches_for_season(league_name, season):
+    conn = get_connection(league_name)
     c = conn.cursor()
     c.execute('SELECT rowid, * FROM match WHERE season = {}'.format(season))
     rows = c.fetchall()
@@ -264,18 +264,18 @@ def get_matches_for_season(lctx, season):
     return [Match.from_db(m) for m in rows]
 
 
-def clear_matches_for_season(lctx, season):
+def clear_matches_for_season(league_name, season):
     command = 'DELETE FROM match WHERE season = {}'.format(season)
-    add_command_to_run(lctx, command)
-    conn = get_connection(lctx)
+    add_command_to_run(league_name, command)
+    conn = get_connection(league_name)
     c = conn.cursor()
     c.execute(command)
     conn.commit()
     conn.close()
 
 
-def get_matches_for_week(lctx, week):
-    conn = get_connection(lctx)
+def get_matches_for_week(league_name, week):
+    conn = get_connection(league_name)
     c = conn.cursor()
     c.execute("SELECT rowid, * FROM match WHERE week = '{}'".format(week))
     rows = c.fetchall()
@@ -284,11 +284,11 @@ def get_matches_for_week(lctx, week):
     return [Match.from_db(m) for m in rows]
 
 
-def get_match_by_players(lctx, player_a, player_b):
+def get_match_by_players(league_name, player_a, player_b):
     if player_a.slack_id == player_b.slack_id:
         return None
-    season = get_current_season(lctx)
-    conn = get_connection(lctx)
+    season = get_current_season(league_name)
+    conn = get_connection(league_name)
     c = conn.cursor()
     c.execute("SELECT rowid, * FROM match WHERE season = {} and (player_1 = '{}' or player_2 = '{}') and (player_1 = '{}' or player_2 = '{}')"\
               .format(season, player_a.slack_id, player_a.slack_id, player_b.slack_id, player_b.slack_id))
@@ -301,24 +301,24 @@ def get_match_by_players(lctx, player_a, player_b):
     return Match.from_db(row)
 
 
-def update_match(lctx, winner_name, loser_name, sets):
-    winner = get_player_by_name(lctx, winner_name)
-    loser = get_player_by_name(lctx, loser_name)
-    return _update_match(lctx, winner, loser, sets)
+def update_match(league_name, winner_name, loser_name, sets):
+    winner = get_player_by_name(league_name, winner_name)
+    loser = get_player_by_name(league_name, loser_name)
+    return _update_match(league_name, winner, loser, sets)
 
 
-def update_match_by_id(lctx, winner_id, loser_id, sets):
-    winner = get_player_by_id(lctx, winner_id)
-    loser = get_player_by_id(lctx, loser_id)
-    return _update_match(lctx, winner, loser, sets)
+def update_match_by_id(league_name, winner_id, loser_id, sets):
+    winner = get_player_by_id(league_name, winner_id)
+    loser = get_player_by_id(league_name, loser_id)
+    return _update_match(league_name, winner, loser, sets)
 
 
-def _update_match(lctx, winner, loser, sets):
+def _update_match(league_name, winner, loser, sets):
     if winner is None or loser is None:
         print('Could not update match')
         return False
 
-    match = get_match_by_players(lctx, winner, loser)
+    match = get_match_by_players(league_name, winner, loser)
     if match is None:
         print('Could not update match')
         return False
@@ -329,8 +329,8 @@ def _update_match(lctx, winner, loser, sets):
 
     command = "UPDATE match SET winner='{}', sets={}, date_played='{}' WHERE player_1 = '{}' and player_2 = '{}' and season={}"\
               .format(winner.slack_id, sets, str(datetime.date.today()), match.player_1_id, match.player_2_id, match.season)
-    add_command_to_run(lctx, command)
-    conn = get_connection(lctx)
+    add_command_to_run(league_name, command)
+    conn = get_connection(league_name)
     c = conn.cursor()
     c.execute(command)
     conn.commit()
@@ -338,7 +338,7 @@ def _update_match(lctx, winner, loser, sets):
     return True
 
 
-def admin_update_match(lctx, new_match):
+def admin_update_match(league_name, new_match):
     command = "UPDATE match SET " +\
               "player_1='{}', ".format(new_match.player_1_id) +\
               "player_2='{}', ".format(new_match.player_2_id) +\
@@ -348,8 +348,8 @@ def admin_update_match(lctx, new_match):
               "sets={}, ".format(new_match.sets) +\
               "sets_needed={} ".format(new_match.sets_needed) +\
               "WHERE rowid={}".format(new_match.id)
-    add_command_to_run(lctx, command)
-    conn = get_connection(lctx)
+    add_command_to_run(league_name, command)
+    conn = get_connection(league_name)
     c = conn.cursor()
     c.execute(command)
     conn.commit()
@@ -357,8 +357,8 @@ def admin_update_match(lctx, new_match):
     return True
 
 
-def get_current_season(lctx):
-    conn = get_connection(lctx)
+def get_current_season(league_name):
+    conn = get_connection(league_name)
     c = conn.cursor()
     c.execute("SELECT MAX(season) FROM match")
     rows = c.fetchall()
@@ -369,8 +369,8 @@ def get_current_season(lctx):
     return current_season
 
 
-def get_all_seasons(lctx):
-    conn = get_connection(lctx)
+def get_all_seasons(league_name):
+    conn = get_connection(league_name)
     c = conn.cursor()
     c.execute("SELECT distinct season FROM match")
     rows = c.fetchall()
