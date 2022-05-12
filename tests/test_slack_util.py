@@ -3,7 +3,7 @@ from unittest import TestCase, mock
 from unittest.mock import call, patch
 
 import test_league_setup
-from backend import db, match_making, utility, slack_util, league_context
+from backend import db, match_making, utility, slack_util, configs
 from backend.league_context import LeagueContext
 
 lctx = None
@@ -15,7 +15,7 @@ class Test(TestCase):
         test_league_setup.create_test_league()
 
         league_name = 'test'
-        db.set_config(league_name, league_context.KEY_COMMISSIONER_SLACK_ID, 'commissioner_slack_id')
+        db.set_config(league_name, configs.COMMISSIONER_SLACK_ID, 'commissioner_slack_id')
         global lctx
         lctx = LeagueContext.load_from_db(league_name)
 
@@ -48,7 +48,7 @@ class Test(TestCase):
         result = slack_util.get_deactivated_slack_ids(lctx)
         self.assertEqual(['playerA2', 'playerA3', 'playerA4'], result)
 
-    @patch.object(slack_util, '_post_message')
+    @patch.object(slack_util, 'post_message')
     def test_send_match_message(self, mock_post_message):
         slack_util.send_match_message(lctx, 'Match Message @against_user', 'playerA2', 'playerA1', utility.get_players_dictionary(lctx), debug=False)
         mock_post_message.assert_called_once_with(lctx, 'Match Message <@playerA1>', 'playerA2')
@@ -121,7 +121,7 @@ class Test(TestCase):
         self.assertEqual(8, mock_send_match_message.call_count)
 
     @patch('time.sleep', return_value=None)
-    @patch.object(slack_util, '_post_message')
+    @patch.object(slack_util, 'post_message')
     def test_send_custom_messages(self, mock_post_message, mock_time_sleep):
         db.set_active(lctx.league_name, 'playerA3', False)
         message = 'Custom message'
@@ -141,7 +141,7 @@ class Test(TestCase):
         mock_post_message.assert_called_once_with(lctx, message, 'commissioner_slack_id')
 
     @patch('time.sleep', return_value=None)
-    @patch.object(slack_util, '_post_message')
+    @patch.object(slack_util, 'post_message')
     def test_send_custom_for_missed_games(self, mock_post_message, mock_time_sleep):
         week = datetime.date(2022, 1, 3)
         skip_weeks = []

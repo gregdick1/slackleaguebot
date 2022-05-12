@@ -2,12 +2,12 @@ import time, datetime
 
 import slackclient
 
-from backend import db, utility, league_context
+from backend import db, utility, configs
 
 
 def _get_slack_client(lctx):
     if lctx.slack_client is None:
-        return slackclient.SlackClient(lctx.configs[league_context.KEY_SLACK_API_KEY])
+        return slackclient.SlackClient(lctx.configs[configs.SLACK_API_KEY])
     else:
         return lctx.slack_client
 
@@ -17,8 +17,13 @@ def _get_users_list(lctx):
     return response['members']
 
 
-def _post_message(lctx, message, channel):
+def post_message(lctx, message, channel):
     response = _get_slack_client(lctx).api_call("chat.postMessage", channel=channel, message=message, as_user=True)
+    return response
+
+
+def add_reaction(lctx, channel, timestamp, reaction):
+    response = _get_slack_client(lctx).api_call("reactions.add", name=reaction, channel=channel, timestamp=timestamp)
     return response
 
 
@@ -48,15 +53,15 @@ def send_match_message(lctx, message, to_user, against_user, players_dictionary,
     else:
         message = message.replace("@against_user", '<@' + against_user + '>')
 
-    if debug and to_user == lctx.configs[league_context.KEY_COMMISSIONER_SLACK_ID]:
-        _post_message(lctx, message, lctx.configs[league_context.KEY_COMMISSIONER_SLACK_ID])
+    if debug and to_user == lctx.configs[configs.COMMISSIONER_SLACK_ID]:
+        post_message(lctx, message, lctx.configs[configs.COMMISSIONER_SLACK_ID])
 
     debug_message = message if against_user is None else message.replace(against_user, players_dictionary[against_user])
     if debug:
         return "Debug sent to " + players_dictionary[to_user] + ": " + debug_message
 
     if not debug:
-        _post_message(lctx, message, to_user)
+        post_message(lctx, message, to_user)
         return "For reals sent to " + players_dictionary[to_user] + ": " + debug_message
 
 
@@ -83,14 +88,14 @@ def send_custom_messages(lctx, message, debug=True):
     players = db.get_active_players(lctx.league_name)
 
     if debug:
-        _post_message(lctx, message, lctx.configs[league_context.KEY_COMMISSIONER_SLACK_ID])
+        post_message(lctx, message, lctx.configs[configs.COMMISSIONER_SLACK_ID])
 
     sent_messages = ""
     for player in players:
         if debug:
             sent_messages = sent_messages + "Debug sent to " + player.name + ": " + message + "\n"
         else:
-            _post_message(lctx, message, player.slack_id)
+            post_message(lctx, message, player.slack_id)
             sent_messages = sent_messages + "For reals sent to " + player.name + ": " + message + "\n"
 
         time.sleep(1.5)
@@ -116,9 +121,9 @@ def send_custom_for_missed_games(lctx, message, num_missed, week, debug=True):
     for player_id in players:
         test = len(players[player_id])
         if len(players[player_id]) >= num_missed:
-            if debug and not player_id == lctx.configs[league_context.KEY_COMMISSIONER_SLACK_ID]:
+            if debug and not player_id == lctx.configs[configs.COMMISSIONER_SLACK_ID]:
                 print('Sending to', player_id, ':', message)
             else:
-                _post_message(lctx, message, player_id)
+                post_message(lctx, message, player_id)
                 print('For reals sent to', player_id, ':', message)
             time.sleep(1.5)
