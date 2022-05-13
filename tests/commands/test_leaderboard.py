@@ -21,25 +21,25 @@ class Test(TestCase):
         lctx = LeagueContext.load_from_db(league_name)
 
         for g in ['A', 'B', 'C']:
-            for i in range(1, 9):
+            for i in range(1, 10):  # Odd number to get some byes
                 db.add_player(lctx.league_name, 'player{}{}'.format(g, i), 'Player {}{}'.format(g, i), g)
 
-        match_making.create_matches_for_season(lctx.league_name, datetime.date(2022, 1, 3), 3, [])
+        match_making.create_matches_for_season(lctx.league_name, datetime.date(2022, 1, 3), 3, [], include_byes=True)
 
-        for i in range(2, 9):
+        for i in range(2, 10):
             db.update_match_by_id(lctx.league_name, 'playerA1', 'playerA{}'.format(i), 3)
-        for i in range(2, 9):
+        for i in range(2, 10):
             db.update_match_by_id(lctx.league_name, 'playerB1', 'playerB{}'.format(i), 4)
-        for i in range(2, 9):
+        for i in range(2, 10):
             db.update_match_by_id(lctx.league_name, 'playerC1', 'playerC{}'.format(i), 5)
 
         # new season with more sets needed
         match_making.create_matches_for_season(lctx.league_name, datetime.date(2022, 1, 3), 4, [])
-        for i in range(2, 9):
+        for i in range(2, 10):
             db.update_match_by_id(lctx.league_name, 'playerA1', 'playerA{}'.format(i), 5)
-        for i in range(2, 9):
+        for i in range(2, 10):
             db.update_match_by_id(lctx.league_name, 'playerB1', 'playerB{}'.format(i), 6)
-        for i in range(2, 9):
+        for i in range(2, 10):
             db.update_match_by_id(lctx.league_name, 'playerC1', 'playerC{}'.format(i), 7)
 
     def tearDown(self):
@@ -76,9 +76,9 @@ class Test(TestCase):
         for top_player in list(result)[:3]:
             short_result[top_player] = result[top_player]
         top_expected = collections.OrderedDict({
-            'Player A1': {'games_won': 49, 'games_lost': 7, 'winrate': 87.5},
-            'Player B1': {'games_won': 49, 'games_lost': 21, 'winrate': 70.0},
-            'Player C1': {'games_won': 49, 'games_lost': 35, 'winrate': 58.33}
+            'Player A1': {'games_won': 56, 'games_lost': 8, 'winrate': 87.5},
+            'Player B1': {'games_won': 56, 'games_lost': 24, 'winrate': 70.0},
+            'Player C1': {'games_won': 56, 'games_lost': 40, 'winrate': 58.33}
         })
         self.assertEqual(top_expected, short_result)
 

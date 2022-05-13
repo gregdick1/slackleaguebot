@@ -37,12 +37,16 @@ def filter_invalid_messages(lctx, message_list):
     return valid_messages
 
 
-def determine_command(lctx, message_object):
+def get_command_object(message_object):
     text = message_object["text"]
     channel = message_object["channel"]
     user_id = message_object["user"]
     timestamp = message_object["ts"]
-    command_message = CommandMessage(text, channel, user_id, timestamp)
+    return CommandMessage(text, channel, user_id, timestamp)
+
+
+def determine_command(lctx, message_object):
+    command_message = get_command_object(message_object)
 
     # The order of these commands is important. It will try them one at a time to see who should handle the command
     commands = [

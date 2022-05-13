@@ -49,7 +49,7 @@ class LeagueBot:
                         try:
                             command = command_parser.determine_command(self.lctx, message)
                             if command is not None:
-                                command.handle_message(self.lctx, message)
+                                command.handle_message(self.lctx, command_parser.get_command_object(message))
                             else:
                                 slack_util.post_message(self.lctx, "I don't recognize that. Try `help` to see what I can do.", message['channel'])
                         except Exception as e:

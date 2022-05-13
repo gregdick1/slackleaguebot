@@ -38,6 +38,9 @@ def get_leaderboard(lctx, reverse_order=True):
     for match in matches:
         games_played = match.sets
 
+        if match.player_1_id is None or match.player_2_id is None:
+            continue
+
         player_1 = player_dict[match.player_1_id]
         player_2 = player_dict[match.player_2_id]
 
