@@ -47,6 +47,15 @@ def _create_and_deploy_bot_db(context):
     sftp.upload_file(context, context.db_name)
 
 
+def deploy_code(league_name):
+    context = Context.load_from_db(league_name)
+    if sftp.folder_exists(context, 'backend'):
+        sftp.delete_folder_on_server(context, 'backend')
+    _create_league_folders(context)
+    _move_files_to_server(context)
+    return "Deploy Successful"
+
+
 def deploy_league(league_name):
     context = Context.load_from_db(league_name)
     if sftp.file_exists(context, context.db_name):

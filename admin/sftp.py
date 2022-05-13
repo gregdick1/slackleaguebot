@@ -105,6 +105,17 @@ def file_exists(context, local_path_from_project_root, ssh_client=None):
     return exists
 
 
+def folder_exists(context, local_path_from_project_root, ssh_client=None):
+    local_ssh_client = ssh_client if ssh_client is not None else get_ssh_client(context)
+    stdin, stdout, stderror = local_ssh_client.exec_command('ls {}/{}'.format(context.league_folder, local_path_from_project_root))
+    stdin.close()  # necessary quirk
+    tmp = stderror.readlines()
+    exists = len(tmp) == 0
+    if ssh_client is None:
+        local_ssh_client.close()
+    return exists
+
+
 def upload_file(context, local_path_from_project_root, ssh_client=None):
     local_ssh_client = ssh_client if ssh_client is not None else get_ssh_client(context)
     sftp = local_ssh_client.open_sftp()
@@ -129,6 +140,18 @@ def delete_file_on_server(context, local_path_from_project_root, ssh_client=None
     stdin, stdout, stderror = local_ssh_client.exec_command('rm {}/{}'.format(context.league_folder, local_path_from_project_root))
     stdin.close()  # necessary quirk
     success = not file_exists(context, local_path_from_project_root, local_ssh_client)
+    if ssh_client is None:
+        local_ssh_client.close()
+    return success
+
+
+def delete_folder_on_server(context, local_path_from_project_root, ssh_client=None):
+    local_ssh_client = ssh_client if ssh_client is not None else get_ssh_client(context)
+    if not folder_exists(context, local_path_from_project_root, local_ssh_client):
+        return True
+    stdin, stdout, stderror = local_ssh_client.exec_command('rm -r {}/{}'.format(context.league_folder, local_path_from_project_root))
+    stdin.close()  # necessary quirk
+    success = not folder_exists(context, local_path_from_project_root, local_ssh_client)
     if ssh_client is None:
         local_ssh_client.close()
     return success
