@@ -5,7 +5,7 @@ from admin import sftp, admin_config
 from admin.admin_context import Context
 from backend import db
 
-server_folders = ['backend']
+server_folders = ['backend', 'backend/commands']
 root_path = os.path.join(os.path.dirname(__file__), '..')
 
 
@@ -34,7 +34,7 @@ def _create_and_deploy_start_bot_file(context):
     f.write("""from backend.leaguebot import LeagueBot
 
 if __name__ == "__main__":
-    LeagueBot({}).start_bot()
+    LeagueBot('{}').start_bot()
 """.format(context.league_name))
     f.close()
 

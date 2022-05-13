@@ -1,8 +1,8 @@
-from backend import db, bot_config, utility
+from backend import db, utility, configs
 
 
 def needs_updated(league_name):
-    current_version = db.get_config(league_name, bot_config.LEAGUE_VERSION)
+    current_version = db.get_config(league_name, configs.LEAGUE_VERSION)
     if current_version is None:
         raise Exception("Can't update a db without a version")
     if current_version != str(db.LATEST_VERSION):  # If the db doesn't have the config, we should just error out instead
@@ -20,7 +20,7 @@ def run_updates(league_name):
 # Adds date played on match
 # Adds message sent flag on match
 def _update_from_0_to_1(league_name):
-    current_version = db.get_config(league_name, bot_config.LEAGUE_VERSION)
+    current_version = db.get_config(league_name, configs.LEAGUE_VERSION)
     if not current_version or current_version != '0':
         return False
 
@@ -43,7 +43,7 @@ def _update_from_0_to_1(league_name):
         for idx, p in enumerate(players):
             db.update_player_order_idx(league_name, p['player_id'], idx)
 
-    db.set_config(league_name, bot_config.LEAGUE_VERSION, '1')
+    db.set_config(league_name, configs.LEAGUE_VERSION, '1')
 
 
 
