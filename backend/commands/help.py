@@ -22,7 +22,7 @@ def channel_help(lctx):
     message = message + '\n`{} group a` - see the current rankings of a group'.format(bot_name)
     message = message + '\n`{} leaderboard` - see the leaderboard, sorted by winrate'.format(bot_name)
     # message = message + '\n`{} loserboard` - see the loserboard, sorted by winrate'.format(bot_name)
-    message = message + '\n`{} matches for week` - see all matches occuring this week in all groups'.format(bot_name)
+    # message = message + '\n`{} matches for week` - see all matches occuring this week in all groups'.format(bot_name)
     return message
 
 
@@ -32,7 +32,8 @@ def dm_help(lctx):
     message = 'In DMs, I support the following:'
     message = message + '\n`group a` - see the current rankings of a group'
     message = message + '\n`leaderboard` - see the leaderboard, sorted by winrate'
-    message = message + '\n`who do i play` - see who you play this week (only in dms)'
-    message = message + '\n`matches for week` - see all matches occurring this week in all groups'
+    message = message + '\n`my total stats` - see your total win/loss record for the league'
+    # message = message + '\n`who do i play` - see who you play this week (only in dms)'
+    # message = message + '\n`matches for week` - see all matches occurring this week in all groups'
     return message
 
