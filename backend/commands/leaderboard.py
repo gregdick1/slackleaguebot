@@ -83,6 +83,8 @@ def get_leaderboard(lctx, sortby, reverse_order=True):
 
     winrate_dict = dict()
     for player_id, player in player_dict.items():
+        if sortby == 'winrate' and player['matches_total'] < 20:
+            continue
         if player['games_total'] == 0:
             winrate_dict[player['name']] = {
                 'matches_won': 0,

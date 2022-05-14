@@ -21,18 +21,18 @@ class Test(TestCase):
         lctx = LeagueContext.load_from_db(league_name)
 
         for g in ['A', 'B', 'C']:
-            for i in range(1, 10):  # Odd number to get some byes
+            for i in range(1, 12):  # Odd number to get some byes
                 db.add_player(lctx.league_name, 'player{}{}'.format(g, i), 'Player {}{}'.format(g, i), g)
         for i in range(1, 13):
             db.add_player(lctx.league_name, 'playerD{}'.format(i), 'Player D{}'.format(i), g)
 
         match_making.create_matches_for_season(lctx.league_name, datetime.date(2022, 1, 3), 3, [], include_byes=True)
 
-        for i in range(2, 10):
+        for i in range(2, 12):
             db.update_match_by_id(lctx.league_name, 'playerA1', 'playerA{}'.format(i), 3)
-        for i in range(2, 10):
+        for i in range(2, 12):
             db.update_match_by_id(lctx.league_name, 'playerB1', 'playerB{}'.format(i), 4)
-        for i in range(2, 10):
+        for i in range(2, 12):
             db.update_match_by_id(lctx.league_name, 'playerC1', 'playerC{}'.format(i), 5)
         for i in range(2, 13):
             db.update_match_by_id(lctx.league_name, 'playerD1', 'playerD{}'.format(i), 5)
@@ -42,11 +42,11 @@ class Test(TestCase):
 
         # new season with more sets needed
         match_making.create_matches_for_season(lctx.league_name, datetime.date(2022, 1, 3), 4, [])
-        for i in range(2, 10):
+        for i in range(2, 12):
             db.update_match_by_id(lctx.league_name, 'playerA1', 'playerA{}'.format(i), 4)
-        for i in range(2, 10):
+        for i in range(2, 12):
             db.update_match_by_id(lctx.league_name, 'playerB1', 'playerB{}'.format(i), 5)
-        for i in range(2, 10):
+        for i in range(2, 12):
             db.update_match_by_id(lctx.league_name, 'playerC1', 'playerC{}'.format(i), 6)
         for i in range(2, 13):
             db.update_match_by_id(lctx.league_name, 'playerD1', 'playerD{}'.format(i), 7)
@@ -87,9 +87,9 @@ class Test(TestCase):
             short_result[top_player] = result[top_player]
         top_expected = collections.OrderedDict({
             'Player D1': {'matches_won': 22, 'matches_lost': 0, 'games_won': 77, 'games_lost': 55, 'winrate': 58.33},
-            'Player B1': {'matches_won': 16, 'matches_lost': 0, 'games_won': 56, 'games_lost': 16, 'winrate': 77.78},
-            'Player A1': {'matches_won': 15, 'matches_lost': 1, 'games_won': 53, 'games_lost': 3, 'winrate': 94.64},
-            'Player C1': {'matches_won': 14, 'matches_lost': 2, 'games_won': 54, 'games_lost': 34, 'winrate': 61.36}
+            'Player B1': {'matches_won': 20, 'matches_lost': 0, 'games_won': 70, 'games_lost': 20, 'winrate': 77.78},
+            'Player A1': {'matches_won': 19, 'matches_lost': 1, 'games_won': 67, 'games_lost': 3, 'winrate': 95.71},
+            'Player C1': {'matches_won': 18, 'matches_lost': 2, 'games_won': 68, 'games_lost': 42, 'winrate': 61.82}
         })
         self.assertEqual(top_expected, short_result)
 
@@ -105,9 +105,9 @@ class Test(TestCase):
             short_result[top_player] = result[top_player]
         top_expected = collections.OrderedDict({
             'Player D1': {'matches_won': 22, 'matches_lost': 0, 'games_won': 77, 'games_lost': 55, 'winrate': 58.33},
-            'Player B1': {'matches_won': 16, 'matches_lost': 0, 'games_won': 56, 'games_lost': 16, 'winrate': 77.78},
-            'Player C1': {'matches_won': 14, 'matches_lost': 2, 'games_won': 54, 'games_lost': 34, 'winrate': 61.36},
-            'Player A1': {'matches_won': 15, 'matches_lost': 1, 'games_won': 53, 'games_lost': 3, 'winrate': 94.64}
+            'Player B1': {'matches_won': 20, 'matches_lost': 0, 'games_won': 70, 'games_lost': 20, 'winrate': 77.78},
+            'Player C1': {'matches_won': 18, 'matches_lost': 2, 'games_won': 68, 'games_lost': 42, 'winrate': 61.82},
+            'Player A1': {'matches_won': 19, 'matches_lost': 1, 'games_won': 67, 'games_lost': 3, 'winrate': 95.71}
         })
         self.assertEqual(top_expected, short_result)
 
@@ -116,10 +116,10 @@ class Test(TestCase):
         for top_player in list(result)[:4]:
             short_result[top_player] = result[top_player]
         top_expected = collections.OrderedDict({
-            'Player A1': {'matches_won': 15, 'matches_lost': 1, 'games_won': 53, 'games_lost': 3, 'winrate': 94.64},
-            'Player B1': {'matches_won': 16, 'matches_lost': 0, 'games_won': 56, 'games_lost': 16, 'winrate': 77.78},
-            'Player C1': {'matches_won': 14, 'matches_lost': 2, 'games_won': 54, 'games_lost': 34, 'winrate': 61.36},
-            'Player D1': {'matches_won': 22, 'matches_lost': 0, 'games_won': 77, 'games_lost': 55, 'winrate': 58.33},
+            'Player A1': {'matches_won': 19, 'matches_lost': 1, 'games_won': 67, 'games_lost': 3, 'winrate': 95.71},
+            'Player B1': {'matches_won': 20, 'matches_lost': 0, 'games_won': 70, 'games_lost': 20, 'winrate': 77.78},
+            'Player C1': {'matches_won': 18, 'matches_lost': 2, 'games_won': 68, 'games_lost': 42, 'winrate': 61.82},
+            'Player D1': {'matches_won': 22, 'matches_lost': 0, 'games_won': 77, 'games_lost': 55, 'winrate': 58.33}
         })
         self.assertEqual(top_expected, short_result)
 
