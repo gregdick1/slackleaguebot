@@ -1,7 +1,9 @@
-import sqlite3
 import os
-from backend import db, league_context
+import sqlite3
+
 from admin import admin_context, db_management
+from backend import db
+
 # Script for importing an older league into the new format
 
 # Assumptions for this to work
@@ -10,7 +12,7 @@ from admin import admin_context, db_management
 # 2. You need to have connected the new league to the server already. This will push up the db when it's done.
 
 old_db_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "hudl_pong_league.sqlite"))
-new_league_name = 'test2'
+new_league_name = 'pingpong'
 
 old_db_conn = sqlite3.connect(old_db_path, detect_types=sqlite3.PARSE_DECLTYPES)
 c = old_db_conn.cursor()
@@ -21,8 +23,7 @@ c.execute('SELECT * FROM match')
 old_matches = c.fetchall()
 old_db_conn.close()
 
-lctx = league_context.LeagueContext(new_league_name)
-new_db_conn = db.get_connection(lctx)
+new_db_conn = db.get_connection(new_league_name)
 c = new_db_conn.cursor()
 
 c.execute("DELETE FROM player")
@@ -30,8 +31,8 @@ c.execute("DELETE FROM match")
 new_db_conn.commit()
 
 for row in old_players:
-    # Players haven't changed, we can import as-is
-    command = "INSERT INTO player VALUES ('{}', '{}', '{}', {})".format(row[0], row[1].replace("'","''"), row[2], row[3])
+    # Players haven't changed, we can import as-is except setting order_idx to 0
+    command = "INSERT INTO player VALUES ('{}', '{}', '{}', {}, 0)".format(row[0], row[1].replace("'","''"), row[2], row[3])
     print(command)
     c.execute(command)
 
@@ -74,7 +75,9 @@ for old_match in old_matches:
               "'{}', ".format(grouping) + \
               "{}, ".format(season) + \
               "{}, ".format(sets) + \
-              "{})".format(sets_needed_per_season[season])
+              "{}, ".format(sets_needed_per_season[season]) + \
+              "'{}', 1)".format(week)
+
     print(command)
     c.execute(command)
 
