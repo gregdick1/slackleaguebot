@@ -5,10 +5,14 @@
   "dependencies": {
     "axios": "^0.19.0",
     "bootstrap": "^4.3.1",
+    "jquery": "^3.6.0",
+    "popper.js": "^1.16.1",
     "react": "^16.8.6",
     "react-beautiful-dnd": "^11.0.4",
+    "react-bootstrap-icons": "^1.8.2",
     "react-confirm-alert": "^2.4.1",
     "react-dom": "^16.8.6",
+    "react-editext": "^4.2.1",
     "react-router-dom": "^5.0.1",
     "react-scripts": "3.0.1"
   },

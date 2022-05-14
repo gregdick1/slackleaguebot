@@ -17,6 +17,18 @@ Enter the environment
 pipenv shell
 ```
 
+Download and install node.js
+
+Install node modules
+```
+npm install
+```
+
+Build the frontend
+```
+npm run build
+```
+
 Run the Admin API
 ```
 python start_api.py

@@ -1,17 +1,10 @@
 import React, { Component } from 'react';
-import Group from './Group'
-
+import axios from 'axios';
 import { DragDropContext } from "react-beautiful-dnd";
-import './Playerboard.css'
-import axios from 'axios'
 
-function groupBy(arr, property) {
-  return arr.reduce(function(memo, x) {
-    if (!memo[x[property]]) { memo[x[property]] = []; }
-    memo[x[property]].push(x);
-    return memo;
-  }, {});
-}
+import Group from './Group';
+import './Playerboard.css'
+import groupBy from '../helpers.js'
 
 class Playerboard extends Component {
   constructor(props) {

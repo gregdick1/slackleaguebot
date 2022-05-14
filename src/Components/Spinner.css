@@ -1,0 +1,15 @@
+@keyframes spinner {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+.spinner-container {
+  display: inline-block;
+}
+.loading-spinner {
+  border-radius: 50%;
+  animation: spinner 1.5s linear infinite;
+}

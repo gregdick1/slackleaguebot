@@ -1,0 +1,14 @@
+label {
+  font-size: 18px;
+  margin-left: 20px;
+  margin-right: 20px;
+}
+.editext-editor {
+  display: inline-block;
+}
+.inline-editor {
+  padding-top: 10px;
+}
+.new-league-inputs {
+  float: right;
+}
