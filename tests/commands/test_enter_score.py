@@ -107,6 +107,11 @@ class Test(TestCase):
         enter_score.handle_message(lctx, msg)
         mock_post_message.assert_called_once_with(lctx, enter_score.get_format_message(lctx), 'comp_channel')
 
+        mock_post_message.reset_mock()
+        msg = CommandMessage('<@playerA2> over me 4-0', 'comp_channel', 'playerA1', 'any_timestamp')
+        enter_score.handle_message(lctx, msg)
+        mock_post_message.assert_called_once_with(lctx, enter_score.get_format_message(lctx), 'comp_channel')
+
     @patch.object(slack_util, 'add_reaction')
     @patch.object(slack_util, 'post_message')
     def test_handle_message_good_entry(self, mock_post_message, mock_add_reaction):

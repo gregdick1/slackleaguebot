@@ -49,6 +49,8 @@ def handle_message(lctx, command_object):
     if match.sets_needed > 1:
         try:
             score_1, score_2 = parse_score(command_object.text)
+            if score_1 > match.sets_needed or score_2 > match.sets_needed:
+                raise Exception("Too many points")
             total_score = score_1 + score_2
         except Exception as e:
             slack_util.post_message(lctx, get_format_message(lctx), command_object.channel)

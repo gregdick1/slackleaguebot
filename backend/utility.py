@@ -72,7 +72,8 @@ def print_season_markup(lctx, season = None):
         if len(group_players) > max_group_size:
             max_group_size = len(group_players)
 
-    standing_groups = [groupings[:6], groupings[6:]]
+    groups_per_row = 4
+    standing_groups = [groupings[:groups_per_row], groupings[groups_per_row:]]
     # standing_groups.append(groupings)
     first_group = True
 
@@ -91,6 +92,7 @@ def print_season_markup(lctx, season = None):
             for grouping in standing_group:
                 group_matches = [m for m in all_matches if m.grouping == grouping]
                 players = gather_scores(group_matches)
+                players = [x for x in players if x['player_id'] is not None]
                 if len(players) > i:
                     p = players[i]
                     output += get_player_name(all_players, p['player_id']) + ' ' + str(p['m_w']) + '-' + str(p['m_l'])  # + ' (' + str(p['s_w']) + '-' + str(p['s_l']) + ')'

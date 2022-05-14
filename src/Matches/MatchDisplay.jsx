@@ -5,15 +5,18 @@ import './MatchDisplay.css'
 function MatchDisplay({ match, allPlayers }) {
     let p1_score = '';
     let p2_score = '';
-    if (match.player_1_id == match.winner_id) {
+    if (match.player_1_id === match.winner_id && match.winner_id !== null) {
         p1_score = ''+match.sets_needed
         p2_score = ''+(match.sets - match.sets_needed)
-    } else if (match.player_2_id == match.winner_id) {
+    } else if (match.player_2_id === match.winner_id && match.winner_id !== null) {
         p1_score = ''+(match.sets - match.sets_needed)
         p2_score = ''+match.sets_needed
     }
 
     const p_name = (p_id) => {
+        if (p_id === null) {
+            return "Bye"
+        }
         for (var p of allPlayers) {
             if (p.slack_id === p_id) return p.name
         }
