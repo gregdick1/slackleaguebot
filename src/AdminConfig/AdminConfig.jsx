@@ -53,6 +53,8 @@ function AdminConfig() {
       }
 
       let leagueAdminConfigs = name === 'copyLeague' ? {...state.leagueAdminConfigs} : {...blankConfigs}
+      leagueAdminConfigs['HAS_CONNECTED'] = false
+      leagueAdminConfigs['HAS_DEPLOYED'] = false
 
       const updateServer = async () => {
         await axios.post(`add-league`, { newLeagueName, leagueAdminConfigs });

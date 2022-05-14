@@ -82,7 +82,7 @@ function LeagueSelector() {
             </select>
           </div>
         </div>
-        { leagueState.hasConnected && leagueState.hasDeployed &&
+        { leagueState.hasConnected === 'True' && leagueState.hasDeployed === 'True' &&
         <div className="nav-control refresh-control">
           <button
             name='refresh_db'
@@ -100,10 +100,10 @@ function LeagueSelector() {
           </button>
         </div>
         }
-        { leagueState.hasConnected && leagueState.hasDeployed &&
+        { leagueState.hasConnected === 'True' && leagueState.hasDeployed === 'True' &&
           <LastRefresh />
         }
-        { leagueState.hasConnected && leagueState.hasDeployed &&
+        { leagueState.hasConnected === 'True' && leagueState.hasDeployed === 'True' &&
           <CommandCommit />
         }
       </div>
