@@ -2,6 +2,7 @@ import sqlite3
 import os
 import datetime
 from functools import partial
+from backend import configs
 
 LATEST_VERSION = 2
 
@@ -49,7 +50,16 @@ def initialize(league_name):
 
     conn.commit()
     conn.close()
-    set_config(league_name, 'LEAGUE_VERSION', str(LATEST_VERSION))
+    initialize_configs(league_name)
+
+
+def initialize_configs(league_name):
+    set_config(league_name, configs.LEAGUE_VERSION, str(LATEST_VERSION))
+    set_config(league_name, configs.BOT_NAME, '@bot')
+    set_config(league_name, configs.LOG_PATH, 'log.txt')
+    set_config(league_name, configs.SCORE_EXAMPLE, '3-2')
+    set_config(league_name, configs.MATCH_MESSAGE, 'This week, you play against @against_user. Please message them _today_ to find a time that works. After your match, report the winner and # of sets (best of 5) to @bot_name in #competition_channel.')
+    set_config(league_name, configs.REMINDER_MESSAGE, 'Friendly reminder that you have a match against @against_user. Please work with them to find a time to play.')
 
 
 def get_commands_to_run(league_name):

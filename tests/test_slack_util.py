@@ -62,12 +62,14 @@ class Test(TestCase):
         mock_post_message.assert_called_once_with(lctx, 'Match Message <@playerA1>', 'commissioner_slack_id')
 
         mock_post_message.reset_mock()
-        slack_util.send_match_message(lctx, 'Match Message @against_user', 'playerA2', None, utility.get_players_dictionary(lctx), debug=False)
+        return_val = slack_util.send_match_message(lctx, 'Match Message @against_user', 'playerA2', None, utility.get_players_dictionary(lctx), debug=False)
         mock_post_message.assert_called_once_with(lctx, 'This week, you have a bye. Relax and get some practice in.', 'playerA2')
+        self.assertIsNotNone(return_val)
 
         mock_post_message.reset_mock()
-        slack_util.send_match_message(lctx, 'Match Message @against_user', None, 'playerA2', utility.get_players_dictionary(lctx), debug=False)
+        return_val = slack_util.send_match_message(lctx, 'Match Message @against_user', None, 'playerA2', utility.get_players_dictionary(lctx), debug=False)
         mock_post_message.assert_not_called()
+        self.assertIsNotNone(return_val)
 
     @patch('time.sleep', return_value=None)
     @patch.object(slack_util, 'send_match_message')

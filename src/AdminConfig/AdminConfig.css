@@ -1,5 +1,7 @@
+.admin-content {
+  font-size: 14px;
+}
 label {
-  font-size: 18px;
   margin-left: 20px;
   margin-right: 20px;
 }
@@ -7,8 +9,37 @@ label {
   display: inline-block;
 }
 .inline-editor {
-  padding-top: 10px;
+  padding-top: 4px;
 }
 .new-league-inputs {
   float: right;
+}
+.inline-btn {
+  background-color: ghostwhite;
+  padding: 0px 5px 2px 5px;
+  margin-left: 3px;
+}
+.config-area {
+  display: flex;
+  flex-wrap: wrap;
+}
+.config-box {
+  border-style: solid;
+  border-color: white;
+  padding: 10px;
+  margin: 10px;
+}
+.btn-config {
+    color: #fff;
+    background-color: #007bff;
+    border-color: #007bff;
+    padding: 1px 5px 1px 5px;
+    font-size: 14px;
+}
+.inline-editor-view {
+  display: flex;
+  color: cyan;
+}
+input.inline-editor-view {
+  padding: 0;
 }

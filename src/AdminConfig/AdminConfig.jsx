@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { Pencil, Check, X } from 'react-bootstrap-icons';
 import axios from 'axios'
 
 import { LeagueContext } from "../contexts/League"
@@ -130,12 +131,15 @@ function AdminConfig() {
           type="text"
           value={state.leagueAdminConfigs[config]}
           onSave={handleSave}
-          inputProps={{ name: config }}
+          inputProps={{ name: config, style: { padding: 0 } }}
           containerProps={{ style: { display: 'inline-block' } }}
-          // TODO smaller buttons
-//           saveButtonClassName="inline-save-button"
-//           editButtonClassName="inline-edit-button"
-//           cancelButtonClassName="inline-cancel-button"
+          saveButtonContent={<Check size={14} />}
+          cancelButtonContent={<X size={14} />}
+          editButtonContent={<Pencil size={14} />}
+          saveButtonClassName="btn inline-btn inline-save-btn"
+          editButtonClassName="btn inline-btn inline-edit-btn"
+          cancelButtonClassName="btn inline-btn inline-cancel-btn"
+          viewContainerClassName="inline-editor-view"
         />
       </div>
       );
@@ -146,6 +150,7 @@ function AdminConfig() {
         return <DbUpdater />
     return (
       <div id="main-content" className="main-content">
+        <div className="admin-content">
           <div className="new-league-inputs">
             <div>
               <label>Create New League</label>
@@ -165,22 +170,24 @@ function AdminConfig() {
               }
             </div>
           </div>
-        <div className="tab-header">
-          <label>Admin Configuration for League: {leagueState.selectedLeague}</label>
-        </div>
-        { editExisting &&
-            <div>
+          <div className="tab-header">
+            <label>Admin Configuration for League: {leagueState.selectedLeague}</label>
+          </div>
+          <div className="config-area">
+          { editExisting &&
+            <div className="config-box">
+                <label>Server Connection</label>
                 {editor('Server Host', 'SERVER_HOST')}
                 {editor('Server Port', 'SERVER_PORT')}
                 {editor('Server User', 'SERVER_USER')}
-                {editor('Bot Command', 'BOT_COMMAND')}
+
                 <div>
                   <label>Has Connected?:</label>
                   {state.leagueAdminConfigs['HAS_CONNECTED'] === 'True' ? <span>Yes</span> : <span>No</span>}
                 </div>
 
                 <div>
-                    <button name="testConnection" disabled={connecting} className="btn btn-primary" onClick={handleTestConnection}>
+                    <button name="testConnection" disabled={connecting} className="btn btn-config" onClick={handleTestConnection}>
                       { connecting &&
                         <Spinner size={20} />
                       }
@@ -194,7 +201,7 @@ function AdminConfig() {
                 </div>
                 { state.leagueAdminConfigs['HAS_CONNECTED'] === 'True' &&
                   <div>
-                    <button name="deploy" disabled={deploying} className="btn btn-primary" onClick={handleDeploy}>
+                    <button name="deploy" disabled={deploying} className="btn btn-config" onClick={handleDeploy}>
                       { deploying &&
                         <Spinner size={20} />
                       }
@@ -204,8 +211,15 @@ function AdminConfig() {
                 }
 
             </div>
-        }
-
+          }
+          { editExisting &&
+            <div className="config-box">
+              <label>Other</label>
+              {editor('Bot Command', 'BOT_COMMAND')}
+            </div>
+          }
+          </div>
+        </div>
       </div>
     );
 }

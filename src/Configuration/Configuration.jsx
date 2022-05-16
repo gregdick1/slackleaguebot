@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { Pencil, Check, X } from 'react-bootstrap-icons';
 import axios from 'axios'
 
 import { LeagueContext } from "../contexts/League"
@@ -7,8 +8,14 @@ import EdiText from 'react-editext';
 import './Configuration.css'
 
 function Configuration() {
+
+    const blankConfigs = {
+        LOG_PATH: 'log.txt',
+        BOT_NAME: '@bot',
+        SCORE_EXAMPLE: '3-2'
+    }
     const [state, setState] = useState({
-        leagueConfigs: {}
+        leagueConfigs: {...blankConfigs}
     })
 
     const [ leagueState, dispatch ] = React.useContext(LeagueContext)
@@ -50,8 +57,15 @@ function Configuration() {
           type="text"
           value={state.leagueConfigs[config]}
           onSave={handleSave}
-          inputProps={{ name: config }}
+          inputProps={{ name: config, style: { padding: 0 } }}
           containerProps={{ style: { display: 'inline-block' } }}
+          saveButtonContent={<Check size={14} />}
+          cancelButtonContent={<X size={14} />}
+          editButtonContent={<Pencil size={14} />}
+          saveButtonClassName="btn inline-btn inline-save-btn"
+          editButtonClassName="btn inline-btn inline-edit-btn"
+          cancelButtonClassName="btn inline-btn inline-cancel-btn"
+          viewContainerClassName="inline-editor-view"
         />
       </div>
       );
@@ -62,13 +76,37 @@ function Configuration() {
         return <DbUpdater />
     return (
       <div id="main-content" className="main-content">
-        { !editExisting &&
-            <div>Please select or create a League first</div>
-        }
-        { editExisting && editor('Slack API Key', 'SLACK_API_KEY') }
-        { editExisting && editor('Competition Channel Slack ID', 'COMPETITION_CHANNEL_SLACK_ID') }
-        { editExisting && editor('Bot Slack User ID', 'BOT_SLACK_USER_ID') }
-        { editExisting && editor('Commissioner Slack ID', 'COMMISSIONER_SLACK_ID') }
+        <div className="config-content">
+          <div className="tab-header">
+            <label>Admin Configuration for League: {leagueState.selectedLeague}</label>
+          </div>
+            { !editExisting &&
+                <div>Please select or create a League first</div>
+            }
+            <div className="config-area">
+              <div className="config-box">
+                <label>Slack Configs</label>
+                { editExisting && editor('Slack API Key', 'SLACK_API_KEY') }
+                { editExisting && editor('Competition Channel Slack ID', 'COMPETITION_CHANNEL_SLACK_ID') }
+                { editExisting && editor('Bot Slack User ID', 'BOT_SLACK_USER_ID') }
+                { editExisting && editor('Commissioner Slack ID', 'COMMISSIONER_SLACK_ID') }
+              </div>
+              <div className="config-box">
+                <label>Help Configs</label>
+                { editExisting && editor('Bot Name', 'BOT_NAME') }
+                { editExisting && editor('Example Score', 'SCORE_EXAMPLE') }
+              </div>
+              <div className="config-box">
+                <label>Other Configs</label>
+                { editExisting && editor('Log Path', 'LOG_PATH') }
+              </div>
+              <div className="config-box">
+                <label>Message Configs</label>
+                { editExisting && editor('Match Message', 'MATCH_MESSAGE')}
+                { editExisting && editor('Reminder Message', 'REMINDER_MESSAGE')}
+              </div>
+            </div>
+        </div>
       </div>
     );
 }
