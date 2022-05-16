@@ -6,6 +6,7 @@ import { LeagueContext } from "../contexts/League"
 import groupBy from '../helpers.js'
 import PlayerGroup from './PlayerGroup';
 import Spinner from "../Components/Spinner"
+import DbUpdater from "../Components/DbUpdater"
 
 import './PlayerBoard2.css'
 
@@ -273,6 +274,8 @@ function PlayerBoard2() {
       return cls
     }
 
+    if (leagueState.needDbUpdate)
+        return <DbUpdater />
     return (
       <div className="groups-container">
         <div id='playerboard-legend'>

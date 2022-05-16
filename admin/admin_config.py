@@ -1,3 +1,4 @@
+import datetime
 import sqlite3
 import os
 
@@ -109,6 +110,9 @@ def add_league(league_name, server_options):
     initialize()
     for config_name, value in server_options.items():
         set_config(league_name, config_name, str(value))
+    set_config(league_name, LAST_DOWNLOADED, str(datetime.datetime.now()))
+    set_config(league_name, HAS_CONNECTED, str(False))
+    set_config(league_name, HAS_DEPLOYED, str(False))
 
 
 def get_league_configs(league_name):

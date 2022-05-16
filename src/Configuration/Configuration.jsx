@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import axios from 'axios'
 
 import { LeagueContext } from "../contexts/League"
+import DbUpdater from "../Components/DbUpdater"
 import EdiText from 'react-editext';
 import './Configuration.css'
 
@@ -57,6 +58,8 @@ function Configuration() {
     }
 
     const editExisting = leagueState.leagues.length > 0;
+    if (leagueState.needDbUpdate)
+        return <DbUpdater />
     return (
       <div id="main-content" className="main-content">
         { !editExisting &&

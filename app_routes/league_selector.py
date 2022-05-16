@@ -1,7 +1,8 @@
 from flask import Blueprint, request, jsonify
+import json
 
 from admin import admin_config, db_management, admin_context
-from backend import db
+from backend import db, configs
 
 league_selector_api = Blueprint('league_selector_api', __name__)
 
@@ -24,9 +25,21 @@ def set_current_league():
     return "Success"
 
 
+@league_selector_api.route('/get-db-update-status', methods=['GET'])
+def get_db_update_status():
+    league_name = request.args.get("leagueName", default="", type=str)
+    if not league_name:
+        return jsonify('')
+    current_version = int(db.get_config(league_name, configs.LEAGUE_VERSION))
+    latest_version = db.LATEST_VERSION
+    return jsonify({'current_version': current_version, 'latest_version': latest_version})
+
+
 @league_selector_api.route('/get-last-db-refresh', methods=['GET'])
 def get_last_db_refresh():
     league_name = request.args.get("leagueName", default="", type=str)
+    if not league_name:
+        return jsonify('')
     time_str = admin_config.get_config(league_name, admin_config.LAST_DOWNLOADED)
     return jsonify(time_str)
 

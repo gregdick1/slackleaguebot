@@ -22,6 +22,11 @@ export const reducer = (state, action) => {
         ...state,
         checkForCommandsToRun: action.checkForCommandsToRun
       }
+    case "need_db_update":
+      return {
+        ...state,
+        needDbUpdate: action.needDbUpdate
+      }
     default:
       return state
   }
@@ -33,5 +38,6 @@ export const initialState = {
   lastRefreshed: null,
   hasConnected: false,
   hasDeployed: false,
-  checkForCommandsToRun: false
+  checkForCommandsToRun: false,
+  needDbUpdate: false
 }

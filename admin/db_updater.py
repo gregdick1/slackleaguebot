@@ -1,19 +1,14 @@
 from backend import db, utility, configs
 
 
-def needs_updated(league_name):
-    current_version = db.get_config(league_name, configs.LEAGUE_VERSION)
-    if current_version is None:
-        raise Exception("Can't update a db without a version")
-    if current_version != str(db.LATEST_VERSION):  # If the db doesn't have the config, we should just error out instead
-        return True
-    return False
-
-
-# TODO figure out how to trigger this automatically on startup?
-# TODO figure out how to handle downloading a db that is out of date. This doesn't hook into the commands to push system
 def run_updates(league_name):
-    _update_from_0_to_1(league_name)
+    current_version = db.get_config(league_name, configs.LEAGUE_VERSION)
+    if current_version == '0':
+        _update_from_0_to_1(league_name)
+        current_version = '1'
+    if current_version == '1':
+        _update_from_1_to_2(league_name)
+        current_version = '2'
 
 
 # Adds the ordering index to players
@@ -46,4 +41,18 @@ def _update_from_0_to_1(league_name):
     db.set_config(league_name, configs.LEAGUE_VERSION, '1')
 
 
+# Adds the commands table
+def _update_from_1_to_2(league_name):
+    current_version = db.get_config(league_name, configs.LEAGUE_VERSION)
+    if not current_version or current_version != '1':
+        return False
 
+    conn = db.get_connection(league_name)
+    c = conn.cursor()
+    c.execute('CREATE TABLE commands_to_run ('
+              'command_id INTEGER PRIMARY KEY AUTOINCREMENT, '
+              'command_text text NOT NULL)')
+    conn.commit()
+    conn.close()
+
+    db.set_config(league_name, configs.LEAGUE_VERSION, '2')

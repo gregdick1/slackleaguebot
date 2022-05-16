@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import axios from 'axios'
 
 import { LeagueContext } from "../contexts/League"
+import DbUpdater from "../Components/DbUpdater"
 import './MarkupPrintout.css'
 
 function MarkupPrintout() {
@@ -27,8 +28,8 @@ function MarkupPrintout() {
       fetchData().catch(console.error);
     }, [leagueState.selectedLeague, leagueState.lastRefreshed, reload, season]);
 
-
-    const editExisting = leagueState.leagues.length > 0;
+    if (leagueState.needDbUpdate)
+        return <DbUpdater />
     return (
       <div id="main-content" className="main-content">
         <div className="markup-controls">

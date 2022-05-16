@@ -6,7 +6,6 @@ import './index.css';
 import AdminConfig from './AdminConfig/AdminConfig';
 import Configuration from './Configuration/Configuration';
 import App from './Reminders/App';
-import Playerboard from './Playerboard/Playerboard';
 import Playerboard2 from './Playerboard2/Playerboard2';
 import NotFound from './NotFound/NotFound'
 import Matches from './Matches/Matches';
@@ -36,10 +35,7 @@ const routing = (
               <Link className="nav-link" to="/">Reminders</Link>
             </li>
             <li className="nav-item">
-              <Link className="nav-link" to="/playerboard">Playerboard</Link>
-            </li>
-            <li className="nav-item">
-              <Link className="nav-link" to="/playerboard2">Playerboard2</Link>
+              <Link className="nav-link" to="/playerboard2">Playerboard</Link>
             </li>
             <li className="nav-item">
               <Link className="nav-link" to="/markup">Markup Printout</Link>
@@ -51,7 +47,6 @@ const routing = (
         </nav>
 
         <Route exact path="/" component={App} />
-        <Route path="/playerboard" component={Playerboard} />
         <Route path="/playerboard2" component={Playerboard2} />
         <Route path="/configuration" component={Configuration} />
         <Route path="/admin" component={AdminConfig} />

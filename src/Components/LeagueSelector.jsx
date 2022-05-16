@@ -15,17 +15,16 @@ function LeagueSelector() {
 
     useEffect(() => {
       const fetchData = async () => {
-        // get the data from the api
-        var leaguesResponse = await axios.get(`get-leagues-to-admin`);
-        var currentLeagueResponse = await axios.get('get-current-league');
-        var leagues = leaguesResponse.data;
-        var selectedLeague = currentLeagueResponse.data;
+        var leagues = (await axios.get(`get-leagues-to-admin`)).data
+        var selectedLeague = (await axios.get('get-current-league')).data
 
-        var lastRefreshedResponse = await axios.get('get-last-db-refresh', { params: { leagueName: selectedLeague }});
-        var leagueConfigsResponse = await axios.get('get-league-admin-configs', { params: { leagueName: selectedLeague }});
+        var updateStatus = (await axios.get('get-db-update-status', { params: { leagueName: selectedLeague }})).data
+        if (updateStatus.current_version < updateStatus.latest_version) {
+          dispatch({ type: 'need_db_update', needDbUpdate: true })
+        }
 
-        var lastRefreshed = lastRefreshedResponse.data;
-        var leagueConfigs = leagueConfigsResponse.data;
+        var lastRefreshed = (await axios.get('get-last-db-refresh', { params: { leagueName: selectedLeague }})).data
+        var leagueConfigs = (await axios.get('get-league-admin-configs', { params: { leagueName: selectedLeague }})).data
 
         dispatch({ type: "league_changed", selectedLeague, leagues })
         dispatch({ type: "db_refreshed", lastRefreshed})

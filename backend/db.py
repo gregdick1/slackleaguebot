@@ -2,7 +2,7 @@ import sqlite3
 import os
 import datetime
 
-LATEST_VERSION = 1
+LATEST_VERSION = 2
 
 _commands_to_run = {}
 
@@ -60,6 +60,9 @@ def initialize(league_name):
     c.execute('CREATE TABLE config ('
               'name TEXT PRIMARY KEY, '
               'value TEXT)')
+    c.execute('CREATE TABLE commands_to_run ('
+              'command_id INTEGER PRIMARY KEY AUTOINCREMENT, '
+              'command_text text NOT NULL)')
 
     conn.commit()
     conn.close()

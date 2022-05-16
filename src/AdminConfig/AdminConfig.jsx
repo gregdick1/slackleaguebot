@@ -4,6 +4,7 @@ import axios from 'axios'
 import { LeagueContext } from "../contexts/League"
 import EdiText from 'react-editext';
 import Spinner from "../Components/Spinner"
+import DbUpdater from "../Components/DbUpdater"
 
 import './AdminConfig.css'
 
@@ -141,6 +142,8 @@ function AdminConfig() {
     }
     const editExisting = leagueState.leagues.length > 0;
 
+    if (leagueState.needDbUpdate)
+        return <DbUpdater />
     return (
       <div id="main-content" className="main-content">
           <div className="new-league-inputs">

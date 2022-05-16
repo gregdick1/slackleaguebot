@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 
-from admin import admin_config, admin_context, sftp, deploy
+from admin import admin_config, admin_context, sftp, deploy, db_updater, db_management
 
 admin_api = Blueprint('admin_api', __name__)
 
@@ -50,5 +50,18 @@ def deploy_to_server():
         message = deploy.deploy_league(league_name)
         admin_config.set_config(league_name, admin_config.HAS_DEPLOYED, str(True))
         return jsonify({'success': True, 'message': message})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)})
+
+
+@admin_api.route('/update-db', methods=['POST'])
+def update_db():
+    league_name = request.get_json().get('leagueName')
+    try:
+        actx = admin_context.Context.load_from_db(league_name)
+        message = db_management.perform_update(actx)
+        if message is not None:
+            return jsonify({'success': False, 'message': message})
+        return jsonify({'success': True})
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)})
