@@ -1,26 +1,9 @@
 import sqlite3
 import os
 import datetime
+from functools import partial
 
 LATEST_VERSION = 2
-
-_commands_to_run = {}
-
-
-def get_commands_to_run(league_name):
-    if league_name not in _commands_to_run:
-        return []
-    return _commands_to_run[league_name]
-
-
-def add_command_to_run(league_name, command):
-    if league_name not in _commands_to_run:
-        _commands_to_run[league_name] = []
-    _commands_to_run[league_name].append(command)
-
-
-def clear_commands_to_run(league_name):
-    _commands_to_run[league_name] = []
 
 
 def path(league_name):
@@ -69,23 +52,60 @@ def initialize(league_name):
     set_config(league_name, 'LEAGUE_VERSION', str(LATEST_VERSION))
 
 
-def set_config(league_name, name, value):
-    command = "INSERT INTO config VALUES ('{}', '{}') " \
-              "ON CONFLICT(name) DO UPDATE SET value='{}' where name='{}'".format(name, value, value, name)
-    add_command_to_run(league_name, command)
-
+def get_commands_to_run(league_name):
     conn = get_connection(league_name)
     c = conn.cursor()
-    c.execute(command)
+    c.execute("SELECT command_id, command_text FROM commands_to_run ORDER BY command_id")
+    results = c.fetchall()
     conn.commit()
     conn.close()
+    return [x[1] for x in results]
+
+
+_tmp_commands_to_run = {}
+
+
+def add_command_to_run(league_name, command):
+    if command in ['BEGIN ', 'COMMIT']:
+        return
+    if league_name not in _tmp_commands_to_run:
+        _tmp_commands_to_run[league_name] = []
+    _tmp_commands_to_run[league_name].append(command)
+
+
+def save_commands_to_run(league_name):
+    conn = get_connection(league_name)
+    c = conn.cursor()
+    for command in _tmp_commands_to_run[league_name]:
+        c.execute("INSERT INTO commands_to_run (command_text) VALUES (?)", (command,))
+    conn.commit()
+    conn.close()
+    _tmp_commands_to_run[league_name] = []
+
+
+def clear_commands_to_run(league_name):
+    conn = get_connection(league_name)
+    c = conn.cursor()
+    c.execute("DELETE FROM commands_to_run")
+    conn.commit()
+    conn.close()
+
+
+def set_config(league_name, name, value):
+    conn = get_connection(league_name)
+    conn.set_trace_callback(partial(add_command_to_run, league_name))
+    c = conn.cursor()
+    c.execute("INSERT INTO config VALUES (?, ?) ON CONFLICT(name) DO UPDATE SET value=? where name=?", (name, value, value, name))
+    conn.commit()
+    conn.close()
+    save_commands_to_run(league_name)
 
 
 def get_config(league_name, name):
     initialize(league_name)
     conn = get_connection(league_name)
     c = conn.cursor()
-    c.execute("SELECT value FROM config WHERE name = '{}'".format(name))
+    c.execute("SELECT value FROM config WHERE name = ?", (name,))
     rows = c.fetchall()
     conn.close()
     if rows:
@@ -94,14 +114,13 @@ def get_config(league_name, name):
 
 
 def add_player(league_name, slack_id, name, grouping):
-    command = "INSERT INTO player (slack_id, name, grouping, active) VALUES ('{}', '{}', '{}', 1)".format(slack_id, name.replace("'","''"), grouping)
-    add_command_to_run(league_name, command)
-
     conn = get_connection(league_name)
+    conn.set_trace_callback(partial(add_command_to_run, league_name))
     c = conn.cursor()
-    c.execute(command)
+    c.execute("INSERT INTO player (slack_id, name, grouping, active) VALUES (?, ?, ?, 1)", (slack_id, name, grouping))
     conn.commit()
     conn.close()
+    save_commands_to_run(league_name)
 
 
 class Player:
@@ -144,7 +163,7 @@ def get_active_players(league_name):
 def get_player_by_name(league_name, name):
     conn = get_connection(league_name)
     c = conn.cursor()
-    c.execute("SELECT * FROM player WHERE name = '{}'".format(name))
+    c.execute("SELECT * FROM player WHERE name = ?", (name,))
     row = c.fetchone()
     conn.close()
     if row is None or len(row) == 0:
@@ -156,7 +175,7 @@ def get_player_by_name(league_name, name):
 def get_player_by_id(league_name, id):
     conn = get_connection(league_name)
     c = conn.cursor()
-    c.execute("SELECT * FROM player WHERE slack_id = '{}'".format(id))
+    c.execute("SELECT * FROM player WHERE slack_id = ?", (id,))
     row = c.fetchone()
     conn.close()
     if row is None or len(row) == 0:
@@ -166,62 +185,60 @@ def get_player_by_id(league_name, id):
 
 
 def update_grouping(league_name, slack_id, grouping):
-    command = "UPDATE player SET grouping='{}' WHERE slack_id = '{}'".format(grouping, slack_id)
-    add_command_to_run(league_name, command)
     conn = get_connection(league_name)
+    conn.set_trace_callback(partial(add_command_to_run, league_name))
     c = conn.cursor()
-    c.execute(command)
+    c.execute("UPDATE player SET grouping=? WHERE slack_id = ?", (grouping, slack_id))
     conn.commit()
     conn.close()
+    save_commands_to_run(league_name)
 
 
 def updating_grouping_and_orders(league_name, slack_ids, grouping):
     conn = get_connection(league_name)
+    conn.set_trace_callback(partial(add_command_to_run, league_name))
     c = conn.cursor()
-
     for idx, slack_id in enumerate(slack_ids):
-        command = "UPDATE player SET grouping='{}', order_idx={}, active=1 WHERE slack_id = '{}'".format(grouping, idx, slack_id)
-        add_command_to_run(league_name, command)
-        c.execute(command)
+        c.execute("UPDATE player SET grouping=?, order_idx=?, active=1 WHERE slack_id = ?", (grouping, idx, slack_id))
     conn.commit()
     conn.close()
+    save_commands_to_run(league_name)
 
 
 def update_player_order_idx(league_name, slack_id, order_idx):
-    command = "UPDATE player set order_idx={} WHERE slack_id = '{}'".format(order_idx, slack_id)
-    add_command_to_run(league_name, command)
     conn = get_connection(league_name)
+    conn.set_trace_callback(partial(add_command_to_run, league_name))
     c = conn.cursor()
-    c.execute(command)
+    c.execute("UPDATE player set order_idx=? WHERE slack_id = ?", (order_idx, slack_id))
     conn.commit()
     conn.close()
+    save_commands_to_run(league_name)
 
 
 def set_active(league_name, slack_id, active):
     active_int = 1 if active else 0
-    command = "UPDATE player SET active={} WHERE slack_id = '{}'".format(active_int, slack_id)
-    add_command_to_run(league_name, command)
     conn = get_connection(league_name)
+    conn.set_trace_callback(partial(add_command_to_run, league_name))
     c = conn.cursor()
-    c.execute(command)
+    c.execute("UPDATE player SET active=? WHERE slack_id = ?", (active_int, slack_id))
     conn.commit()
     conn.close()
+    save_commands_to_run(league_name)
 
 
 def add_match(league_name, player_1, player_2, week_date, grouping, season, sets_needed):
+    conn = get_connection(league_name)
+    conn.set_trace_callback(partial(add_command_to_run, league_name))
+    c = conn.cursor()
 
     if player_1 is None or player_2 is None:
         p_id = player_1.slack_id if player_1 is not None else player_2.slack_id
-        command = "INSERT INTO match (player_1, week, grouping, season, sets, sets_needed) VALUES ('{}', '{}', '{}', {}, 0, {})".format(p_id, str(week_date), grouping, season, sets_needed)
+        c.execute("INSERT INTO match (player_1, week, grouping, season, sets, sets_needed) VALUES (?, ?, ?, ?, 0, ?)", (p_id, str(week_date), grouping, season, sets_needed))
     else:
-        command = "INSERT INTO match (player_1, player_2, week, grouping, season, sets, sets_needed) VALUES ('{}', '{}', '{}', '{}', {}, 0, {})".format(player_1.slack_id, player_2.slack_id, str(week_date), grouping, season, sets_needed)
-
-    add_command_to_run(league_name, command)
-    conn = get_connection(league_name)
-    c = conn.cursor()
-    c.execute(command)
+        c.execute("INSERT INTO match (player_1, player_2, week, grouping, season, sets, sets_needed) VALUES (?, ?, ?, ?, ?, 0, ?)", (player_1.slack_id, player_2.slack_id, str(week_date), grouping, season, sets_needed))
     conn.commit()
     conn.close()
+    save_commands_to_run(league_name)
 
 
 class Match:
@@ -260,7 +277,7 @@ def get_matches(league_name):
 def get_matches_for_season(league_name, season):
     conn = get_connection(league_name)
     c = conn.cursor()
-    c.execute('SELECT rowid, * FROM match WHERE season = {}'.format(season))
+    c.execute('SELECT rowid, * FROM match WHERE season = ?', (season,))
     rows = c.fetchall()
     conn.close()
 
@@ -268,19 +285,19 @@ def get_matches_for_season(league_name, season):
 
 
 def clear_matches_for_season(league_name, season):
-    command = 'DELETE FROM match WHERE season = {}'.format(season)
-    add_command_to_run(league_name, command)
     conn = get_connection(league_name)
+    conn.set_trace_callback(partial(add_command_to_run, league_name))
     c = conn.cursor()
-    c.execute(command)
+    c.execute('DELETE FROM match WHERE season = ?', (season,))
     conn.commit()
     conn.close()
+    save_commands_to_run(league_name)
 
 
 def get_matches_for_week(league_name, week):
     conn = get_connection(league_name)
     c = conn.cursor()
-    c.execute("SELECT rowid, * FROM match WHERE week = '{}'".format(week))
+    c.execute("SELECT rowid, * FROM match WHERE week = ?", (week,))
     rows = c.fetchall()
     conn.close()
 
@@ -293,8 +310,8 @@ def get_match_by_players(league_name, player_a, player_b):
     season = get_current_season(league_name)
     conn = get_connection(league_name)
     c = conn.cursor()
-    c.execute("SELECT rowid, * FROM match WHERE season = {} and (player_1 = '{}' or player_2 = '{}') and (player_1 = '{}' or player_2 = '{}')"\
-              .format(season, player_a.slack_id, player_a.slack_id, player_b.slack_id, player_b.slack_id))
+    c.execute("SELECT rowid, * FROM match WHERE season = ? and (player_1 = ? or player_2 = ?) and (player_1 = ? or player_2 = ?)",
+              (season, player_a.slack_id, player_a.slack_id, player_b.slack_id, player_b.slack_id))
     row = c.fetchone()
     conn.close()
 
@@ -330,33 +347,25 @@ def _update_match(league_name, winner, loser, sets):
         print('Sets out of range, was {}, but must be between {} and {}'.format(sets, match.sets_needed, match.sets_needed*2-1))
         return False
 
-    command = "UPDATE match SET winner='{}', sets={}, date_played='{}' WHERE player_1 = '{}' and player_2 = '{}' and season={}"\
-              .format(winner.slack_id, sets, str(datetime.date.today()), match.player_1_id, match.player_2_id, match.season)
-    add_command_to_run(league_name, command)
     conn = get_connection(league_name)
+    conn.set_trace_callback(partial(add_command_to_run, league_name))
     c = conn.cursor()
-    c.execute(command)
+    c.execute("UPDATE match SET winner=?, sets=?, date_played=? WHERE player_1 = ? and player_2 = ? and season=?", (winner.slack_id, sets, str(datetime.date.today()), match.player_1_id, match.player_2_id, match.season))
     conn.commit()
     conn.close()
+    save_commands_to_run(league_name)
     return True
 
 
 def admin_update_match(league_name, new_match):
-    command = "UPDATE match SET " +\
-              "player_1='{}', ".format(new_match.player_1_id) +\
-              "player_2='{}', ".format(new_match.player_2_id) +\
-              ("winner='{}', ".format(new_match.winner_id) if new_match.winner_id is not None else "winner=null, ") +\
-              "week='{}', ".format(new_match.week) +\
-              "grouping='{}', ".format(new_match.grouping) +\
-              "sets={}, ".format(new_match.sets) +\
-              "sets_needed={} ".format(new_match.sets_needed) +\
-              "WHERE rowid={}".format(new_match.id)
-    add_command_to_run(league_name, command)
     conn = get_connection(league_name)
+    conn.set_trace_callback(partial(add_command_to_run, league_name))
     c = conn.cursor()
-    c.execute(command)
+    c.execute("UPDATE match SET player_1=?, player_2=?, winner=?, week=?, grouping=?, sets=?, sets_needed=? WHERE rowid=?",
+              (new_match.player_1_id, new_match.player_2_id, new_match.winner_id, new_match.week, new_match.grouping, new_match.sets, new_match.sets_needed, new_match.id))
     conn.commit()
     conn.close()
+    save_commands_to_run(league_name)
     return True
 
 

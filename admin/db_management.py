@@ -59,7 +59,7 @@ def _backup_local_and_download(context):
         raise e
 
 
-def _commit_commands_to_local(context):
+def _commit_commands_to_local(context, commands):
     db_path = os.path.join(root_path, context.db_name)
     if not os.path.exists(db_path + '.bak'):
         message = "Can't commit commands to local. The backup db doesn't exist. Expecting: "+db_path+".bak"
@@ -68,10 +68,11 @@ def _commit_commands_to_local(context):
     try:
         conn = db.get_connection(context.league_name)
         c = conn.cursor()
-        for command in db.get_commands_to_run(context.league_name):
+        for command in commands:
             c.execute(command)
         conn.commit()
         conn.close()
+        db.clear_commands_to_run(context.league_name)
     except Exception as e:
         print('Error executing commands on copy of server db. Canceling that process and restoring local db.')
         print(e)
@@ -151,13 +152,15 @@ def perform_update(context):
 def commit_commands(context):
     _ensure_no_current_backup(context)
 
+    # Get commands before refreshing db from the server
+    commands = db.get_commands_to_run(context.league_name)
     try:
         _backup_local_and_download(context)
     except Exception as e:
         return "There was an error connecting to the server. The process was rolled back. The db on the server is unchanged."
 
     try:
-        _commit_commands_to_local(context)
+        _commit_commands_to_local(context, commands)
     except Exception as e:
         return "There was an error applying the updates to the db. The process was rolled back. The db on the server is unchanged."
 

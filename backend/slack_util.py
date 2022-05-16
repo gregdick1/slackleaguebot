@@ -46,7 +46,7 @@ def get_deactivated_slack_ids(lctx):
 
 def send_match_message(lctx, message, to_user, against_user, players_dictionary, debug=True):
     if to_user is None:
-        return
+        return ''
 
     if against_user is None:
         message = 'This week, you have a bye. Relax and get some practice in.'
@@ -58,10 +58,12 @@ def send_match_message(lctx, message, to_user, against_user, players_dictionary,
 
     debug_message = message if against_user is None else message.replace(against_user, players_dictionary[against_user])
     if debug:
+        print("Debug sent to " + players_dictionary[to_user] + ": " + debug_message)
         return "Debug sent to " + players_dictionary[to_user] + ": " + debug_message
 
     if not debug:
         post_message(lctx, message, to_user)
+        print("For reals sent to " + players_dictionary[to_user] + ": " + debug_message)
         return "For reals sent to " + players_dictionary[to_user] + ": " + debug_message
 
 
@@ -74,7 +76,7 @@ def send_match_messages(lctx, message, week, debug=True):
 
     sent_messages = ""
     for match in matches:
-        if match.winner_id is None:
+        if match.winner_id is None and not match.message_sent:
             sent_messages = sent_messages + send_match_message(lctx, message, match.player_1_id, match.player_2_id, players_dictionary, debug=debug) + "\n"
             time.sleep(1.5)
 
