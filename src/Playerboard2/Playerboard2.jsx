@@ -63,7 +63,7 @@ function PlayerBoard2() {
       }
 
       fetchData().catch(console.error);
-    }, [leagueState.selectedLeague, season, reload]);
+    }, [leagueState.selectedLeague, leagueState.lastRefreshed, season, reload]);
 
     const handleGetDeactivated = () => {
       setDeactivating(true)
