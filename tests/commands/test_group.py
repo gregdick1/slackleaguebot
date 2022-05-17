@@ -28,6 +28,7 @@ class Test(TestCase):
         db.add_player(lctx.league_name, u'playerB2', 'Player B2', 'B')
         db.add_player(lctx.league_name, u'playerB3', 'Player B3', 'B')
         db.add_player(lctx.league_name, u'playerB4', 'Player B4', 'B')
+        db.add_player(lctx.league_name, u'playerB5', 'Player B5', 'B')
 
         week = datetime.date(2022, 1, 3)
         skip_weeks = []
@@ -73,6 +74,18 @@ class Test(TestCase):
 
         mock_post_message.reset_mock()
         msg = CommandMessage('GrOuP A', 'any_channel', 'any_user', 'any_timestamp')
+        group.handle_message(lctx, msg)
+        mock_post_message.assert_called_once_with(lctx, printout, 'any_channel')
+
+        # No 'Bye' player in printout
+        db.update_match_by_id(lctx.league_name, 'playerB1', 'playerB2', 5)
+        db.update_match_by_id(lctx.league_name, 'playerB1', 'playerB3', 4)
+        db.update_match_by_id(lctx.league_name, 'playerB2', 'playerB3', 3)
+        db.update_match_by_id(lctx.league_name, 'playerB5', 'playerB4', 3)
+        printout = 'Group B:\nPlayer B1 2-0 (6-3)\nPlayer B2 1-1 (5-3)\nPlayer B5 1-0 (3-0)\nPlayer B3 0-2 (1-6)\nPlayer B4 0-1 (0-3)'
+
+        mock_post_message.reset_mock()
+        msg = CommandMessage('GrOuP B', 'any_channel', 'any_user', 'any_timestamp')
         group.handle_message(lctx, msg)
         mock_post_message.assert_called_once_with(lctx, printout, 'any_channel')
         

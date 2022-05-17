@@ -23,6 +23,8 @@ def build_message_for_group(lctx, group):
     message = 'Group ' + group + ':'
 
     for p in players:
+        if p['player_id'] is None:
+            continue
         message += '\n' + utility.get_player_name(all_players, p['player_id']) + ' ' + str(p['m_w']) + '-' + str(p['m_l'])
         message += ' (' + str(p['s_w']) + '-' + str(p['s_l']) + ')'
     return message
