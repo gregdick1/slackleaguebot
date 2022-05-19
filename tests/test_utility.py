@@ -2,7 +2,8 @@ import datetime
 from unittest import TestCase
 
 import test_league_setup
-from backend import db, match_making, utility
+from backend import db, match_making, utility, configs
+from backend.league_context import LeagueContext
 
 league_name = 'test'
 
@@ -37,5 +38,16 @@ class Test(TestCase):
         self.assertEqual(results[1], {'player_id': 'playerA4', 'm_w': 2, 'm_l': 1, 's_w': 10, 's_l': 7})
         self.assertEqual(results[2], {'player_id': 'playerA3', 'm_w': 1, 'm_l': 2, 's_w': 6, 's_l': 11})
         self.assertEqual(results[3], {'player_id': 'playerA2', 'm_w': 0, 'm_l': 3, 's_w': 5, 's_l': 12})
+
+    def test_replace_message_variables(self):
+        message = 'stuff @bot_name and #competition_channel stuff'
+        db.set_config(league_name, configs.BOT_SLACK_USER_ID, 'bot_slack_id')
+        db.set_config(league_name, configs.COMPETITION_CHANNEL_SLACK_ID, 'channel_slack_id')
+        lctx = LeagueContext.load_from_db(league_name)
+
+        self.assertEqual('stuff <@bot_slack_id> and <#channel_slack_id> stuff', utility.replace_message_variables(lctx, message))
+
+        message = 'does not include any of the variables'
+        self.assertEqual(message, utility.replace_message_variables(lctx, message))
 
     # TODO test the printout function

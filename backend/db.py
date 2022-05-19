@@ -405,3 +405,47 @@ def get_all_seasons(league_name):
     seasons = [x[0] for x in rows]
     seasons.sort()
     return seasons
+
+
+def add_reminder_day(league_name, date):
+    conn = get_connection(league_name)
+    conn.set_trace_callback(partial(add_command_to_run, league_name))
+    c = conn.cursor()
+    c.execute("INSERT INTO reminder_days (date, sent) VALUES (?, 0)", (date,))
+    conn.commit()
+    conn.close()
+    save_commands_to_run(league_name)
+
+
+def remove_reminder_day(league_name, date):
+    conn = get_connection(league_name)
+    conn.set_trace_callback(partial(add_command_to_run, league_name))
+    c = conn.cursor()
+    c.execute("DELETE FROM reminder_days WHERE date=?", (date,))
+    conn.commit()
+    conn.close()
+    save_commands_to_run(league_name)
+
+
+def mark_reminder_day_sent(league_name, date):
+    conn = get_connection(league_name)
+    conn.set_trace_callback(partial(add_command_to_run, league_name))
+    c = conn.cursor()
+    c.execute("UPDATE reminder_days SET sent=1 WHERE date=?", (date,))
+    conn.commit()
+    conn.close()
+    save_commands_to_run(league_name)
+
+
+def get_reminder_days_since(league_name, date):
+    conn = get_connection(league_name)
+    c = conn.cursor()
+    c.execute("SELECT * FROM reminder_days WHERE date >= ?", (date,))
+    rows = c.fetchall()
+    conn.commit()
+    conn.close()
+    if rows is None or len(rows) == 0:
+        return []
+    reminder_dates = [{'date': x[0], 'sent': x[1]} for x in rows]
+    reminder_dates = sorted(reminder_dates, key=lambda d: d['date'])
+    return reminder_dates

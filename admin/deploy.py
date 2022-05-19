@@ -42,6 +42,23 @@ if __name__ == "__main__":
     os.remove(os.path.join(root_path, context.bot_name))
 
 
+def _create_and_deploy_run_reminders_file(context):
+    filename = 'run_reminders.py'
+    if sftp.file_exists(context, filename):
+        return True
+
+    f = open(os.path.join(root_path, filename), "w")
+    f.write("""from backend import reminders
+
+if __name__ == "__main__":
+    reminders.run_reminders('{}')
+""".format(context.league_name))
+    f.close()
+
+    sftp.upload_file(context, filename)
+    os.remove(os.path.join(root_path, filename))
+
+
 def _create_and_deploy_bot_db(context):
     db.initialize(context.league_name)
     sftp.upload_file(context, context.db_name)

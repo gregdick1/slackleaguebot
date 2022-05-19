@@ -1,4 +1,4 @@
-from backend import tie_breaker, db
+from backend import tie_breaker, db, configs
 
 
 def get_player_print(players, id, match):
@@ -127,3 +127,9 @@ def get_players_dictionary(lctx):
     for player in players:
         players_dictionary[player.slack_id] = player.name
     return players_dictionary
+
+
+def replace_message_variables(lctx, message):
+    message = message.replace('@bot_name', '<@{}>'.format(lctx.configs[configs.BOT_SLACK_USER_ID]))
+    message = message.replace('#competition_channel', '<#{}>'.format(lctx.configs[configs.COMPETITION_CHANNEL_SLACK_ID]))
+    return message
