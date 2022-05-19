@@ -1,4 +1,4 @@
-import time, datetime
+import time
 
 import slackclient
 
@@ -67,21 +67,30 @@ def send_match_message(lctx, message, to_user, against_user, players_dictionary,
         return "For reals sent to " + players_dictionary[to_user] + ": " + debug_message
 
 
-def send_match_messages(lctx, message, week, debug=True):
-    # today = datetime.datetime.today()
-    # last_monday = (today - datetime.timedelta(days=today.weekday())).date()
-
-    matches = db.get_matches_for_week(lctx.league_name, week)
+def send_match_messages(lctx, message, cutoff_date, is_reminder, debug=True):
+    season = db.get_current_season(lctx.league_name)
+    matches = db.get_matches_for_season(lctx.league_name, season)
     players_dictionary = utility.get_players_dictionary(lctx)
 
     sent_messages = ""
     for match in matches:
-        if match.winner_id is None and not match.message_sent:
-            sent_messages = sent_messages + send_match_message(lctx, message, match.player_1_id, match.player_2_id, players_dictionary, debug=debug) + "\n"
-            time.sleep(1.5)
+        if match.week > cutoff_date:
+            continue
+        if match.winner_id is not None:
+            continue
+        if is_reminder and (match.player_1_id is None or match.player_2_id is None):
+            continue
+        if not is_reminder and match.message_sent:
+            continue
 
-            sent_messages = sent_messages + send_match_message(lctx, message, match.player_2_id, match.player_1_id, players_dictionary, debug=debug) + "\n"
-            time.sleep(1.5)
+        sent_messages = sent_messages + send_match_message(lctx, message, match.player_1_id, match.player_2_id, players_dictionary, debug=debug) + "\n"
+        time.sleep(1.5)
+
+        sent_messages = sent_messages + send_match_message(lctx, message, match.player_2_id, match.player_1_id, players_dictionary, debug=debug) + "\n"
+        time.sleep(1.5)
+        if not is_reminder:
+            match.message_sent = 1
+            db.admin_update_match(lctx.league_name, match)
 
     return sent_messages
 

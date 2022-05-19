@@ -245,6 +245,8 @@ class Test(TestCase):
         match.grouping = 'B'
         match.sets = 9
         match.sets_needed = 1
+        match.date_played = datetime.date(2021, 2, 2)
+        match.message_sent = 1
 
         num_commands = len(db.get_commands_to_run(league_name))
         db.admin_update_match(league_name, match)
@@ -257,6 +259,8 @@ class Test(TestCase):
         self.assertEqual('B', updatedMatch.grouping)
         self.assertEqual(9, updatedMatch.sets)
         self.assertEqual(1, updatedMatch.sets_needed)
+        self.assertEqual(datetime.date(2021, 2, 2), updatedMatch.date_played)
+        self.assertEqual(1, updatedMatch.message_sent)
 
     def test_get_all_seasons(self):
         db.add_player(league_name, u'testplayer1', 'Test Player1', 'A')

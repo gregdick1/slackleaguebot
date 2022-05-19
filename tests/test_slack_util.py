@@ -75,17 +75,26 @@ class Test(TestCase):
     @patch.object(slack_util, 'send_match_message')
     def test_send_match_messages(self, mock_send_match_message, mock_time_sleep):
         week = datetime.date(2022, 1, 3)
-        slack_util.send_match_messages(lctx, 'Match Message @against_user', week, debug=False)
+        slack_util.send_match_messages(lctx, 'Match Message @against_user', week, False, debug=False)
         mock_send_match_message.assert_not_called()
 
         skip_weeks = []
         match_making.create_matches_for_season(lctx.league_name, week, 1, skip_weeks, False)
-        matches = db.get_matches_for_week(lctx.league_name, week)
 
         mock_send_match_message.reset_mock()
         message = 'Match Message @against_user'
-        slack_util.send_match_messages(lctx, message, week, debug=True)
+
+        # Call with too early of a date
+        early = week - datetime.timedelta(days=1)
+        slack_util.send_match_messages(lctx, message, early, False, debug=True)
+        mock_send_match_message.assert_not_called()
+        slack_util.send_match_messages(lctx, message, early, True, debug=True)
+        mock_send_match_message.assert_not_called()
+
+        # Call day of, should set message_sent
+        slack_util.send_match_messages(lctx, message, week, False, debug=True)
         pd = utility.get_players_dictionary(lctx)
+        matches = db.get_matches_for_week(lctx.league_name, week)
         calls = [
             call(lctx, message, matches[0].player_1_id, matches[0].player_2_id, pd, debug=True),
             call(lctx, message, matches[0].player_2_id, matches[0].player_1_id, pd, debug=True),
@@ -96,6 +105,19 @@ class Test(TestCase):
         ]
         mock_send_match_message.assert_has_calls(calls, any_order=True)
         self.assertEqual(6, mock_send_match_message.call_count)
+        self.assertEqual([1, 1, 1], [x.message_sent for x in matches])
+
+        # Call again, non-reminders don't send, reminders do
+        mock_send_match_message.reset_mock()
+        slack_util.send_match_messages(lctx, message, week, False, debug=True)
+        mock_send_match_message.assert_not_called()
+        slack_util.send_match_messages(lctx, message, week, True, debug=True)
+        self.assertEqual(6, mock_send_match_message.call_count)
+
+        # Call in the future
+        mock_send_match_message.reset_mock()
+        slack_util.send_match_messages(lctx, message, week, True, debug=True)
+        self.assertEqual(6, mock_send_match_message.call_count)
 
     @patch('time.sleep', return_value=None)
     @patch.object(slack_util, 'send_match_message')
@@ -104,11 +126,12 @@ class Test(TestCase):
         skip_weeks = []
         db.add_player(lctx.league_name, 'playerA6', 'Player A6', 'A')
         match_making.create_matches_for_season(lctx.league_name, week, 1, skip_weeks, True)
-        matches = db.get_matches_for_week(lctx.league_name, week)
 
         message = 'Match Message @against_user'
-        slack_util.send_match_messages(lctx, message, week, debug=False)
+        # Future call, should still find matches to send non-reminders
+        slack_util.send_match_messages(lctx, message, week + datetime.timedelta(days=1), False, debug=False)
         pd = utility.get_players_dictionary(lctx)
+        matches = db.get_matches_for_week(lctx.league_name, week)
         calls = [
             call(lctx, message, matches[0].player_1_id, None, pd, debug=False),
             call(lctx, message, None, matches[0].player_1_id, pd, debug=False),
@@ -121,6 +144,12 @@ class Test(TestCase):
         ]
         mock_send_match_message.assert_has_calls(calls, any_order=True)
         self.assertEqual(8, mock_send_match_message.call_count)
+        self.assertEqual([1, 1, 1, 1], [x.message_sent for x in matches])
+
+        # Call again, no reminders for bye match
+        mock_send_match_message.reset_mock()
+        slack_util.send_match_messages(lctx, message, week, True, debug=True)
+        self.assertEqual(6, mock_send_match_message.call_count)
 
     @patch('time.sleep', return_value=None)
     @patch.object(slack_util, 'post_message')
