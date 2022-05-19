@@ -88,7 +88,7 @@ def send_match_messages(lctx, message, cutoff_date, is_reminder, debug=True):
 
         sent_messages = sent_messages + send_match_message(lctx, message, match.player_2_id, match.player_1_id, players_dictionary, debug=debug) + "\n"
         time.sleep(1.5)
-        if not is_reminder:
+        if not is_reminder and not debug:
             match.message_sent = 1
             db.admin_update_match(lctx.league_name, match)
 

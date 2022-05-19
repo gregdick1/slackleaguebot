@@ -25,4 +25,5 @@ def run_reminders(league_name):
     slack_util.send_match_messages(lctx, new_match_message, today, is_reminder=False, debug=debug)
     slack_util.send_match_messages(lctx, reminder_message, yesterday, is_reminder=True, debug=debug)
     slack_util.post_message(lctx, 'Cron Job Reminders Sent', lctx.configs[configs.COMMISSIONER_SLACK_ID])
-    db.mark_reminder_day_sent(league_name, today)
+    if not debug:
+        db.mark_reminder_day_sent(league_name, today)
