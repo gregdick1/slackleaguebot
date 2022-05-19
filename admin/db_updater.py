@@ -9,6 +9,9 @@ def run_updates(league_name):
     if current_version == '1':
         _update_from_1_to_2(league_name)
         current_version = '2'
+    if current_version == '2':
+        _update_from_2_to_3(league_name)
+        current_version = '3'
 
 
 # Adds the ordering index to players
@@ -56,3 +59,20 @@ def _update_from_1_to_2(league_name):
     conn.close()
 
     db.set_config(league_name, configs.LEAGUE_VERSION, '2')
+
+
+# Adds the reminder days table
+def _update_from_2_to_3(league_name):
+    current_version = db.get_config(league_name, configs.LEAGUE_VERSION)
+    if not current_version or current_version != '2':
+        return False
+
+    conn = db.get_connection(league_name)
+    c = conn.cursor()
+    c.execute('CREATE TABLE reminder_days ('
+              'date DATE, '
+              'sent INT)')
+    conn.commit()
+    conn.close()
+
+    db.set_config(league_name, configs.LEAGUE_VERSION, '3')

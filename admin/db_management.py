@@ -122,13 +122,15 @@ def perform_update(context):
 
     has_deployed = admin_config.get_config(context.league_name, admin_config.HAS_DEPLOYED) == 'True'
     if has_deployed:
+        # Get commands before refreshing db from the server
+        commands = db.get_commands_to_run(context.league_name)
         try:
             _backup_local_and_download(context)
         except Exception as e:
             return "There was an error connecting to the server. The process was rolled back. The db on the server is unchanged."
 
         try:
-            _commit_commands_to_local(context)
+            _commit_commands_to_local(context, commands)
         except Exception as e:
             return "There was an error applying the updates to the db. The process was rolled back. The db on the server is unchanged."
     else:

@@ -4,7 +4,7 @@ import datetime
 from functools import partial
 from backend import configs
 
-LATEST_VERSION = 2
+LATEST_VERSION = 3
 
 
 def path(league_name):
@@ -47,6 +47,9 @@ def initialize(league_name):
     c.execute('CREATE TABLE commands_to_run ('
               'command_id INTEGER PRIMARY KEY AUTOINCREMENT, '
               'command_text text NOT NULL)')
+    c.execute('CREATE TABLE reminder_days ('
+              'date DATE, '
+              'sent INT)')
 
     conn.commit()
     conn.close()
