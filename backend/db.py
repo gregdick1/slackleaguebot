@@ -370,6 +370,16 @@ def _update_match(league_name, winner, loser, sets):
     return True
 
 
+def clear_score_for_match(league_name, match_id):
+    conn = get_connection(league_name)
+    conn.set_trace_callback(partial(add_command_to_run, league_name))
+    c = conn.cursor()
+    c.execute("UPDATE match SET winner=?, sets=?, date_played=? WHERE rowid=?", (None, 0, None, match_id))
+    conn.commit()
+    conn.close()
+    save_commands_to_run(league_name)
+
+
 def admin_update_match(league_name, new_match):
     conn = get_connection(league_name)
     conn.set_trace_callback(partial(add_command_to_run, league_name))

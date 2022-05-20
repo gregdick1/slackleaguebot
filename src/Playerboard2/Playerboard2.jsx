@@ -4,7 +4,6 @@ import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 
 import { LeagueContext } from "../contexts/League"
 import groupBy from '../helpers.js'
-import PlayerGroup from './PlayerGroup';
 import Spinner from "../Components/Spinner"
 import DbUpdater from "../Components/DbUpdater"
 
@@ -39,11 +38,11 @@ function PlayerBoard2() {
           seasonToLoad = seasons[seasons.length-1]
           setSeason(seasonToLoad)
         }
-        let seasonPlayers = (await axios.get(`get-players-from-season`,
+        let players = (await axios.get(`get-players-from-season`,
             { params: { leagueName: leagueState.selectedLeague, season: seasonToLoad } })).data
         let allPlayers = (await axios.get(`get-all-players`, { params: { leagueName: leagueState.selectedLeague } })).data
 
-        setSeasonPlayers(seasonPlayers)
+        setSeasonPlayers(players)
 
         const inactivePlayers = allPlayers.filter((p) => p.grouping === '');
         inactivePlayers.sort((a,b) => a.name > b.name ? 1 : ((a.name < b.name) ? -1 : 0))
@@ -144,7 +143,7 @@ function PlayerBoard2() {
 
         //Moved a person
         if (result.draggableId.length > 1) {
-          let movedPlayer = result.source.droppableId == 'active' ?
+          let movedPlayer = result.source.droppableId === 'active' ?
             orderedActivePlayersAndMarkers.filter(p => p.slack_id === result.draggableId)[0] :
             inactivePlayers.filter(p => p.slack_id === result.draggableId)[0]
 
@@ -160,14 +159,14 @@ function PlayerBoard2() {
           let sourceGroup = ''
           let destinationGroup = ''
           for (var [i, slack_id] of playersAndGroups.map(p => p.slack_id).entries()) {
-            if (movedDown && slack_id.length == 1) currentGroup = slack_id
-            if (i == result.source.index) sourceGroup = currentGroup;
-            if (i == result.destination.index) destinationGroup = currentGroup;
-            if (!movedDown && slack_id.length == 1) currentGroup = slack_id
+            if (movedDown && slack_id.length === 1) currentGroup = slack_id
+            if (i === result.source.index) sourceGroup = currentGroup;
+            if (i === result.destination.index) destinationGroup = currentGroup;
+            if (!movedDown && slack_id.length === 1) currentGroup = slack_id
           }
 
           let newSpot = result.destination.index + (movedDown ? 1 : 0)
-          if (result.source.droppableId == 'active') {
+          if (result.source.droppableId === 'active') {
             if (movedDown) { //moved a player down the list'
               playersAndGroups.splice(newSpot, 0, movedPlayer) //add player in the new position
               playersAndGroups.splice(result.source.index, 1) //remove player from the original spot
@@ -183,7 +182,7 @@ function PlayerBoard2() {
           let groups = {}
           currentGroup = ''
           for (var [i, slack_id] of playersAndGroups.map(p => p.slack_id).entries()) {
-            if (slack_id.length == 1) { //it's a group
+            if (slack_id.length === 1) { //it's a group
               currentGroup = slack_id
               groups[currentGroup] = []
             } else {
@@ -226,7 +225,7 @@ function PlayerBoard2() {
     }
 
     const onReturn = (e) => {
-        if(e.keyCode == 13){
+        if(e.keyCode === 13){
             addPlayer(e.target.value)
             setAddPlayerName("")
             setAddingPlayer(false)

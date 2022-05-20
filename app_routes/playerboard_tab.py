@@ -159,7 +159,10 @@ def get_ranked_players(league_name=None, season=None):
         players = utility.gather_scores(group_matches)
 
         for player in players:
-            name = [p.name for p in all_players if p.slack_id == player['player_id']][0]
+            if player['player_id'] is None:
+                continue
+
+            name = [p.name for p in all_players if p.slack_id is not None and p.slack_id == player['player_id']][0]
             return_players.append(
                 {
                     'name': name,

@@ -4,7 +4,6 @@
 }
 
 .match-group {
-    display: flex;
     font-weight: bold;
     align-items: center;
 }
@@ -21,4 +20,37 @@
 
 .modal-body {
     color: #000;
+}
+
+.matches-container {
+  font-size: 14px;
+}
+.group-row {
+  display: flex;
+}
+
+.group-week {
+    font-size: 0.7rem;
+    display: flex;
+    background-color: #dfdfdf;
+    flex-direction: column;
+    color: black;
+    padding: 5px;
+    margin: 5px;
+    border-radius: 4px;
+    min-width: 170px;
+}
+
+.week-title {
+    display: flex;
+    justify-content: space-between;
+    font-weight: bold;
+}
+.week-grip {
+    cursor: grab;
+}
+.match-box {
+    padding: 5px;
+    border-radius: 4px;
+    margin: 2px 2px;
 }

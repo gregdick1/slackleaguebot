@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-
+import { Envelope, EnvelopeCheck } from 'react-bootstrap-icons';
 import './MatchDisplay.css'
 
 function MatchDisplay({ match, allPlayers }) {
@@ -24,7 +24,17 @@ function MatchDisplay({ match, allPlayers }) {
     }
     return (
         <div className="match-item">
-            <div className="match-group">{match.grouping}</div>
+            <div className="match-group">
+                <div>{match.grouping}</div>
+                <div>
+                    {match.message_sent === 1 &&
+                        <EnvelopeCheck size={14} style={{color:'green'}} />
+                    }
+                    {match.message_sent !== 1 &&
+                        <Envelope size={14} />
+                    }
+                </div>
+            </div>
             <div>
                 <div>{p_name(match.player_1_id)}</div>
                 <div>{p_name(match.player_2_id)}</div>
