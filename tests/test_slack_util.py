@@ -75,8 +75,9 @@ class Test(TestCase):
     @patch.object(slack_util, 'send_match_message')
     def test_send_match_messages(self, mock_send_match_message, mock_time_sleep):
         week = datetime.date(2022, 1, 3)
-        slack_util.send_match_messages(lctx, 'Match Message @against_user', week, False, debug=False)
+        ids = slack_util.send_match_messages(lctx, 'Match Message @against_user', week, False, [], debug=False)
         mock_send_match_message.assert_not_called()
+        self.assertEqual(0, len(ids))
 
         skip_weeks = []
         match_making.create_matches_for_season(lctx.league_name, week, 1, skip_weeks, False)
@@ -86,13 +87,13 @@ class Test(TestCase):
 
         # Call with too early of a date
         early = week - datetime.timedelta(days=1)
-        slack_util.send_match_messages(lctx, message, early, False, debug=True)
+        slack_util.send_match_messages(lctx, message, early, False, [], debug=True)
         mock_send_match_message.assert_not_called()
-        slack_util.send_match_messages(lctx, message, early, True, debug=True)
+        slack_util.send_match_messages(lctx, message, early, True, [], debug=True)
         mock_send_match_message.assert_not_called()
 
         # Call day of, should set message_sent
-        slack_util.send_match_messages(lctx, message, week, False, debug=True)
+        ids = slack_util.send_match_messages(lctx, message, week, False, [], debug=True)
         pd = utility.get_players_dictionary(lctx)
         matches = db.get_matches_for_week(lctx.league_name, week)
         calls = [
@@ -104,20 +105,47 @@ class Test(TestCase):
             call(lctx, message, matches[2].player_2_id, matches[2].player_1_id, pd, debug=True)
         ]
         mock_send_match_message.assert_has_calls(calls, any_order=True)
+        self.assertEqual(3, len(ids))
+        self.assertEqual(6, mock_send_match_message.call_count)
+        self.assertEqual([0, 0, 0], [x.message_sent for x in matches])  # Doesn't set this on debug=true
+
+        mock_send_match_message.reset_mock()
+        ids = slack_util.send_match_messages(lctx, message, week, False, [], debug=False)
+        matches = db.get_matches_for_week(lctx.league_name, week)
+        self.assertEqual(3, len(ids))
         self.assertEqual(6, mock_send_match_message.call_count)
         self.assertEqual([1, 1, 1], [x.message_sent for x in matches])
 
         # Call again, non-reminders don't send, reminders do
         mock_send_match_message.reset_mock()
-        slack_util.send_match_messages(lctx, message, week, False, debug=True)
+        ids = slack_util.send_match_messages(lctx, message, week, False, [], debug=True)
         mock_send_match_message.assert_not_called()
-        slack_util.send_match_messages(lctx, message, week, True, debug=True)
+        self.assertEqual(0, len(ids))
+        ids = slack_util.send_match_messages(lctx, message, week, True, [], debug=True)
+        self.assertEqual(3, len(ids))
         self.assertEqual(6, mock_send_match_message.call_count)
 
         # Call in the future
         mock_send_match_message.reset_mock()
-        slack_util.send_match_messages(lctx, message, week, True, debug=True)
+        ids = slack_util.send_match_messages(lctx, message, week, True, [], debug=True)
+        self.assertEqual(3, len(ids))
         self.assertEqual(6, mock_send_match_message.call_count)
+
+    @patch('time.sleep', return_value=None)
+    @patch.object(slack_util, 'send_match_message')
+    def test_send_match_messages_and_reminders(self, mock_send_match_message, mock_time_sleep):
+        week = datetime.date(2022, 1, 3)
+        skip_weeks = []
+        match_making.create_matches_for_season(lctx.league_name, week, 1, skip_weeks, True)
+
+        message = 'Match Message @against_user'
+        sent_match_ids = slack_util.send_match_messages(lctx, message, week+datetime.timedelta(days=1), False, [], False)
+        self.assertEqual(3, len(sent_match_ids))
+        reminder_match_ids = slack_util.send_match_messages(lctx, message, week+datetime.timedelta(days=1), True, sent_match_ids, False)
+        self.assertEqual(0, len(reminder_match_ids))
+
+        reminder_match_ids = slack_util.send_match_messages(lctx, message, week + datetime.timedelta(days=1), True, [], False)
+        self.assertEqual(3, len(reminder_match_ids))
 
     @patch('time.sleep', return_value=None)
     @patch.object(slack_util, 'send_match_message')
@@ -129,7 +157,7 @@ class Test(TestCase):
 
         message = 'Match Message @against_user'
         # Future call, should still find matches to send non-reminders
-        slack_util.send_match_messages(lctx, message, week + datetime.timedelta(days=1), False, debug=False)
+        slack_util.send_match_messages(lctx, message, week + datetime.timedelta(days=1), False, [], debug=False)
         pd = utility.get_players_dictionary(lctx)
         matches = db.get_matches_for_week(lctx.league_name, week)
         calls = [
@@ -148,7 +176,7 @@ class Test(TestCase):
 
         # Call again, no reminders for bye match
         mock_send_match_message.reset_mock()
-        slack_util.send_match_messages(lctx, message, week, True, debug=True)
+        slack_util.send_match_messages(lctx, message, week, True, [], debug=True)
         self.assertEqual(6, mock_send_match_message.call_count)
 
     @patch('time.sleep', return_value=None)

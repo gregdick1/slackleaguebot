@@ -22,8 +22,10 @@ def run_reminders(league_name):
     new_match_message = utility.replace_message_variables(lctx, lctx.configs[configs.MATCH_MESSAGE])
     reminder_message = utility.replace_message_variables(lctx, lctx.configs[configs.REMINDER_MESSAGE])
 
-    slack_util.send_match_messages(lctx, new_match_message, today, is_reminder=False, debug=debug)
-    slack_util.send_match_messages(lctx, reminder_message, yesterday, is_reminder=True, debug=debug)
-    slack_util.post_message(lctx, 'Cron Job Reminders Sent', lctx.configs[configs.COMMISSIONER_SLACK_ID])
+    sent_match_ids = slack_util.send_match_messages(lctx, new_match_message, today, False, [], debug=debug)
+    sent_reminder_ids = slack_util.send_match_messages(lctx, reminder_message, yesterday, True, sent_match_ids, debug=debug)
+    slack_util.post_message(lctx,
+                            'Cron Job Reminders Sent: {} Match Messages, {} Reminder Messages'.format(len(sent_match_ids), len(sent_reminder_ids)),
+                            lctx.configs[configs.COMMISSIONER_SLACK_ID])
     if not debug:
         db.mark_reminder_day_sent(league_name, today)

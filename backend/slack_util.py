@@ -67,13 +67,15 @@ def send_match_message(lctx, message, to_user, against_user, players_dictionary,
         return "For reals sent to " + players_dictionary[to_user] + ": " + debug_message
 
 
-def send_match_messages(lctx, message, cutoff_date, is_reminder, debug=True):
+def send_match_messages(lctx, message, cutoff_date, is_reminder, skip_matches, debug=True):
     season = db.get_current_season(lctx.league_name)
     matches = db.get_matches_for_season(lctx.league_name, season)
     players_dictionary = utility.get_players_dictionary(lctx)
 
-    sent_messages = ""
+    sent_matches = []
     for match in matches:
+        if match.id in skip_matches:
+            continue
         if match.week > cutoff_date:
             continue
         if match.winner_id is not None:
@@ -83,16 +85,17 @@ def send_match_messages(lctx, message, cutoff_date, is_reminder, debug=True):
         if not is_reminder and match.message_sent:
             continue
 
-        sent_messages = sent_messages + send_match_message(lctx, message, match.player_1_id, match.player_2_id, players_dictionary, debug=debug) + "\n"
+        send_match_message(lctx, message, match.player_1_id, match.player_2_id, players_dictionary, debug=debug)
         time.sleep(1.5)
 
-        sent_messages = sent_messages + send_match_message(lctx, message, match.player_2_id, match.player_1_id, players_dictionary, debug=debug) + "\n"
+        send_match_message(lctx, message, match.player_2_id, match.player_1_id, players_dictionary, debug=debug)
         time.sleep(1.5)
+        sent_matches.append(match.id)
         if not is_reminder and not debug:
             match.message_sent = 1
             db.admin_update_match(lctx.league_name, match)
 
-    return sent_messages
+    return sent_matches
 
 
 def send_custom_messages(lctx, message, debug=True):
