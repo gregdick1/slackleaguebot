@@ -110,7 +110,7 @@ def get_leaderboard(lctx, matches_or_sets, sortby, active_only, reverse_order=Tr
 
     winrate_dict = dict()
     for player_id, player in player_dict.items():
-        if sortby == 'winrate' and player['matches_total'] < 20:
+        if sortby.upper() == 'WINRATE' and player['matches_total'] < 20:
             continue
         if active_only and player['is_active'] != 1:
             continue

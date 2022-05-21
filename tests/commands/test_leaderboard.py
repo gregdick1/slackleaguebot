@@ -119,6 +119,7 @@ class Test(TestCase):
         for top_player in list(result):
             self.assertGreaterEqual(last_result, result[top_player]['matches_winrate'])
             last_result = result[top_player]['matches_winrate']
+        self.assertEqual(4, len(list(result)))  # Only A1,B1,C1,D1 have at least 20 matches
 
         result = leaderboard.get_leaderboard(lctx, 'SETS', 'WON', True)
         last_result = 999999999
@@ -137,6 +138,7 @@ class Test(TestCase):
         for top_player in list(result):
             self.assertGreaterEqual(last_result, result[top_player]['games_winrate'])
             last_result = result[top_player]['games_winrate']
+        self.assertEqual(4, len(list(result)))  # Only A1,B1,C1,D1 have at least 20 matches
 
         db.set_active(lctx.league_name, 'playerD1', False)
         result = leaderboard.get_leaderboard(lctx, 'MATCHES', 'WON', True)
@@ -182,3 +184,4 @@ class Test(TestCase):
             msg = CommandMessage(case[0] + ' all', 'channel', 'any_user', 'any_timestamp')
             leaderboard.handle_message(lctx, msg)
             mock_post_message.assert_called_once_with(lctx, leaderboard.build_post(leaderboard.get_leaderboard(lctx, case[1], case[2], False), case[1], case[2]), 'channel')
+
