@@ -1,10 +1,28 @@
-from flask import Blueprint, request
+from flask import Blueprint, request, jsonify
 
 from admin import admin_config
-from backend import slack_util
+from backend import slack_util, db, reminders
 from backend.league_context import LeagueContext
 
 messages_api = Blueprint('messages_api', __name__)
+
+
+@messages_api.route('/get-reminder-days', methods=['GET'])
+def get_reminder_days():
+    league_name = request.args.get("leagueName", default="", type=str)
+    season = request.args.get("season", default="", type=int)
+    reminder_days = db.get_reminder_days_for_season(league_name, season)
+    return jsonify(reminder_days)
+
+
+@messages_api.route('/update-reminder-days', methods=['POST'])
+def update_reminder_days():
+    data = request.get_json()
+    league_name = data.get("leagueName")
+    season = data.get("season")
+    dates = data.get("dates")
+    reminders.update_reminders_days(league_name, season, dates)
+    return "Success"
 
 
 # TODO download the db before sending messages

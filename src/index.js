@@ -5,7 +5,7 @@ import { Route, Link, HashRouter as Router } from 'react-router-dom'
 import './index.css';
 import AdminConfig from './AdminConfig/AdminConfig';
 import Configuration from './Configuration/Configuration';
-import App from './Reminders/App';
+import Reminders from './Reminders/Reminders';
 import Playerboard2 from './Playerboard2/Playerboard2';
 import NotFound from './NotFound/NotFound'
 import Matches from './Matches/Matches';
@@ -46,7 +46,7 @@ const routing = (
           </ul>
         </nav>
 
-        <Route exact path="/" component={App} />
+        <Route exact path="/" component={Reminders} />
         <Route path="/playerboard2" component={Playerboard2} />
         <Route path="/configuration" component={Configuration} />
         <Route path="/admin" component={AdminConfig} />

@@ -341,35 +341,35 @@ class Test(TestCase):
     def test_add_reminder_day(self):
         num_commands = len(db.get_commands_to_run(league_name))
         date = datetime.date(2022, 1, 1)
-        db.add_reminder_day(league_name, date)
+        db.add_reminder_day(league_name, 3, date)
         self.assertEqual(1, len(db.get_commands_to_run(league_name)) - num_commands)
-        self.assertEqual([{'date': date, 'sent': 0}], db.get_reminder_days_since(league_name, date))
+        self.assertEqual([{'date': date, 'season': 3, 'sent': 0}], db.get_reminder_days_since(league_name, 3, date))
 
-        self.assertEqual(0, len(db.get_reminder_days_since(league_name, date + datetime.timedelta(days=1))))
+        self.assertEqual(0, len(db.get_reminder_days_since(league_name, 3, date + datetime.timedelta(days=1))))
 
     def test_remove_reminder_day(self):
         date = datetime.date(2022, 1, 1)
-        db.add_reminder_day(league_name, date)
-        db.add_reminder_day(league_name, date + datetime.timedelta(weeks=1))
-        db.add_reminder_day(league_name, date + datetime.timedelta(weeks=2))
+        db.add_reminder_day(league_name, 3, date)
+        db.add_reminder_day(league_name, 3, date + datetime.timedelta(weeks=1))
+        db.add_reminder_day(league_name, 3, date + datetime.timedelta(weeks=2))
 
         num_commands = len(db.get_commands_to_run(league_name))
-        db.remove_reminder_day(league_name, date+datetime.timedelta(weeks=1))
+        db.remove_reminder_day(league_name, 3, date+datetime.timedelta(weeks=1))
         self.assertEqual(1, len(db.get_commands_to_run(league_name)) - num_commands)
-        self.assertEqual([{'date': date, 'sent': 0}, {'date': date + datetime.timedelta(weeks=2), 'sent': 0}],
-                         db.get_reminder_days_since(league_name, datetime.date(1970, 1, 1)))
+        self.assertEqual([{'date': date, 'season': 3, 'sent': 0}, {'date': date + datetime.timedelta(weeks=2), 'season': 3, 'sent': 0}],
+                         db.get_reminder_days_since(league_name, 3, datetime.date(1970, 1, 1)))
 
     def test_mark_reminder_day_sent(self):
         date = datetime.date(2022, 1, 1)
-        db.add_reminder_day(league_name, date)
-        db.add_reminder_day(league_name, date + datetime.timedelta(weeks=1))
-        db.add_reminder_day(league_name, date + datetime.timedelta(weeks=2))
+        db.add_reminder_day(league_name, 3, date)
+        db.add_reminder_day(league_name, 3, date + datetime.timedelta(weeks=1))
+        db.add_reminder_day(league_name, 3, date + datetime.timedelta(weeks=2))
 
         num_commands = len(db.get_commands_to_run(league_name))
-        db.mark_reminder_day_sent(league_name, date + datetime.timedelta(weeks=1))
+        db.mark_reminder_day_sent(league_name, 3, date + datetime.timedelta(weeks=1))
         self.assertEqual(1, len(db.get_commands_to_run(league_name)) - num_commands)
-        self.assertEqual([{'date': date, 'sent': 0}, {'date': date + datetime.timedelta(weeks=1), 'sent': 1}, {'date': date + datetime.timedelta(weeks=2), 'sent': 0}],
-                         db.get_reminder_days_since(league_name, datetime.date(1970, 1, 1)))
+        self.assertEqual([{'date': date, 'season': 3, 'sent': 0}, {'date': date + datetime.timedelta(weeks=1), 'season': 3, 'sent': 1}, {'date': date + datetime.timedelta(weeks=2), 'season': 3, 'sent': 0}],
+                         db.get_reminder_days_since(league_name, 3, datetime.date(1970, 1, 1)))
 
     def test_clear_score_for_match(self):
         db.add_player(league_name, u'testplayer1', 'Test Player1', 'A')
