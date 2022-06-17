@@ -6,6 +6,7 @@ from backend import configs, slack_util, utility, db
 from backend.league_context import LeagueContext
 
 
+# dates is iso format strings of datetimes, not date objects
 def update_reminders_days(league_name, season, dates):
     date_objs = [datetime.datetime.fromisoformat(x[:-1]).date() for x in dates]  # Remove the Z from the end
     existing = [x['date'] for x in db.get_reminder_days_for_season(league_name, season)]
@@ -21,8 +22,7 @@ def update_reminders_days(league_name, season, dates):
         db.remove_reminder_day(league_name, season, date)
 
 
-def run_reminders(league_name):
-    debug = True  # Keep true until we verify this works
+def run_reminders(league_name, debug=True):
     lctx = LeagueContext.load_from_db(league_name)
 
     today = datetime.date.today()
@@ -41,7 +41,7 @@ def run_reminders(league_name):
     sent_match_ids = slack_util.send_match_messages(lctx, new_match_message, today, False, [], debug=debug)
     sent_reminder_ids = slack_util.send_match_messages(lctx, reminder_message, yesterday, True, sent_match_ids, debug=debug)
     slack_util.post_message(lctx,
-                            'Cron Job Reminders Sent: {} Match Messages, {} Reminder Messages'.format(len(sent_match_ids), len(sent_reminder_ids)),
+                            'Cron Job Reminders Sent: {} Match Messages, {} Reminder Messages, Debug={}'.format(len(sent_match_ids), len(sent_reminder_ids), debug),
                             lctx.configs[configs.COMMISSIONER_SLACK_ID])
     if not debug:
         db.mark_reminder_day_sent(league_name, season, today)

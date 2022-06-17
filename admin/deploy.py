@@ -51,7 +51,7 @@ def _create_and_deploy_run_reminders_file(context):
     f.write("""from backend import reminders
 
 if __name__ == "__main__":
-    reminders.run_reminders('{}')
+    reminders.run_reminders('{}', False)
 """.format(context.league_name))
     f.close()
 

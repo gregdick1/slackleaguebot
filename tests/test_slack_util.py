@@ -127,7 +127,7 @@ class Test(TestCase):
 
         # Call in the future
         mock_send_match_message.reset_mock()
-        ids = slack_util.send_match_messages(lctx, message, week, True, [], debug=True)
+        ids = slack_util.send_match_messages(lctx, message, week+datetime.timedelta(days=1), True, [], debug=True)
         self.assertEqual(3, len(ids))
         self.assertEqual(6, mock_send_match_message.call_count)
 
