@@ -1,20 +1,33 @@
+.reminders-container {
+  font-size: 14px;
+  display: flex;
+}
+.reminders-controls {
+  margin: 15px;
+  max-width: 390px;
+}
+.reminder-instructions {
+  font-size: 10px;
+}
+.custom-title {
+  margin: 15px;
+}
+
 #button-wrapper {
   display: flex;
   flex-direction: row;
   align-items: center;
-  justify-content: center;
 }
 
 #submit-options {
   display: flex;
   flex-direction: row;
-  justify-content: center;
+  margin: 15px 15px;
 }
 
 .textarea-wrapper, .response-textarea-wrapper {
   display: flex;
-  justify-content: center;
-  margin: 20px 20px;
+  margin: 15px 15px;
 }
 
 .textarea-wrapper textarea {
@@ -38,8 +51,9 @@
 }
 
 .response-textarea-wrapper textarea {
-  width: 90vw;
+  width: 56vw;
   font-family: monospace;
+  font-size: 12px;
   white-space: pre;
   transition: 0.5s ease;
 }
@@ -52,4 +66,9 @@
 }
 div.rmdp-panel {
   min-width: 140px;
+}
+button.btn-trigger-reminders {
+  padding: 3px;
+  margin: 5px;
+  font-size: 12px;
 }

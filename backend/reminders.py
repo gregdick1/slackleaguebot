@@ -22,14 +22,15 @@ def update_reminders_days(league_name, season, dates):
         db.remove_reminder_day(league_name, season, date)
 
 
-def run_reminders(league_name, debug=True):
+def run_reminders(league_name, debug=True, force=False):
     lctx = LeagueContext.load_from_db(league_name)
 
     today = datetime.date.today()
     season = db.get_current_season(league_name)
-    reminder_days = db.get_reminder_days_since(league_name, season, today)
-    if {'date': today, 'sent': 0, 'season': season} not in reminder_days:
-        return
+    if not force:
+        reminder_days = db.get_reminder_days_since(league_name, season, today)
+        if {'date': today, 'sent': 0, 'season': season} not in reminder_days:
+            return
 
     lctx.slack_client = SlackClient(lctx.configs[configs.SLACK_API_KEY])
     today = datetime.date.today()
@@ -43,5 +44,5 @@ def run_reminders(league_name, debug=True):
     slack_util.post_message(lctx,
                             'Cron Job Reminders Sent: {} Match Messages, {} Reminder Messages, Debug={}'.format(len(sent_match_ids), len(sent_reminder_ids), debug),
                             lctx.configs[configs.COMMISSIONER_SLACK_ID])
-    if not debug:
+    if not debug and not force:
         db.mark_reminder_day_sent(league_name, season, today)

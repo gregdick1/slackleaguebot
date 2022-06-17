@@ -92,7 +92,7 @@ class Test(TestCase):
         slack_util.send_match_messages(lctx, message, early, True, [], debug=True)
         mock_send_match_message.assert_not_called()
 
-        # Call day of, should set message_sent
+        # Call day of
         ids = slack_util.send_match_messages(lctx, message, week, False, [], debug=True)
         pd = utility.get_players_dictionary(lctx)
         matches = db.get_matches_for_week(lctx.league_name, week)
@@ -109,6 +109,14 @@ class Test(TestCase):
         self.assertEqual(6, mock_send_match_message.call_count)
         self.assertEqual([0, 0, 0], [x.message_sent for x in matches])  # Doesn't set this on debug=true
 
+        # Call day after, should find and send
+        mock_send_match_message.reset_mock()
+        ids = slack_util.send_match_messages(lctx, message, week+datetime.timedelta(days=1), False, [], debug=True)
+        self.assertEqual(3, len(ids))
+        self.assertEqual(6, mock_send_match_message.call_count)
+        self.assertEqual([0, 0, 0], [x.message_sent for x in matches])  # Doesn't set this on debug=true
+
+        # Call for real, should set message_sent
         mock_send_match_message.reset_mock()
         ids = slack_util.send_match_messages(lctx, message, week, False, [], debug=False)
         matches = db.get_matches_for_week(lctx.league_name, week)

@@ -60,6 +60,33 @@ function Reminders() {
       setSeasonReminders(isoStrings)
     }
 
+    const triggerReminders = () => {
+      const updateServer = async () => {
+        var commands = (await axios.get('get-commands-to-run', { params: { leagueName: leagueState.selectedLeague }})).data;
+        var doRefresh = commands === 0 || window.confirm("You have unsaved updates locally. This will overwrite them with the db from the server before sending messages.")
+        if (!doRefresh) return
+
+        if (commands === 0) {
+          doRefresh = window.confirm("This will send real slack messages to real users. Are you sure you want to do this?")
+          if (!doRefresh) return
+        }
+
+        setLoading(true)
+        var response = await axios.post('trigger-reminders', { leagueName: leagueState.selectedLeague })
+        setLoading(false)
+        if (response.data['success']) {
+          var lastRefreshedResponse = await axios.get('get-last-db-refresh', { params: { leagueName: leagueState.selectedLeague }});
+          var lastRefreshed = lastRefreshedResponse.data;
+          dispatch({ type: "db_refreshed", lastRefreshed})
+          dispatch({ type: "need_to_check_for_commands", checkForCommandsToRun:true})
+          alert("Match messages and reminders succeeded!")
+        } else {
+          alert("Reminders failed: "+response.data['message'])
+        }
+      }
+      updateServer().catch(console.error);
+    }
+
     const sendMessage = (endpoint) => {
       setResponse('')
       setLoading(true)
@@ -83,7 +110,7 @@ function Reminders() {
     const confirmRealMessage = () => {
       confirmAlert({
         title: 'Confirm to send messages',
-        message: 'Are you sure you want to do this?',
+        message: "This will send real slack messages to real users. Are you sure you want to do this?",
         buttons: [
           {
             label: 'Yes',
@@ -97,34 +124,31 @@ function Reminders() {
     }
 
     const dates = seasonReminders.map(sr => new Date(sr))
+    const reminderInstr = 'Auto reminders require a cron job to be configured on the server. When a reminder runs, it will look for any unplayed matches with a date <= the date of the reminder. If the match has not had its match message sent yet, it will send the match message. If it has already had a match message sent, it will send a reminder message instead.'
 
     if (leagueState.needDbUpdate)
         return <DbUpdater />
     return (
-      <div>
+      <div className="reminders-container">
         <div className="reminders-controls">
           <div className="season-control">
-            <span>Matches from season: </span>
+            <span>Reminders for season: </span>
             <select name='selectedSeason' value={season} onChange={(e) => setSeason(e.target.value)}>
               {seasons.map((s) => (
                   <option value={s}>{s}</option>
                 ))}
             </select>
+            <button disabled={loading} className="btn btn-secondary btn-trigger-reminders" onClick={triggerReminders}>Manual Trigger Reminders</button>
           </div>
-        </div>
-        <div id="main-content" className={loading ? "loading" : null}>
           <Calendar multiple={true} value={dates} onChange={updateReminderDays}
             plugins={[
               <DatePanel sort="date" />
             ]}
           />
-          <div id="button-wrapper">
-            <button className="btn btn-secondary" onClick={() => setMessage(weeklyCommands.seasonStart)}>Season Starts</button>
-            <button className="btn btn-secondary" onClick={() => setMessage(weeklyCommands.standingsUpdated)}>Standings Updated</button>
-            <button className="btn btn-secondary" onClick={() => setMessage(weeklyCommands.mondayReminderMessage)}>Monday Reminder</button>
-            <button className="btn btn-secondary" onClick={() => setMessage(weeklyCommands.thursdayReminderMessage)}>Thursday Reminder</button>
-          </div>
-
+          <div className='reminder-instructions'>{reminderInstr}</div>
+        </div>
+        <div id="custom-message-container" className={loading ? "loading" : null}>
+          <div className='custom-title'>Send Custom Message to Active Players</div>
           <div className="form-group textarea-wrapper">
             <textarea class="form-control form-rounded" rows="2" value={message} onChange={(e) => setMessage(e.target.value)}></textarea>
           </div>
