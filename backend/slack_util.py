@@ -92,8 +92,7 @@ def send_match_messages(lctx, message, cutoff_date, is_reminder, skip_matches, d
         time.sleep(1.5)
         sent_matches.append(match.id)
         if not is_reminder and not debug:
-            match.message_sent = 1
-            db.admin_update_match(lctx.league_name, match)
+            db.mark_match_message_sent(lctx.league_name, match.id)
 
     return sent_matches
 

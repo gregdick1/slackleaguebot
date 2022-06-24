@@ -371,6 +371,28 @@ class Test(TestCase):
         self.assertEqual([{'date': date, 'season': 3, 'sent': 0}, {'date': date + datetime.timedelta(weeks=1), 'season': 3, 'sent': 1}, {'date': date + datetime.timedelta(weeks=2), 'season': 3, 'sent': 0}],
                          db.get_reminder_days_since(league_name, 3, datetime.date(1970, 1, 1)))
 
+    def test_mark_match_message_sent(self):
+        db.add_player(league_name, u'testplayer1', 'Test Player1', 'A')
+        db.add_player(league_name, u'testplayer2', 'Test Player2', 'A')
+        db.add_player(league_name, u'testplayer3', 'Test Player3', 'A')
+        p1 = db.get_player_by_id(league_name, u'testplayer1')
+        p2 = db.get_player_by_id(league_name, u'testplayer2')
+        p3 = db.get_player_by_id(league_name, u'testplayer3')
+        week = datetime.date(2020, 1, 1)
+        db.add_match(league_name, p1, p2, week, 'A', 1, 3)
+        db.add_match(league_name, p1, p3, week + datetime.timedelta(weeks=1), 'A', 1, 3)
+        match = db.get_matches_for_week(league_name, week)[0]
+        self.assertEqual(0, match.message_sent)
+        db.mark_match_message_sent(league_name, match.id)
+
+        match = db.get_matches_for_week(league_name, week)[0]
+        self.assertEqual(1, match.message_sent)
+
+        db.mark_match_message_sent(league_name, match.id, sent=0)
+        match = db.get_matches_for_week(league_name, week)[0]
+        self.assertEqual(0, match.message_sent)
+
+
     def test_clear_score_for_match(self):
         db.add_player(league_name, u'testplayer1', 'Test Player1', 'A')
         db.add_player(league_name, u'testplayer2', 'Test Player2', 'A')

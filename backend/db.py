@@ -381,6 +381,17 @@ def clear_score_for_match(league_name, match_id):
     save_commands_to_run(league_name)
 
 
+def mark_match_message_sent(league_name, match_id, sent=1):
+    conn = get_connection(league_name)
+    conn.set_trace_callback(partial(add_command_to_run, league_name))
+    c = conn.cursor()
+    c.execute("UPDATE match SET message_sent=? WHERE rowid=?", (sent, match_id))
+    conn.commit()
+    conn.close()
+    save_commands_to_run(league_name)
+
+
+# TODO This isn't a great method because if the server db has updated scores and we try to commit one of these, we'll overwrite those scores
 def admin_update_match(league_name, new_match):
     conn = get_connection(league_name)
     conn.set_trace_callback(partial(add_command_to_run, league_name))
