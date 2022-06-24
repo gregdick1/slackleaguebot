@@ -11,6 +11,7 @@ import NotFound from './NotFound/NotFound'
 import Matches from './Matches/Matches';
 import LeagueSelector from './Components/LeagueSelector';
 import MarkupPrintout from './MarkupPrintout/MarkupPrintout'
+import LocalUpdates from './LocalUpdates/LocalUpdates'
 
 import * as serviceWorker from './serviceWorker';
 import 'bootstrap/dist/css/bootstrap.css';
@@ -41,6 +42,9 @@ const routing = (
               <Link className="nav-link" to="/markup">Markup Printout</Link>
             </li>
             <li className="nav-item">
+              <Link className="nav-link" to="/updates">Local DB Updates</Link>
+            </li>
+            <li className="nav-item">
               <LeagueSelector />
             </li>
           </ul>
@@ -52,6 +56,7 @@ const routing = (
         <Route path="/admin" component={AdminConfig} />
         <Route path="/matches" component={Matches} />
         <Route path="/markup" component={MarkupPrintout} />
+        <Route path="/updates" component={LocalUpdates} />
         { /* <Route component={NotFound} /> */ }
       </div>
     </Router>

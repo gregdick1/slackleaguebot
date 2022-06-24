@@ -31,8 +31,8 @@ def manual_trigger_reminders():
     try:
         context = admin_context.Context.load_from_db(league_name)
         db_management.download_db(context)
-        # reminders.run_reminders(league_name, debug=False, force=True)
-        print('Ran reminders')
+        reminders.run_reminders(league_name, debug=False, force=True)
+        # print('Ran reminders')
         return jsonify({'success': True})
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)})
