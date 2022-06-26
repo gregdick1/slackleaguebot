@@ -20,6 +20,7 @@ def channel_help(lctx):
     message = 'In the channel, I support the following:'
     message = message + '\n`{} me over @them {}` or `{} @them over me {}` - report a score'.format(bot_name, example_score, bot_name, example_score)
     message = message + '\n`{} group [a, b, c, etc]` - see the current rankings of a group'.format(bot_name)
+    message = message + '\n`{} analyze group [a, b, c, etc]` - see a summary of who can still get promoted and relegated'.format(bot_name)
     message = message + '\n`{} leaderboard [matches, sets] [won, played, winrate] [all]` - see the leaderboard, counting matches or sets, sorted by wins, # played, or winrate. 20 match minimum for winrate. This will only include active players by default. Add `all` to include all historical players.'.format(bot_name)
     # message = message + '\n`{} loserboard` - see the loserboard, sorted by winrate'.format(bot_name)
     # message = message + '\n`{} matches for week` - see all matches occuring this week in all groups'.format(bot_name)
@@ -31,6 +32,7 @@ def dm_help(lctx):
     example_score = lctx.configs[configs.SCORE_EXAMPLE]
     message = 'In DMs, I support the following:'
     message = message + '\n`group [a, b, c, etc]` - see the current rankings of a group'
+    message = message + '\n`analyze group [a, b, c, etc]` - see a summary of who can still get promoted and relegated'
     message = message + '\n`leaderboard [matches, sets] [won, played, winrate] [all]` - see the leaderboard, counting matches or sets, sorted by wins, # played, or winrate. 20 match minimum for winrate. This will only include active players by default. Add `all` to include all historical players.'
     message = message + '\n`my total stats` - see your total win/loss record for the league'
     # message = message + '\n`who do i play` - see who you play this week (only in dms)'

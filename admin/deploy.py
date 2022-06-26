@@ -5,7 +5,7 @@ from admin import sftp, admin_config
 from admin.admin_context import Context
 from backend import db
 
-server_folders = ['backend', 'backend/commands']
+server_folders = ['backend', 'backend/commands', 'backend/scenario_analysis']
 root_path = os.path.join(os.path.dirname(__file__), '..')
 
 
