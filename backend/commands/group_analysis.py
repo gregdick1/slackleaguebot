@@ -12,7 +12,7 @@ def handles_message(lctx, command_object):
 
 
 def handle_message(lctx, command_object):
-    text = command_object.text[6:]
+    text = command_object.text[14:]
     if len(text) != 1:
         slack_util.post_message(lctx, MISFORMAT_MSG, command_object.channel)
         return
