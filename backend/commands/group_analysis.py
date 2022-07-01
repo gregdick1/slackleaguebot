@@ -18,6 +18,7 @@ def handle_message(lctx, command_object):
         return
 
     group = text[0].upper()
+    #TODO make a config for how many get promoted/relegated and pass that into the analysis
     message = scenario_predictor.analyze_group_possibilities(lctx.league_name, group)
     if message is None:
         slack_util.post_message(lctx, NOT_A_GROUP_MSG, command_object.channel)

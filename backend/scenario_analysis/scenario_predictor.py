@@ -259,8 +259,13 @@ def get_player_names(player_ids, all_players):
     return to_return
 
 
-def analyze_group_possibilities(league_name, group):
+def analyze_group_possibilities(league_name, group, num_promoted=2):
     all_matches = db.get_matches_for_season(league_name, db.get_current_season(league_name))
+    all_groups = sorted(list(set([m.grouping for m in all_matches])))
+    no_promotions = group == all_groups[0]
+    no_relegations = group == all_groups[-1]
+    #TODO we could get away with calculating less if we know we're in top or bottom group
+
     all_players = db.get_players(league_name)
     group_matches = [m for m in all_matches if m.grouping == group and m.player_1_id is not None and m.player_2_id is not None]
     player_ids = list(set([m.player_1_id for m in group_matches] + [m.player_2_id for m in group_matches]))
@@ -279,36 +284,38 @@ def analyze_group_possibilities(league_name, group):
     for player_id in player_ids:
         # players_unplayed = len([copy.copy(m) for m in group_matches if m.winner_id is None and (m.player_1_id == player_id or m.player_2_id == player_id)])
 
-        top_x_results = can_player_make_top_x(group_matches, player_id, [2, num_players - 2])
-        bottom_x_results = can_player_make_top_x(group_matches, player_id, [2, num_players - 2], reverse=True)
+        top_x_results = can_player_make_top_x(group_matches, player_id, [num_promoted, num_players - num_promoted])
+        bottom_x_results = can_player_make_top_x(group_matches, player_id, [num_promoted, num_players - num_promoted], reverse=True)
 
-        if 'possibility' not in top_x_results[2]:
+        if 'possibility' not in top_x_results[num_promoted]:
             no_info = True
             break
-        promotion_impossible = top_x_results[2]['possibility'] in [0, 1, 7]
+        promotion_impossible = top_x_results[num_promoted]['possibility'] in [0, 1, 7]
+        promotion_impossible = promotion_impossible or (top_x_results[num_promoted]['possibility'] == 6 and not top_x_results[num_promoted]['too_many_ties'])
         if not promotion_impossible:
-            if bottom_x_results[num_players - 2]['possibility'] in [1, 7]:
+            if bottom_x_results[num_players - num_promoted]['possibility'] in [1, 7]:
                 promotion_locked.append(player_id)
-            elif bottom_x_results[num_players - 2]['possibility'] in [6] and not top_x_results[2]['too_many_ties']:
+            elif bottom_x_results[num_players - num_promoted]['possibility'] in [6] and not top_x_results[num_promoted]['too_many_ties']:
                 promotion_locked.append(player_id)
-            elif top_x_results[2]['possibility'] in [2, 3]:
+            elif top_x_results[num_promoted]['possibility'] in [2, 3]:
                 promotion_destiny_controlled.append(player_id)
-            elif top_x_results[2]['possibility'] in [4, 5] and not top_x_results[2]['too_many_ties']:
+            elif top_x_results[num_promoted]['possibility'] in [4, 5] and not top_x_results[num_promoted]['too_many_ties']:
                 promotion_possible.append(player_id)
-            elif top_x_results[2]['too_many_ties'] and top_x_results[2]['possibility'] in [4, 6]:
+            elif top_x_results[num_promoted]['too_many_ties'] and top_x_results[num_promoted]['possibility'] in [4, 6]:
                 promotion_unclear.append(player_id)
 
-        relegation_impossible = bottom_x_results[2]['possibility'] in [1, 7]
+        relegation_impossible = bottom_x_results[num_promoted]['possibility'] in [1, 7]
+        relegation_impossible = relegation_impossible or (bottom_x_results[num_promoted]['possibility'] == 6 and not bottom_x_results[num_promoted]['too_many_ties'])
         if not relegation_impossible:
-            if top_x_results[num_players - 2]['possibility'] in [0, 1, 7]:
+            if top_x_results[num_players - num_promoted]['possibility'] in [0, 1, 7]:
                 relegation_locked.append(player_id)
-            elif top_x_results[num_players - 2]['possibility'] in [6] and not top_x_results[num_players - 2]['too_many_ties']:
+            elif top_x_results[num_players - num_promoted]['possibility'] in [6] and not top_x_results[num_players - num_promoted]['too_many_ties']:
                 relegation_locked.append(player_id)
-            elif top_x_results[num_players - 2]['possibility'] in [2, 3]:
+            elif top_x_results[num_players - num_promoted]['possibility'] in [2, 3]:
                 relegation_avoidance_destiny_controlled.append(player_id)
-            elif top_x_results[num_players - 2]['possibility'] in [4, 5] and not top_x_results[num_players - 2]['too_many_ties']:
+            elif top_x_results[num_players - num_promoted]['possibility'] in [4, 5] and not top_x_results[num_players - num_promoted]['too_many_ties']:
                 relegation_avoidance_possible.append(player_id)
-            elif top_x_results[num_players - 2]['too_many_ties'] and top_x_results[num_players - 2]['possibility'] in [4, 6]:
+            elif top_x_results[num_players - num_promoted]['too_many_ties'] and top_x_results[num_players - num_promoted]['possibility'] in [4, 6]:
                 relegation_avoidance_unclear.append(player_id)
 
     # X and Y have promotion locked in.
@@ -316,55 +323,60 @@ def analyze_group_possibilities(league_name, group):
     # X and Y could still be promoted, but it requires other games to fall a certain way.
     # X might be able to reach promotion, but there are too many tie scenarios to know for sure.
     # Promotion is out of reach for Y and Z
-    total_message = ""
+    promotion_message = ""
     if len(promotion_locked):
-        total_message += get_player_names(promotion_locked, all_players)
+        promotion_message += get_player_names(promotion_locked, all_players)
         if len(promotion_locked) > 1:
-            total_message += " are locked into promotion.\n"
+            promotion_message += " are locked into promotion.\n"
         else:
-            total_message += " is locked into promotion.\n"
+            promotion_message += " is locked into promotion.\n"
 
     if len(promotion_destiny_controlled):
-        total_message += get_player_names(promotion_destiny_controlled, all_players)
+        promotion_message += get_player_names(promotion_destiny_controlled, all_players)
         if len(promotion_destiny_controlled) > 1:
-            total_message += " are in the running for promotion and control their destiny.\n"
+            promotion_message += " are in the running for promotion and control their destiny.\n"
         else:
-            total_message += " is in the running for promotion and control their destiny.\n"
+            promotion_message += " is in the running for promotion and control their destiny.\n"
 
     if len(promotion_possible):
-        total_message += get_player_names(promotion_possible, all_players)
-        total_message += " could still get promotion, but it will require others' games to fall a certain way.\n"
+        promotion_message += get_player_names(promotion_possible, all_players)
+        promotion_message += " could still get promotion, but it will require others' games to fall a certain way.\n"
 
     if len(promotion_unclear):
-        total_message += "It's unclear if "
-        total_message += get_player_names(promotion_unclear, all_players)
-        total_message += " can still achieve promotion. There are too many tiebreaker scenarios to calculate.\n"
+        promotion_message += "It's unclear if "
+        promotion_message += get_player_names(promotion_unclear, all_players)
+        promotion_message += " can still achieve promotion. There are too many tiebreaker scenarios to calculate.\n"
 
-    total_message += "\n"
-
+    relegation_message = ""
     if len(relegation_avoidance_destiny_controlled):
-        total_message += get_player_names(relegation_avoidance_destiny_controlled, all_players)
-        total_message += " could get relegated, but they can avoid it by winning their remaining games.\n"
+        relegation_message += get_player_names(relegation_avoidance_destiny_controlled, all_players)
+        relegation_message += " could get relegated, but they can avoid it by winning their remaining games.\n"
 
     if len(relegation_avoidance_possible):
-        total_message += get_player_names(relegation_avoidance_possible, all_players)
+        relegation_message += get_player_names(relegation_avoidance_possible, all_players)
         if len(relegation_avoidance_possible) > 1:
-            total_message += " are"
+            relegation_message += " are"
         else:
-            total_message += " is"
-        total_message += " facing relegation. Even if they win out, it will require others' games to fall a certain way to avoid it.\n"
+            relegation_message += " is"
+        relegation_message += " facing relegation. Even if they win out, it will require others' games to fall a certain way to avoid it.\n"
 
     if len(relegation_avoidance_unclear):
-        total_message += "It's unclear if "
-        total_message += get_player_names(relegation_avoidance_unclear, all_players)
-        total_message += " can avoid relegation. There are too many tiebreaker scenarios to calculate.\n"
+        relegation_message += "It's unclear if "
+        relegation_message += get_player_names(relegation_avoidance_unclear, all_players)
+        relegation_message += " can avoid relegation. There are too many tiebreaker scenarios to calculate.\n"
 
     if len(relegation_locked):
-        total_message += get_player_names(relegation_locked, all_players)
+        relegation_message += get_player_names(relegation_locked, all_players)
         if len(relegation_locked) > 1:
-            total_message += " are locked into relegation.\n"
+            relegation_message += " are locked into relegation.\n"
         else:
-            total_message += " is locked into relegation.\n"
+            relegation_message += " is locked into relegation.\n"
+
+    total_message = ""
+    if not no_promotions:
+        total_message += promotion_message + "\n"
+    if not no_relegations:
+        total_message += relegation_message
 
     if no_info:
         total_message = "There are too many unplayed games to analyze this group."
