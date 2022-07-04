@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react'
-import axios from 'axios'
 import { LeagueContext } from "../contexts/League"
 
 import './LastRefresh.css'

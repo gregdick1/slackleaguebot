@@ -4,7 +4,7 @@ import json
 from flask import Blueprint, request
 
 from admin import admin_config
-from backend import db
+from backend import db, match_making
 
 matches_api = Blueprint('matches_api', __name__)
 
@@ -28,6 +28,22 @@ def clear_score():
     match_id = request.get_json().get('matchId')
     db.clear_score_for_match(league_name, match_id)
 
+    return "Success"
+
+
+@matches_api.route('/create-season', methods=['POST'])
+def create_season():
+    data = request.get_json()
+    league_name = data.get('leagueName')
+    start_date_iso = data.get('startDate')
+    skip_weeks_iso = data.get('skipWeeks')
+    sets_needed = data.get('setsNeeded')
+    include_byes = data.get('includeByes')
+
+    start_date = datetime.datetime.fromisoformat(start_date_iso[:-1]).date()  # Remove the Z from the end
+    skip_weeks = [datetime.datetime.fromisoformat(x[:-1]).date() for x in skip_weeks_iso]  # Remove the Z from the end
+
+    match_making.create_matches_for_season(league_name, start_date, sets_needed, skip_weeks, include_byes)
     return "Success"
 
 

@@ -58,13 +58,13 @@
   transition: 0.5s ease;
 }
 
-.rmdp-calendar {
+.reminders-container .rmdp-calendar {
   margin-bottom: 120px;
 }
-.rmdp-wrapper {
+.reminders-container .rmdp-wrapper {
   min-height: 350px;
 }
-div.rmdp-panel {
+.reminders-container div.rmdp-panel {
   min-width: 140px;
 }
 button.btn-trigger-reminders {

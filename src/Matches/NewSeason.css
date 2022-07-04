@@ -1,0 +1,30 @@
+#setsNeeded {
+  width: 45px;
+  margin-right: 5px;
+}
+
+.group-size-warning {
+    background-color: tomato;
+    padding: 10px;
+    border-radius: 8px;
+    font-size: 12px;
+    margin-bottom: 8px;
+}
+
+.field-context {
+  font-size: 12px;
+  font-style: italic;
+}
+
+.new-season-field {
+    border: 1px;
+    border-style: solid;
+    padding: 8px;
+    border-radius: 7px;
+    border-color: gray;
+    margin-bottom: 10px;
+}
+
+.create-season-title {
+    color: black;
+}

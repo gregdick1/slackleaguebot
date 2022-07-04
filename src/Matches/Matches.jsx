@@ -3,10 +3,12 @@ import { GripHorizontal } from 'react-bootstrap-icons';
 import axios from 'axios'
 
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
+
 import { LeagueContext } from "../contexts/League"
 import DbUpdater from "../Components/DbUpdater"
 import MatchDisplay from './MatchDisplay'
 import MatchEditor from './MatchEditor'
+import NewSeason from './NewSeason'
 import './Matches.css'
 
 function Matches() {
@@ -15,22 +17,23 @@ function Matches() {
     const [seasons, setSeasons] = useState([])
     const [allPlayers, setAllPlayers] = useState([])
 
-    const [reload, setReload] = useState(false)
+    const [loadNewSeason, setLoadNewSeason] = useState(false)
 
     const [ leagueState, dispatch ] = React.useContext(LeagueContext)
 
     useEffect(() => {
       const fetchData = async () => {
-        setReload(false)
         if (!leagueState.selectedLeague) return
 
         let seasons = (await axios.get('get-all-seasons', { params: { leagueName: leagueState.selectedLeague } })).data
         setSeasons(seasons)
         let seasonToLoad = season
-        if (seasonToLoad === -1) {
+        if (seasonToLoad === -1 || loadNewSeason) {
           seasonToLoad = seasons[seasons.length-1]
           setSeason(seasonToLoad)
         }
+        setLoadNewSeason(false)
+
         const players = (await axios.get('/get-all-players')).data
         setAllPlayers(players)
         let matches = (await axios.get('get-matches-for-season', { params: { leagueName: leagueState.selectedLeague, season: seasonToLoad}})).data
@@ -38,7 +41,7 @@ function Matches() {
       }
 
       fetchData().catch(console.error);
-    }, [leagueState.selectedLeague, leagueState.lastRefreshed, season, reload]);
+    }, [leagueState.selectedLeague, leagueState.lastRefreshed, season, loadNewSeason]);
 
 
     const onDragEnd = (result) => {
@@ -61,6 +64,17 @@ function Matches() {
                   <option value={s}>{s}</option>
                 ))}
             </select>
+          </div>
+          <div className="new-season-control">
+            <>
+              <div className="new-season-box" data-toggle="modal" data-target="#modal-new-season">
+                <button name="new-season-btn" className="btn btn-primary">Create New Season</button>
+              </div>
+
+              <div class="modal show" id="modal-new-season" tabIndex="-1" role="dialog" aria-labelledBy="modalLabel" aria-hidden="true">
+                <NewSeason callback={() => setLoadNewSeason(true)} />
+              </div>
+            </>
           </div>
         </div>
         <DragDropContext onDragEnd={onDragEnd}>

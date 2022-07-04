@@ -54,3 +54,8 @@
     border-radius: 4px;
     margin: 2px 2px;
 }
+.matches-controls {
+    display: flex;
+    justify-content: space-between;
+    width: 50%;
+}
