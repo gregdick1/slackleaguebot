@@ -51,7 +51,7 @@ def _create_and_deploy_run_reminders_file(context):
     f.write("""from backend import reminders
 
 if __name__ == "__main__":
-    reminders.run_reminders('{}', False)
+    reminders.run_reminders('{}', debug=False)
 """.format(context.league_name))
     f.close()
 
@@ -80,6 +80,7 @@ def deploy_league(league_name):
 
     _create_league_folders(context)
     _create_and_deploy_start_bot_file(context)
+    _create_and_deploy_run_reminders_file(context)
     _move_files_to_server(context)
     _create_and_deploy_bot_db(context)
     admin_config.set_config(context.league_name, admin_config.LAST_DOWNLOADED, datetime.now())

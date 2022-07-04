@@ -11,8 +11,8 @@ from backend import db
 #    collide with anything in the new db.
 # 2. You need to have connected the new league to the server already. This will push up the db when it's done.
 
-old_db_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "hudl_pong_league.sqlite"))
-new_league_name = 'pingpong'
+old_db_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "smash_league.sqlite"))
+new_league_name = 'smashbros'
 
 old_db_conn = sqlite3.connect(old_db_path, detect_types=sqlite3.PARSE_DECLTYPES)
 c = old_db_conn.cursor()
@@ -32,9 +32,9 @@ new_db_conn.commit()
 
 for row in old_players:
     # Players haven't changed, we can import as-is except setting order_idx to 0
-    command = "INSERT INTO player VALUES ('{}', '{}', '{}', {}, 0)".format(row[0], row[1].replace("'","''"), row[2], row[3])
+    command = "INSERT INTO player VALUES (?, ?, ?, ?, 0)"
     print(command)
-    c.execute(command)
+    c.execute(command, (row[0], row[1], row[2], row[3]))
 
 
 sets_per_season = {}
@@ -76,7 +76,7 @@ for old_match in old_matches:
               "{}, ".format(season) + \
               "{}, ".format(sets) + \
               "{}, ".format(sets_needed_per_season[season]) + \
-              "'{}', 1)".format(week)
+              "'{}', 1, 0)".format(week)
 
     print(command)
     c.execute(command)

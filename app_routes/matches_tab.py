@@ -20,10 +20,10 @@ def clear_score():
 @matches_api.route('/set-score', methods=['POST'])
 def set_score():
     league_name = request.get_json().get('leagueName')
+    match_id = request.get_json().get('matchId')
     winner_id = request.get_json().get('winnerId')
-    loser_id = request.get_json().get('loserId')
     sets = request.get_json().get('sets')
-    db.update_match_by_id(league_name, winner_id, loser_id, sets)
+    db.admin_update_match_score(league_name, match_id, winner_id, sets)
     return "Success"
 
 

@@ -399,13 +399,11 @@ def set_match_forfeit(league_name, match_id, forfeit=1):
     save_commands_to_run(league_name)
 
 
-# TODO This isn't a great method because if the server db has updated scores and we try to commit one of these, we'll overwrite those scores
-def admin_update_match(league_name, new_match):
+def admin_update_match_score(league_name, match_id, winner_id, sets):
     conn = get_connection(league_name)
     conn.set_trace_callback(partial(add_command_to_run, league_name))
     c = conn.cursor()
-    c.execute("UPDATE match SET player_1=?, player_2=?, winner=?, week=?, grouping=?, sets=?, sets_needed=?, date_played=?, message_sent=? WHERE rowid=?",
-              (new_match.player_1_id, new_match.player_2_id, new_match.winner_id, new_match.week, new_match.grouping, new_match.sets, new_match.sets_needed, new_match.date_played, new_match.message_sent, new_match.id))
+    c.execute("UPDATE match SET winner=?, sets=? WHERE rowid=?", (winner_id, sets, match_id))
     conn.commit()
     conn.close()
     save_commands_to_run(league_name)

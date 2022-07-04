@@ -32,7 +32,7 @@ function MatchEditor({ match, allPlayers }) {
 
     const setWinner = (winnerId, loserId) => {
       const updateServer = async () => {
-        await axios.post(`set-score`, { leagueName: leagueState.selectedLeague, winnerId, loserId, sets: match.sets_needed });
+        await axios.post(`set-score`, { leagueName: leagueState.selectedLeague, matchId: match.id, winnerId, sets: match.sets_needed });
         // TODO Probably wanna grab the match from the db again
         match.winner_id = winnerId
         match.sets = match.sets_needed
@@ -47,7 +47,7 @@ function MatchEditor({ match, allPlayers }) {
       if (loserSetsInt < 0 || loserSetsInt >= match.sets_needed) return
 
       const updateServer = async () => {
-        await axios.post(`set-score`, { leagueName: leagueState.selectedLeague, winnerId, loserId, sets: match.sets_needed + loserSetsInt });
+        await axios.post(`set-score`, { leagueName: leagueState.selectedLeague, matchId: match.id, winnerId, sets: match.sets_needed + loserSetsInt });
         // TODO Probably wanna grab the match from the db again
         match.sets = match.sets_needed + loserSetsInt
         dispatch({ type: "need_to_check_for_commands", checkForCommandsToRun:true})
@@ -116,7 +116,6 @@ function MatchEditor({ match, allPlayers }) {
               { match.winner_id !== null &&
                 <button onClick={clearScore}>Clear Score</button>
               }
-              <ToolTip size={14} width={100} text={"Just testing"} />
             </div>
 
         </div>

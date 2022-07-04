@@ -244,7 +244,7 @@ class Test(TestCase):
         self.assertEqual(3, db.get_match_by_players(league_name, p1, p2).sets)
         self.assertEqual(p1.slack_id, db.get_match_by_players(league_name, p1, p2).winner_id)
 
-    def test_admin_update_match(self):
+    def test_admin_update_match_score(self):
         db.add_player(league_name, u'testplayer1', 'Test Player1', 'A')
         db.add_player(league_name, u'testplayer2', 'Test Player2', 'A')
         p1 = db.get_player_by_id(league_name, u'testplayer1')
@@ -253,29 +253,18 @@ class Test(TestCase):
         db.add_match(league_name, p1, p2, week1, 'A', 1, 3)
 
         match = db.get_match_by_players(league_name, p1, p2)
-        match.player_1_id = 'arbitrary1'
-        match.player_2_id = 'arbitrary2'
-        match.winner_id = None
-        match.week = datetime.date(2021, 1, 1)
-        match.grouping = 'B'
-        match.sets = 9
-        match.sets_needed = 1
-        match.date_played = datetime.date(2021, 2, 2)
-        match.message_sent = 1
 
         num_commands = len(db.get_commands_to_run(league_name))
-        db.admin_update_match(league_name, match)
+        db.admin_update_match_score(league_name, match.id, u'testplayer1', 3)
         self.assertEqual(1, len(db.get_commands_to_run(league_name)) - num_commands)
-        updatedMatch = db.get_matches(league_name)[0]
-        self.assertEqual('arbitrary1', updatedMatch.player_1_id)
-        self.assertEqual('arbitrary2', updatedMatch.player_2_id)
-        self.assertIsNone(updatedMatch.winner_id)
-        self.assertEqual(datetime.date(2021, 1, 1), updatedMatch.week)
-        self.assertEqual('B', updatedMatch.grouping)
-        self.assertEqual(9, updatedMatch.sets)
-        self.assertEqual(1, updatedMatch.sets_needed)
-        self.assertEqual(datetime.date(2021, 2, 2), updatedMatch.date_played)
-        self.assertEqual(1, updatedMatch.message_sent)
+        updated_match = db.get_matches(league_name)[0]
+        self.assertEqual(u'testplayer1', updated_match.winner_id)
+        self.assertEqual(3, updated_match.sets)
+
+        db.admin_update_match_score(league_name, match.id, u'testplayer2', 5)
+        updated_match = db.get_matches(league_name)[0]
+        self.assertEqual(u'testplayer2', updated_match.winner_id)
+        self.assertEqual(5, updated_match.sets)
 
     def test_get_all_seasons(self):
         db.add_player(league_name, u'testplayer1', 'Test Player1', 'A')
@@ -383,7 +372,9 @@ class Test(TestCase):
         db.add_match(league_name, p1, p3, week + datetime.timedelta(weeks=1), 'A', 1, 3)
         match = db.get_matches_for_week(league_name, week)[0]
         self.assertEqual(0, match.message_sent)
+        num_commands = len(db.get_commands_to_run(league_name))
         db.mark_match_message_sent(league_name, match.id)
+        self.assertEqual(1, len(db.get_commands_to_run(league_name)) - num_commands)
 
         match = db.get_matches_for_week(league_name, week)[0]
         self.assertEqual(1, match.message_sent)
@@ -406,7 +397,9 @@ class Test(TestCase):
         db.add_match(league_name, p1, p3, week + datetime.timedelta(weeks=1), 'A', 1, 3)
         match = db.get_matches_for_week(league_name, week)[0]
         self.assertEqual(0, match.forfeit)
+        num_commands = len(db.get_commands_to_run(league_name))
         db.set_match_forfeit(league_name, match.id)
+        self.assertEqual(1, len(db.get_commands_to_run(league_name)) - num_commands)
 
         match = db.get_matches_for_week(league_name, week)[0]
         self.assertEqual(1, match.forfeit)
@@ -435,7 +428,9 @@ class Test(TestCase):
         self.assertEqual(3, match.sets)
         self.assertIsNotNone(match.date_played)
 
+        num_commands = len(db.get_commands_to_run(league_name))
         db.clear_score_for_match(league_name, match.id)
+        self.assertEqual(1, len(db.get_commands_to_run(league_name)) - num_commands)
         match = db.get_matches_for_week(league_name, week)[0]
         self.assertIsNone(match.winner_id)
         self.assertEqual(0, match.sets)
