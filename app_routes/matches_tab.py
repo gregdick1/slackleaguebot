@@ -9,25 +9,30 @@ from backend import db, match_making
 matches_api = Blueprint('matches_api', __name__)
 
 
-@matches_api.route('/update-match-info', methods=['POST'])
-def update_match_info():
-    updated_match_info = request.get_json()
-
-    # TODO fix this jank
-    league_name = admin_config.get_current_league()
-    updated_match_info['season'] = db.get_current_season(league_name)
-    updated_match_info['sets_needed'] = 3
-    db.admin_update_match(league_name, db.Match.from_dict(updated_match_info))
-
-    return "The commissioner has spoken. The match has been updated."
-
-
 @matches_api.route('/clear-score', methods=['POST'])
 def clear_score():
     league_name = request.get_json().get('leagueName')
     match_id = request.get_json().get('matchId')
     db.clear_score_for_match(league_name, match_id)
+    return "Success"
 
+
+@matches_api.route('/set-score', methods=['POST'])
+def set_score():
+    league_name = request.get_json().get('leagueName')
+    winner_id = request.get_json().get('winnerId')
+    loser_id = request.get_json().get('loserId')
+    sets = request.get_json().get('sets')
+    db.update_match_by_id(league_name, winner_id, loser_id, sets)
+    return "Success"
+
+
+@matches_api.route('/set-forfeit', methods=['POST'])
+def set_forfeit():
+    league_name = request.get_json().get('leagueName')
+    match_id = request.get_json().get('matchId')
+    forfeit = 1 if request.get_json().get('forfeit') else 0
+    db.set_match_forfeit(league_name, match_id, forfeit)
     return "Success"
 
 

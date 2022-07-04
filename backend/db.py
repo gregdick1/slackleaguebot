@@ -4,7 +4,7 @@ import datetime
 from functools import partial
 from backend import configs
 
-LATEST_VERSION = 4
+LATEST_VERSION = 5
 
 
 def path(league_name):
@@ -38,6 +38,7 @@ def initialize(league_name):
               'sets_needed INT, '
               'date_played DATE, '
               'message_sent INT DEFAULT 0, '
+              'forfeit INT DEFAULT 0, '
               'FOREIGN KEY (player_1) REFERENCES player, '
               'FOREIGN KEY (player_2) REFERENCES player, '
               'FOREIGN KEY (winner) REFERENCES player)')
@@ -256,7 +257,7 @@ def add_match(league_name, player_1, player_2, week_date, grouping, season, sets
 
 
 class Match:
-    def __init__(self, id, p1_id, p2_id, winner_id, week, grouping, season, sets, sets_needed, date_played, message_sent):
+    def __init__(self, id, p1_id, p2_id, winner_id, week, grouping, season, sets, sets_needed, date_played, message_sent, forfeit):
         self.id = id
         self.player_1_id = p1_id
         self.player_2_id = p2_id
@@ -268,14 +269,11 @@ class Match:
         self.sets_needed = sets_needed
         self.date_played = date_played
         self.message_sent = message_sent
+        self.forfeit = forfeit
 
     @classmethod
     def from_db(cls, row):
-        return Match(row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9], row[10])
-
-    @classmethod
-    def from_dict(cls, d):
-        return Match(d['id'], d['player_1_id'], d['player_2_id'], d['winner_id'], d['week'], d['grouping'], d['season'], d['sets'], d['sets_needed'])
+        return Match(row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9], row[10], row[11])
 
 
 def get_matches(league_name):
@@ -386,6 +384,16 @@ def mark_match_message_sent(league_name, match_id, sent=1):
     conn.set_trace_callback(partial(add_command_to_run, league_name))
     c = conn.cursor()
     c.execute("UPDATE match SET message_sent=? WHERE rowid=?", (sent, match_id))
+    conn.commit()
+    conn.close()
+    save_commands_to_run(league_name)
+
+
+def set_match_forfeit(league_name, match_id, forfeit=1):
+    conn = get_connection(league_name)
+    conn.set_trace_callback(partial(add_command_to_run, league_name))
+    c = conn.cursor()
+    c.execute("UPDATE match SET forfeit=? WHERE rowid=?", (forfeit, match_id))
     conn.commit()
     conn.close()
     save_commands_to_run(league_name)
