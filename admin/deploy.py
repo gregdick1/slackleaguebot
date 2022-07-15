@@ -1,7 +1,7 @@
 import os
 from datetime import datetime
 
-from admin import sftp, admin_config
+from admin import sftp, admin_config, db_management
 from admin.admin_context import Context
 from backend import db
 
@@ -76,6 +76,7 @@ def deploy_code(league_name):
 def deploy_league(league_name):
     context = Context.load_from_db(league_name)
     if sftp.file_exists(context, context.db_name):
+        db_management.download_db(context)
         return "Connected to Existing"
 
     _create_league_folders(context)
