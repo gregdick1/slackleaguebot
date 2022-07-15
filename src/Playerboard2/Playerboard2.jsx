@@ -14,6 +14,7 @@ function PlayerBoard2() {
     const [seasonPlayers, setSeasonPlayers] = useState([])
     const [season, setSeason] = useState(-1)
     const [seasons, setSeasons] = useState([])
+    const [loadedForLeague, setLoadedForLeague] = useState('')
     const [orderedActivePlayersAndMarkers, setOrderedActivePlayersAndMarkers] = useState([])
     const [inactivePlayers, setInactivePlayers] = useState([])
     const [deactivatedSlackIds, setDeactivatedSlackIds] = useState([])
@@ -31,6 +32,11 @@ function PlayerBoard2() {
         setReload(false)
         if (!leagueState.selectedLeague) return
 
+        if (loadedForLeague !== leagueState.selectedLeague) {
+          //Need to reset our saved season when the league has changed
+          setSeason(-1)
+          setLoadedForLeague(leagueState.selectedLeague)
+        }
         let seasons = (await axios.get('get-all-seasons', { params: { leagueName: leagueState.selectedLeague } })).data
         setSeasons(seasons)
         let seasonToLoad = season

@@ -15,6 +15,7 @@ function Matches() {
     const [seasonMatches, setSeasonMatches] = useState({})
     const [season, setSeason] = useState(-1)
     const [seasons, setSeasons] = useState([])
+    const [loadedForLeague, setLoadedForLeague] = useState('')
     const [allPlayers, setAllPlayers] = useState([])
 
     const [loadNewSeason, setLoadNewSeason] = useState(false)
@@ -25,6 +26,11 @@ function Matches() {
       const fetchData = async () => {
         if (!leagueState.selectedLeague) return
 
+        if (loadedForLeague !== leagueState.selectedLeague) {
+          //Need to reset our saved season when the league has changed
+          setSeason(-1)
+          setLoadedForLeague(leagueState.selectedLeague)
+        }
         let seasons = (await axios.get('get-all-seasons', { params: { leagueName: leagueState.selectedLeague } })).data
         setSeasons(seasons)
         let seasonToLoad = season

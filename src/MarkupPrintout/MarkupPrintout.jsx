@@ -10,10 +10,17 @@ function MarkupPrintout() {
     const [ printout, setPrintout ] = useState('')
     const [ seasons, setSeasons ] = useState([])
     const [ season, setSeason ] = useState(-1)
+    const [loadedForLeague, setLoadedForLeague] = useState('')
     const [ reload, setReload ] = useState(false)
 
     useEffect(() => {
       const fetchData = async () => {
+        if (loadedForLeague !== leagueState.selectedLeague) {
+          //Need to reset our saved season when the league has changed
+          setSeason(-1)
+          setLoadedForLeague(leagueState.selectedLeague)
+        }
+
         let seasons = (await axios.get('get-all-seasons', { params: { leagueName: leagueState.selectedLeague } })).data
         setSeasons(seasons)
         let seasonToLoad = season
