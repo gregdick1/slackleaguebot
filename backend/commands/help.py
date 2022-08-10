@@ -34,7 +34,8 @@ def dm_help(lctx):
     message = message + '\n`group [a, b, c, etc]` - see the current rankings of a group'
     message = message + '\n`analyze group [a, b, c, etc]` - see a summary of who can still get promoted and relegated'
     message = message + '\n`leaderboard [matches, sets] [won, played, winrate] [all]` - see the leaderboard, counting matches or sets, sorted by wins, # played, or winrate. 20 match minimum for winrate. This will only include active players by default. Add `all` to include all historical players.'
-    message = message + '\n`my total stats` - see your total win/loss record for the league'
+    message = message + '\n`my total stats` - See your total win/loss record for the league.'
+    message = message + '\n`matchup history [all]` - See your matchup records against every active player you have played against. Add `all` to see records against all historical players.'
     # message = message + '\n`who do i play` - see who you play this week (only in dms)'
     # message = message + '\n`matches for week` - see all matches occurring this week in all groups'
     return message

@@ -268,6 +268,8 @@ def analyze_group_possibilities(league_name, group, num_promoted=2):
 
     all_players = db.get_players(league_name)
     group_matches = [m for m in all_matches if m.grouping == group and m.player_1_id is not None and m.player_2_id is not None]
+    unplayed_matches = [m for m in group_matches if m.winner_id is not None]
+
     player_ids = list(set([m.player_1_id for m in group_matches] + [m.player_2_id for m in group_matches]))
     num_players = len(player_ids)
     promotion_locked = []
@@ -282,8 +284,6 @@ def analyze_group_possibilities(league_name, group, num_promoted=2):
 
     no_info = False
     for player_id in player_ids:
-        # players_unplayed = len([copy.copy(m) for m in group_matches if m.winner_id is None and (m.player_1_id == player_id or m.player_2_id == player_id)])
-
         top_x_results = can_player_make_top_x(group_matches, player_id, [num_promoted, num_players - num_promoted])
         bottom_x_results = can_player_make_top_x(group_matches, player_id, [num_promoted, num_players - num_promoted], reverse=True)
 
@@ -381,9 +381,12 @@ def analyze_group_possibilities(league_name, group, num_promoted=2):
     if no_info:
         total_message = "There are too many unplayed games to analyze this group."
 
-    total_message = "*Group {} Analysis:*\n".format(group) + total_message
-    print(total_message)
-    return total_message
+    final_message = "*Group {} Analysis:*\n".format(group)
+    if len(unplayed_matches) > 0:
+        total_message += "_assuming all matches get played..._\n"
+    final_message += total_message
+    print(final_message)
+    return final_message
 
 
 def analyze_player_by_name(league_name, name):
