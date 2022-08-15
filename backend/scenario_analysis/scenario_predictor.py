@@ -382,8 +382,8 @@ def analyze_group_possibilities(league_name, group, num_promoted=2):
         total_message = "There are too many unplayed games to analyze this group."
 
     final_message = "*Group {} Analysis:*\n".format(group)
-    if len(unplayed_matches) > 0:
-        total_message += "_assuming all matches get played..._\n"
+    if len(unplayed_matches) > 0 and not no_info:
+        final_message += "_assuming all matches get played..._\n"
     final_message += total_message
     print(final_message)
     return final_message
