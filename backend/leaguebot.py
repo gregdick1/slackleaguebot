@@ -31,13 +31,13 @@ class LeagueBot:
                 self.lctx.slack_client.server.ping()
             except WebSocketConnectionClosedException as e:
                 self.logger.debug('Keep alive web socket exception.')
-                self.lctx.slack_client.rtm_connect()
+                self.lctx.slack_client.rtm_connect(with_team_state=False)
 
     def start_bot(self):
         p = Process(target=self.keepalive)
         p.start()
 
-        if self.lctx.slack_client.rtm_connect():
+        if self.lctx.slack_client.rtm_connect(with_team_state=False):
             print("LeagueBot connected and running!")
 
             while True:
@@ -59,7 +59,7 @@ class LeagueBot:
                     time.sleep(1)
                 except Exception as e:
                     self.logger.debug('Main while loop web socket exception.', e)
-                    self.lctx.slack_client.rtm_connect()
+                    self.lctx.slack_client.rtm_connect(with_team_state=False)
         else:
             print("Connection failed. Invalid Slack token or bot ID?")
 
