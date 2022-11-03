@@ -1,6 +1,7 @@
 from backend import slack_util, configs, db
 from backend.commands import group
 
+BLOCK_NEW_SCORES_MSG = "Sorry, not accepting any scores at this time."
 PLAYED_YOURSELF_MSG = "You can't play against yourself."
 NO_MATCH_MSG = "I couldn't find a match between you two."
 WORKED_REACTION = "white_check_mark"
@@ -29,6 +30,10 @@ def get_format_message(lctx):
 
 
 def handle_message(lctx, command_object):
+    if lctx.configs[configs.BLOCK_NEW_SCORES] == 'TRUE':
+        slack_util.post_message(lctx, BLOCK_NEW_SCORES_MSG, command_object.channel)
+        return
+
     users = parse_users(lctx, command_object)
     if users is None:
         slack_util.post_message(lctx, get_format_message(lctx), command_object.channel)
@@ -74,7 +79,8 @@ def handle_message(lctx, command_object):
         return
 
     if not is_admin:
-        slack_util.post_message(lctx, 'Entered into db', lctx.configs[configs.COMMISSIONER_SLACK_ID])
+        if lctx.configs[configs.MESSAGE_COMMISSIONER_ON_SUCCESS] == 'TRUE':
+            slack_util.post_message(lctx, 'Entered into db', lctx.configs[configs.COMMISSIONER_SLACK_ID])
         player = db.get_player_by_id(lctx.league_name, users['winner_id'])
         group_msg = group.build_message_for_group(lctx, player.grouping)
         slack_util.post_message(lctx, group_msg, command_object.channel)

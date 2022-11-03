@@ -66,7 +66,7 @@ def create_matches(start_date, players, skip_weeks, include_byes=False):
 # 2) The group currently has an even number of players
 # This will effectively create two new matches for the person being added for the first week, and then one additional
 # match for the player the remaining weeks to simulate an odd number group season.
-def add_player_to_group(league_name, player_name, season_num):
+def add_player_to_group(league_name, player_name, season_num, sets_needed):
     player = db.get_player_by_name(league_name, player_name)
     group_players = [p for p in db.get_active_players(league_name) if p.grouping == player.grouping and p.name != player_name]
     dates = [m.week for m in db.get_matches_for_season(league_name, season_num)]
@@ -75,9 +75,9 @@ def add_player_to_group(league_name, player_name, season_num):
     for week in dates:
         # TODO use config for sets needed
         if first:
-            db.add_match(league_name, player, group_players.pop(0), week, player.grouping, season_num, 3)
+            db.add_match(league_name, player, group_players.pop(0), week, player.grouping, season_num, sets_needed)
             first = False
-        db.add_match(league_name, player, group_players.pop(0), week, player.grouping, season_num, 3)
+        db.add_match(league_name, player, group_players.pop(0), week, player.grouping, season_num, sets_needed)
 
 
 def create_matches_for_season(league_name, start_date, sets_needed, skip_weeks=None, include_byes=False):

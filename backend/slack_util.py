@@ -120,7 +120,9 @@ def send_custom_messages(lctx, message, debug=True):
 def send_custom_for_missed_games(lctx, message, num_missed, week, debug=True):
     season = db.get_current_season(lctx.league_name)
     season_matches = db.get_matches_for_season(lctx.league_name, season)
+    season_matches = [x for x in season_matches if x.player_1_id is not None and x.player_2_id is not None]
     players = {}
+    players_dictionary = utility.get_players_dictionary(lctx)
     for match in season_matches:
         if match.week <= week and match.winner_id is None:
             if match.player_1_id not in players:
@@ -132,11 +134,10 @@ def send_custom_for_missed_games(lctx, message, num_missed, week, debug=True):
             players[match.player_2_id].add(match.week)
 
     for player_id in players:
-        test = len(players[player_id])
         if len(players[player_id]) >= num_missed:
             if debug and not player_id == lctx.configs[configs.COMMISSIONER_SLACK_ID]:
-                print('Sending to', player_id, ':', message)
+                print('Sending to', players_dictionary[player_id], ':', message)
             else:
                 post_message(lctx, message, player_id)
-                print('For reals sent to', player_id, ':', message)
-            time.sleep(1.5)
+                time.sleep(1.5)
+                print('For reals sent to', players_dictionary[player_id], ':', message)

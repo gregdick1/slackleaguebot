@@ -121,6 +121,7 @@ class Test(TestCase):
     @patch.object(slack_util, 'post_message')
     def test_handle_message_good_entry(self, mock_post_message, mock_add_reaction):
         msg = CommandMessage('<@playerA2> over me 3-1', 'comp_channel', 'playerA1', 'any_timestamp')
+        lctx.configs[configs.MESSAGE_COMMISSIONER_ON_SUCCESS] = 'TRUE'
         enter_score.handle_message(lctx, msg)
         matches = db.get_matches(lctx.league_name)
         tmp = [x for x in matches if x.winner_id == 'playerA2']
@@ -155,6 +156,7 @@ class Test(TestCase):
         match_making.create_matches_for_season(lctx.league_name, week, 1, skip_weeks, True)
 
         msg = CommandMessage('<@playerA2> over me', 'comp_channel', 'playerA1', 'any_timestamp')
+        lctx.configs[configs.MESSAGE_COMMISSIONER_ON_SUCCESS] = 'TRUE'
         enter_score.handle_message(lctx, msg)
         matches = db.get_matches(lctx.league_name)
         tmp = [x for x in matches if x.winner_id == 'playerA2']
@@ -210,3 +212,15 @@ class Test(TestCase):
 
         mock_post_message.assert_called_once_with(lctx, 'Failed to enter into db', 'commish')
         mock_add_reaction.assert_called_once_with(lctx, 'comp_channel', 'any_timestamp', enter_score.NOT_WORKED_REACTION)
+
+    @patch.object(slack_util, 'add_reaction')
+    @patch.object(slack_util, 'post_message')
+    def test_handle_message_blocked_scores(self, mock_post_message, mock_add_reaction):
+        msg = CommandMessage('<@playerA2> over me 3-1', 'comp_channel', 'playerA1', 'any_timestamp')
+        lctx.configs[configs.BLOCK_NEW_SCORES] = 'TRUE'
+        enter_score.handle_message(lctx, msg)
+        matches = db.get_matches(lctx.league_name)
+        tmp = [x for x in matches if x.winner_id == 'playerA2']
+        self.assertEqual(0, len(tmp))
+
+        mock_post_message.assert_called_once_with(lctx, enter_score.BLOCK_NEW_SCORES_MSG, 'comp_channel')

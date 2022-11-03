@@ -48,6 +48,37 @@ function Configuration() {
         dispatch({ type: "need_to_check_for_commands", checkForCommandsToRun:true})
     }
 
+    const handleCheck = async ({target: { name, checked }}) => {
+        var val = checked ? "TRUE" : "FALSE"
+        var leagueConfigs = {...state.leagueConfigs, [name]: val}
+        setState({
+          ...state,
+          leagueConfigs
+        })
+        const response = await axios.post('set-league-config', {
+                selectedLeague: leagueState.selectedLeague,
+                configKey: name,
+                configValue: val
+            });
+        dispatch({ type: "need_to_check_for_commands", checkForCommandsToRun:true})
+    }
+
+
+    const checkbox = (label, config) => {
+      var checked = state.leagueConfigs[config] === 'TRUE' ? "checked" : ""
+      return (
+      <div className="inline-editor">
+        <label>{label}:</label>
+        <input type="checkbox"
+          id={config}
+          name={config}
+          onChange={handleCheck}
+          checked={checked}
+        />
+      </div>
+      );
+    }
+
     const editor = (label, config) => {
       return (
       <div className="inline-editor">
@@ -99,6 +130,8 @@ function Configuration() {
               <div className="config-box">
                 <label>Other Configs</label>
                 { editExisting && editor('Log Path', 'LOG_PATH') }
+                { editExisting && checkbox('Block New Scores', 'BLOCK_NEW_SCORES')}
+                { editExisting && checkbox('Message Commissioner On Score Entry', 'MESSAGE_COMMISSIONER_ON_SUCCESS')}
               </div>
               <div className="config-box">
                 <label>Message Configs</label>
