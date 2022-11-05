@@ -45,6 +45,12 @@ class LeagueBot:
                     message_list = self.lctx.slack_client.rtm_read()
                     message_list = command_parser.filter_invalid_messages(self.lctx, message_list)
 
+                    if len(message_list) > 0:
+                        # Reload the league context because there might be changes to the config. There's probably a better
+                        # way to handle it, but this works for now to minimize checks on the db while auto finding changes
+                        new_lctx = LeagueContext.load_from_db(self.lctx.league_name, self.lctx.slack_client)
+                        self.lctx = new_lctx
+
                     for message in message_list:
                         try:
                             command = command_parser.determine_command(self.lctx, message)
