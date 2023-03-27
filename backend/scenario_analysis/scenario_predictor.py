@@ -262,7 +262,7 @@ def get_player_names(player_ids, all_players):
 def analyze_group_possibilities(league_name, group, num_promoted=2):
     all_matches = db.get_matches_for_season(league_name, db.get_current_season(league_name))
     all_groups = sorted(list(set([m.grouping for m in all_matches])))
-    no_promotions = group == all_groups[0]
+    top_group = group == all_groups[0]
     no_relegations = group == all_groups[-1]
     #TODO we could get away with calculating less if we know we're in top or bottom group
 
@@ -282,10 +282,18 @@ def analyze_group_possibilities(league_name, group, num_promoted=2):
     relegation_avoidance_possible = []
     relegation_avoidance_unclear = []
 
+    champ_locked = []
+    champ_destiny_controlled = []
+    champ_possible = []
+    champ_unclear = []
+
     no_info = False
     for player_id in player_ids:
         top_x_results = can_player_make_top_x(group_matches, player_id, [num_promoted, num_players - num_promoted])
         bottom_x_results = can_player_make_top_x(group_matches, player_id, [num_promoted, num_players - num_promoted], reverse=True)
+        if top_group:
+            champ_results = can_player_make_top_x(group_matches, player_id, [1])
+            nonchamp_results = can_player_make_top_x(group_matches, player_id, [num_players-1], reverse=True)
 
         if 'possibility' not in top_x_results[num_promoted]:
             no_info = True
@@ -317,6 +325,21 @@ def analyze_group_possibilities(league_name, group, num_promoted=2):
                 relegation_avoidance_possible.append(player_id)
             elif top_x_results[num_players - num_promoted]['too_many_ties'] and top_x_results[num_players - num_promoted]['possibility'] in [4, 6]:
                 relegation_avoidance_unclear.append(player_id)
+
+        if top_group:
+            champ_impossible = champ_results[1]['possibility'] in [0, 1, 7]
+            champ_impossible = champ_impossible or (champ_results[1]['possibility'] == 6 and not champ_results[1]['too_many_ties'])
+            if not champ_impossible:
+                if nonchamp_results[num_players-1]['possibility'] in [1, 7]:
+                    champ_locked.append(player_id)
+                elif nonchamp_results[num_players-1]['possibility'] in [6] and not champ_results[1]['too_many_ties']:
+                    champ_locked.append(player_id)
+                elif champ_results[1]['possibility'] in [2, 3]:
+                    champ_destiny_controlled.append(player_id)
+                elif champ_results[1]['possibility'] in [4, 5] and not champ_results[1]['too_many_ties']:
+                    champ_possible.append(player_id)
+                elif champ_results[1]['too_many_ties'] and champ_results[1]['possibility'] in [4, 6]:
+                    champ_unclear.append(player_id)
 
     # X and Y have promotion locked in.
     # X, Y, and Z are in the running for promotion and control their destiny.
@@ -372,8 +395,31 @@ def analyze_group_possibilities(league_name, group, num_promoted=2):
         else:
             relegation_message += " is locked into relegation.\n"
 
+    champ_message = ""
+    if len(champ_locked):
+        champ_message += get_player_names(champ_locked, all_players)
+        champ_message += " is locked in as Champion!\n"
+
+    if len(champ_destiny_controlled):
+        champ_message += get_player_names(champ_destiny_controlled, all_players)
+        if len(champ_destiny_controlled) > 1:
+            champ_message += " are in the running for the championship and control their destiny.\n"
+        else:
+            champ_message += " is in the running for the championship and control their destiny.\n"
+
+    if len(champ_possible):
+        champ_message += get_player_names(champ_possible, all_players)
+        champ_message += " could still claim the championship, but it will require others' games to fall a certain way.\n"
+
+    if len(champ_unclear):
+        champ_message += "It's unclear if "
+        champ_message += get_player_names(champ_unclear, all_players)
+        champ_message += " can still claim the championship. There are too many tiebreaker scenarios to calculate.\n"
+
     total_message = ""
-    if not no_promotions:
+    if top_group:
+        total_message += champ_message + "\n"
+    else:
         total_message += promotion_message + "\n"
     if not no_relegations:
         total_message += relegation_message
