@@ -1,9 +1,8 @@
 import logging
-import time
-from multiprocessing import Process
 
-from slackclient import SlackClient
-from websocket import WebSocketConnectionClosedException
+from slack_sdk import WebClient
+from slack_bolt import App, BoltContext
+from slack_bolt.adapter.socket_mode import SocketModeHandler
 
 from backend import command_parser, configs, slack_util
 from backend.league_context import LeagueContext
@@ -12,7 +11,7 @@ from backend.league_context import LeagueContext
 class LeagueBot:
     def __init__(self, league_name):
         self.lctx = LeagueContext.load_from_db(league_name)
-        self.lctx.slack_client = SlackClient(self.lctx.configs[configs.SLACK_API_KEY])
+        self.lctx.slack_client = WebClient(token=self.lctx.configs[configs.SLACK_API_KEY])
 
         self.logger = logging.getLogger(league_name)
 
@@ -24,48 +23,31 @@ class LeagueBot:
 
         self.logger.debug('booting up leaguebot file')
 
-    def keepalive(self):
-        while True:
-            time.sleep(3)
-            try:
-                self.lctx.slack_client.server.ping()
-            except WebSocketConnectionClosedException as e:
-                self.logger.debug('Keep alive web socket exception.')
-                self.lctx.slack_client.rtm_connect(with_team_state=False)
+    def app_home_opened(self):
+        pass
+
+    def app_home_opened_lazy(self):
+        pass
+
+    def message_received(self, body, logger):
+        message = command_parser.validate_and_clean_message(self.lctx, body['event'])
+        try:
+            command = command_parser.determine_command(self.lctx, message)
+            if command is not None:
+                command.handle_message(self.lctx, command_parser.get_command_object(message))
+            else:
+                slack_util.post_message(self.lctx, "I don't recognize that. Try `help` to see what I can do.", message['channel'])
+        except Exception as e:
+            self.logger.debug(e)
+            slack_util.add_reaction(self.lctx, message["channel"], message["ts"], "x")
+
+    def message_received_lazy(self, event, context: BoltContext, client: WebClient):
+        pass
 
     def start_bot(self):
-        p = Process(target=self.keepalive)
-        p.start()
-
-        if self.lctx.slack_client.rtm_connect(with_team_state=False):
-            print("LeagueBot connected and running!")
-
-            while True:
-                try:
-                    message_list = self.lctx.slack_client.rtm_read()
-                    message_list = command_parser.filter_invalid_messages(self.lctx, message_list)
-
-                    if len(message_list) > 0:
-                        # Reload the league context because there might be changes to the config. There's probably a better
-                        # way to handle it, but this works for now to minimize checks on the db while auto finding changes
-                        new_lctx = LeagueContext.load_from_db(self.lctx.league_name, self.lctx.slack_client)
-                        self.lctx = new_lctx
-
-                    for message in message_list:
-                        try:
-                            command = command_parser.determine_command(self.lctx, message)
-                            if command is not None:
-                                command.handle_message(self.lctx, command_parser.get_command_object(message))
-                            else:
-                                slack_util.post_message(self.lctx, "I don't recognize that. Try `help` to see what I can do.", message['channel'])
-                        except Exception as e:
-                            self.logger.debug(e)
-                            slack_util.add_reaction(self.lctx, message["channel"], message["ts"], "x")
-
-                    time.sleep(1)
-                except Exception as e:
-                    self.logger.debug('Main while loop web socket exception.', e)
-                    self.lctx.slack_client.rtm_connect(with_team_state=False)
-        else:
-            print("Connection failed. Invalid Slack token or bot ID?")
+        app = App(token=self.lctx.configs[configs.SLACK_API_KEY])
+        app.event('app_home_opened')(ack=self.app_home_opened, lazy=[self.app_home_opened_lazy])
+        app.event('app_mention')(ack=self.message_received, lazy=[self.message_received_lazy])
+        app.event('message')(ack=self.message_received, lazy=[self.message_received_lazy])
+        SocketModeHandler(app, self.lctx.configs[configs.SLACK_APP_KEY]).start()
 

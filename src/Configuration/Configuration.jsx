@@ -118,6 +118,7 @@ function Configuration() {
               <div className="config-box">
                 <label>Slack Configs</label>
                 { editExisting && editor('Slack API Key', 'SLACK_API_KEY') }
+                { editExisting && editor('Slack App Key', 'SLACK_APP_KEY') }
                 { editExisting && editor('Competition Channel Slack ID', 'COMPETITION_CHANNEL_SLACK_ID') }
                 { editExisting && editor('Bot Slack User ID', 'BOT_SLACK_USER_ID') }
                 { editExisting && editor('Commissioner Slack ID', 'COMMISSIONER_SLACK_ID') }

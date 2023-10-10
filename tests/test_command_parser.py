@@ -23,7 +23,7 @@ class Test(TestCase):
     def tearDown(self):
         test_league_setup.teardown_test_league()
 
-    def test_filter_invalid_messages(self):
+    def test_validate_and_clean_message(self):
         bot_slack_id = lctx.configs[configs.BOT_SLACK_USER_ID]
         channel_id = lctx.configs[configs.COMPETITION_CHANNEL_SLACK_ID]
 
@@ -34,25 +34,22 @@ class Test(TestCase):
             {'channel': channel_id, 'user': 'user', 'ts': 'timestamp'},  # no text
             {'text': 'message text', 'channel': channel_id, 'user': 'user', 'ts': 'timestamp', 'bot_id': bot_slack_id},  # has bot_id
             {'text': 'message text', 'channel': channel_id, 'user': 'user', 'ts': 'timestamp'},  # message lacks bot id
-            {'text': '<@{}> message'.format(bot_slack_id), 'channel': 'fake_channel', 'user': 'user', 'ts': 'timestamp'}  # wrong channel
+            {'text': '<@{}> message'.format(bot_slack_id), 'channel': 'fake_channel', 'user': 'user', 'ts': 'timestamp'},  # wrong channel
+            {'text': 'message <@{}> text middle'.format(bot_slack_id), 'channel': channel_id, 'user': 'user', 'ts': 'timestamp'},  # bot tag in middle
+            {'text': 'message text <@{}> last'.format(bot_slack_id), 'channel': channel_id, 'user': 'user', 'ts': 'timestamp'},  # bot tag at end
         ]
-        result = command_parser.filter_invalid_messages(lctx, message_objects)
-        self.assertEqual(0, len(result))
+        for m in message_objects:
+            result = command_parser.validate_and_clean_message(lctx, m)
+            self.assertIsNone(result)
 
         message_objects = [
             {'text': 'message text', 'channel': 'Dchannel', 'user': 'user', 'ts': 'timestamp'},
-            {'text': '<@{}> message text'.format(bot_slack_id), 'channel': 'Dchannel', 'user': 'user', 'ts': 'timestamp'}
+            {'text': '<@{}> message text'.format(bot_slack_id), 'channel': 'Dchannel', 'user': 'user', 'ts': 'timestamp'},  # in DM
+            {'text': '<@{}> message text'.format(bot_slack_id), 'channel': channel_id, 'user': 'user', 'ts': 'timestamp'}  # in channel
         ]
-        result = command_parser.filter_invalid_messages(lctx, message_objects)
-        self.assertEqual(['message text', 'message text'], [x['text'] for x in result])
-
-        message_objects = [
-            {'text': 'message <@{}> text middle'.format(bot_slack_id), 'channel': channel_id, 'user': 'user', 'ts': 'timestamp'},
-            {'text': 'message text <@{}> last'.format(bot_slack_id), 'channel': channel_id, 'user': 'user', 'ts': 'timestamp'},
-            {'text': '<@{}> message text first'.format(bot_slack_id), 'channel': channel_id, 'user': 'user', 'ts': 'timestamp'}
-        ]
-        result = command_parser.filter_invalid_messages(lctx, message_objects)
-        self.assertEqual(['message text first'], [x['text'] for x in result])
+        for m in message_objects:
+            result = command_parser.validate_and_clean_message(lctx, m)
+            self.assertEqual('message text', result['text'])
 
     def test_determine_command(self):
         pass  # TODO
