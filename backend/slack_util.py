@@ -1,29 +1,29 @@
 import time
 
-import slackclient
+from slack_sdk import WebClient
 
 from backend import db, utility, configs
 
 
 def _get_slack_client(lctx):
     if lctx.slack_client is None:
-        return slackclient.SlackClient(lctx.configs[configs.SLACK_API_KEY])
+        return WebClient(token=lctx.configs[configs.SLACK_API_KEY])
     else:
         return lctx.slack_client
 
 
 def _get_users_list(lctx):
-    response = _get_slack_client(lctx).api_call('users.list')
-    return response['members']
+    response = _get_slack_client(lctx).users_list()
+    return response['data']['members']
 
 
 def post_message(lctx, message, channel):
-    response = _get_slack_client(lctx).api_call("chat.postMessage", channel=channel, text=message, as_user=True)
+    response = _get_slack_client(lctx).chat_postMessage(channel=channel, text=message, as_user=True)
     return response
 
 
 def add_reaction(lctx, channel, timestamp, reaction):
-    response = _get_slack_client(lctx).api_call("reactions.add", name=reaction, channel=channel, timestamp=timestamp)
+    response = _get_slack_client(lctx).reactions_add(name=reaction, channel=channel, timestamp=timestamp)
     return response
 
 

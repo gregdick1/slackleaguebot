@@ -1,6 +1,6 @@
 import datetime
 
-from slackclient import SlackClient
+from slack_sdk import WebClient
 
 from backend import configs, slack_util, utility, db
 from backend.league_context import LeagueContext
@@ -32,7 +32,7 @@ def run_reminders(league_name, debug=True, force=False):
         if {'date': today, 'sent': 0, 'season': season} not in reminder_days:
             return
 
-    lctx.slack_client = SlackClient(lctx.configs[configs.SLACK_API_KEY])
+    lctx.slack_client = WebClient(lctx.configs[configs.SLACK_API_KEY])
     today = datetime.date.today()
     yesterday = today - datetime.timedelta(days=1)
 
