@@ -122,7 +122,7 @@ def get_league_configs(league_name):
     return configs
 
 
-# useful for debugging
+# useful for debugging.py
 def print_db():
     conn = _get_connection()
     c = conn.cursor()
