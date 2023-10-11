@@ -105,7 +105,9 @@ function PlayerBoard2() {
         setOrderedActivePlayersAndMarkers([...orderedActivePlayersAndMarkers, {slack_id: 'waiting', name:playerName}])
         let groups = orderedActivePlayersAndMarkers.filter(p => p.slack_id.length === 1).map(p => p.slack_id)
         let bottomGroup = groups[groups.length-1]
-
+        if (slackUsersRefreshState.totalUsers == 0) {
+            alert('This will take ~20 seconds. Next time click the refresh users button if the list of users is not cached.')
+        }
 
         const updateServer = async () => {
           let response = await axios.post(`add-player`, { leagueName: leagueState.selectedLeague, playerName: playerName, grouping: bottomGroup });
