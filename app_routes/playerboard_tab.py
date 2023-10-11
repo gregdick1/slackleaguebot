@@ -92,6 +92,21 @@ def add_player():
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)})
 
+@playerboard_api.route('/refresh-users', methods=['POST'])
+def refresh_users():
+    data = request.get_json()
+    league_name = data.get("leagueName")
+    lctx = LeagueContext.load_from_db(league_name)
+    try:
+        users_list = slack_util._get_users_list(lctx, True)
+        return jsonify({'success': True, 'totalUsers': len(users_list), 'lastRan': slack_util.last_get_users_date})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)})
+
+@playerboard_api.route('/slack-users-count', methods=['GET'])
+def refresh_users_info():
+    return jsonify({'success': True, 'totalUsers': len(slack_util.users_list), 'lastRan': slack_util.last_get_users_date})
+
 
 @playerboard_api.route('/get-deactivated-players', methods=['GET'])
 def get_deactivated_players():

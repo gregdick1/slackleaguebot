@@ -1,8 +1,13 @@
+import datetime
 import time
+import json
 
 from slack_sdk import WebClient
 
 from backend import db, utility, configs
+
+users_list = []
+last_get_users_date = None
 
 
 def _get_slack_client(lctx):
@@ -12,9 +17,17 @@ def _get_slack_client(lctx):
         return lctx.slack_client
 
 
-def _get_users_list(lctx):
-    response = _get_slack_client(lctx).users_list()
-    return response['data']['members']
+def _get_users_list(lctx, force_query=False):
+    if not globals()['users_list'] or force_query:
+        response = _get_slack_client(lctx).users_list()
+        all_members = response.data['members']
+        while len(response.data['response_metadata']['next_cursor']) != 0:
+            response = _get_slack_client(lctx).users_list(cursor=response.data['response_metadata']['next_cursor'])
+            all_members = all_members + response.data['members']
+        globals()['users_list'] = all_members
+        globals()['last_get_users_date'] = datetime.datetime.now().isoformat()
+        return all_members
+    return globals()['users_list']
 
 
 def post_message(lctx, message, channel):
@@ -31,6 +44,7 @@ def add_reaction(lctx, channel, timestamp, reaction):
 def get_slack_id(lctx, player_name):
     users = _get_users_list(lctx)
     for user in users:
+        x = user['profile']['real_name']
         if user['profile']['real_name'].startswith(player_name) and not user['deleted']:
             return user['id']
     return None
