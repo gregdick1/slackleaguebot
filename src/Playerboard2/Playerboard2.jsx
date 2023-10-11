@@ -24,6 +24,8 @@ function PlayerBoard2() {
     const [addPlayerName, setAddPlayerName] = useState("")
 
     const [reload, setReload] = useState(false)
+    const [refreshUsersLoading, setRefreshUsersLoading] = useState(false)
+    const [slackUsersRefreshState, setSlackUsersRefreshState] = useState({})
 
     const [ leagueState, dispatch ] = React.useContext(LeagueContext)
 
@@ -65,6 +67,9 @@ function PlayerBoard2() {
             orderedActivePlayersAndMarkers.push(...group_players)
         }
         setOrderedActivePlayersAndMarkers(orderedActivePlayersAndMarkers)
+
+        let slackUsersRefreshData = (await axios.get('slack-users-count')).data
+        setSlackUsersRefreshState({totalUsers: slackUsersRefreshData.totalUsers, lastRan: slackUsersRefreshData.lastRan});
       }
 
       fetchData().catch(console.error);
@@ -82,11 +87,27 @@ function PlayerBoard2() {
       updateServer().catch(console.error);
     }
 
+    const handleRefreshUsers = () => {
+        setRefreshUsersLoading(true)
+        const refresh = async () => {
+            let response = await axios.post('refresh-users', {leagueName: leagueState.selectedLeague});
+            if (response.data['success']) {
+                setSlackUsersRefreshState({totalUsers: response.data.totalUsers, lastRan: response.data.lastRan})
+            } else {
+                alert('Refresh slack users cache failed.')
+            }
+            setRefreshUsersLoading(false)
+        }
+        refresh().catch(console.error);
+    }
+
     const addPlayer = (playerName) => {
         setOrderedActivePlayersAndMarkers([...orderedActivePlayersAndMarkers, {slack_id: 'waiting', name:playerName}])
         let groups = orderedActivePlayersAndMarkers.filter(p => p.slack_id.length === 1).map(p => p.slack_id)
         let bottomGroup = groups[groups.length-1]
-
+        if (slackUsersRefreshState.totalUsers === 0) {
+            alert('This will take ~20 seconds. Next time click the refresh users button if the list of users is not cached.')
+        }
 
         const updateServer = async () => {
           let response = await axios.post(`add-player`, { leagueName: leagueState.selectedLeague, playerName: playerName, grouping: bottomGroup });
@@ -170,6 +191,7 @@ function PlayerBoard2() {
             if (i === result.destination.index) destinationGroup = currentGroup;
             if (!movedDown && slack_id.length === 1) currentGroup = slack_id
           }
+          if (result.destination.index === playersAndGroups.length) destinationGroup = currentGroup
 
           let newSpot = result.destination.index + (movedDown ? 1 : 0)
           if (result.source.droppableId === 'active') {
@@ -301,6 +323,22 @@ function PlayerBoard2() {
             <div className="promoted-player">Promoted Player</div>
             <div className="demoted-player">Relegated Player</div>
             <div className="pending-player">Pending Slack ID Retrieval</div>
+          </div>
+          <button
+            id='get-refresh-users-btn'
+            className="btn btn-primary"
+            disabled={refreshUsersLoading}
+            onClick={handleRefreshUsers}
+            title="Refreshes the list of users the backend caches. Used only for adding players.">
+            { refreshUsersLoading &&
+              <Spinner size={20} />
+            }
+            <span>Refresh Users</span>
+          </button>
+          <div
+            className="slack-users">
+            <div>Users: {slackUsersRefreshState.totalUsers}</div>
+            <div>Last run: {slackUsersRefreshState.lastRan}</div>
           </div>
         </div>
 

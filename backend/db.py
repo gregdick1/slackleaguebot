@@ -357,12 +357,7 @@ def _update_match(league_name, winner, loser, sets):
         print('Could not update match')
         return False
 
-    # If a match has played all sets, we set sets to the winners total
-    if match.play_all_sets:
-        if sets < match.sets_needed/2 + 1:
-            print('Sets out of range, was {}, but must be between {} and {}'.format(sets, int(match.sets_needed/2) + 1, match.sets_needed))
-            return False
-    else:
+    if not match.play_all_sets:
         if sets < match.sets_needed or sets > (match.sets_needed*2-1):
             print('Sets out of range, was {}, but must be between {} and {}'.format(sets, match.sets_needed, match.sets_needed*2-1))
             return False

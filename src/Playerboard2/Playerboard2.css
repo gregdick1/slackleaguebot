@@ -67,3 +67,8 @@ body {
     top: 70px;
     right: 15px;
 }
+
+.slack-users {
+    font-size: 11px;
+    display : block;
+}

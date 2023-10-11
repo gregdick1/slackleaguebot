@@ -56,7 +56,7 @@ def handle_message(lctx, command_object):
         try:
             score_1, score_2 = parse_score(command_object.text)
             if all_sets_played:
-                if score_1 != match.sets_needed and score_2 != match.sets_needed:
+                if score_1 + score_2 != match.sets_needed:
                     raise Exception("Incorrect points")
             else:
                 if score_1 < match.sets_needed and score_2 < match.sets_needed:
@@ -71,14 +71,10 @@ def handle_message(lctx, command_object):
     if (total_score < match.sets_needed or total_score >= match.sets_needed*2) and not all_sets_played:
         slack_util.post_message(lctx, get_format_message(lctx), command_object.channel)
         return
-    
-    if total_score <= match.sets_needed and all_sets_played:
-        slack_util.post_message(lctx, get_format_message(lctx), command_object.channel)
-        return
 
     is_admin = command_object.user == lctx.configs[configs.COMMISSIONER_SLACK_ID] and command_object.is_dm()
     try:
-        db.update_match_by_id(lctx.league_name, users['winner_id'], users['loser_id'], all_sets_played if max(score_1, score_2) else total_score)
+        db.update_match_by_id(lctx.league_name, users['winner_id'], users['loser_id'], max(score_1, score_2) if all_sets_played else total_score)
         slack_util.add_reaction(lctx, command_object.channel, command_object.timestamp, WORKED_REACTION)
 
     except Exception as e:
