@@ -5,7 +5,7 @@ from unittest import TestCase
 import test_league_setup
 from backend import db
 
-league_name = 'test'
+league_name = 'unittest'
 
 
 class Test(TestCase):
@@ -32,6 +32,16 @@ class Test(TestCase):
 
         with self.assertRaises(sqlite3.IntegrityError) as exception_context:
             db.add_player(league_name, u'testplayer', 'Same ID', 'A')
+
+    def test_add_player_unique_constraint(self):
+        num_commands = len(db.get_commands_to_run(league_name))
+        db.add_player(league_name, u'testplayer', 'Test Player', 'A')
+        try:
+            db.add_player(league_name, u'testplayer', 'Test Player Again', 'A')
+        except:
+            pass
+        db.add_player(league_name, u'testplayer2', 'Test Player 2', 'A')
+        self.assertEqual(2, len(db.get_commands_to_run(league_name)) - num_commands)
 
     def test_set_active(self):
         db.add_player(league_name, u'testplayer', 'Test Player', 'A')
