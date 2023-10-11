@@ -35,6 +35,7 @@ def initialize(league_name):
               'grouping TEXT, '
               'season INT, '
               'sets INT, '
+              'play_all_sets INT DEFAULT 0, '
               'sets_needed INT, '
               'date_played DATE, '
               'message_sent INT DEFAULT 0, '
@@ -241,23 +242,23 @@ def set_active(league_name, slack_id, active):
     save_commands_to_run(league_name)
 
 
-def add_match(league_name, player_1, player_2, week_date, grouping, season, sets_needed):
+def add_match(league_name, player_1, player_2, week_date, grouping, season, play_all_sets, sets_needed):
     conn = get_connection(league_name)
     conn.set_trace_callback(partial(add_command_to_run, league_name))
     c = conn.cursor()
 
     if player_1 is None or player_2 is None:
         p_id = player_1.slack_id if player_1 is not None else player_2.slack_id
-        c.execute("INSERT INTO match (player_1, week, grouping, season, sets, sets_needed) VALUES (?, ?, ?, ?, 0, ?)", (p_id, str(week_date), grouping, season, sets_needed))
+        c.execute("INSERT INTO match (player_1, week, grouping, season, sets, play_all_sets, sets_needed) VALUES (?, ?, ?, ?, 0, ?, ?)", (p_id, str(week_date), grouping, season, play_all_sets, sets_needed))
     else:
-        c.execute("INSERT INTO match (player_1, player_2, week, grouping, season, sets, sets_needed) VALUES (?, ?, ?, ?, ?, 0, ?)", (player_1.slack_id, player_2.slack_id, str(week_date), grouping, season, sets_needed))
+        c.execute("INSERT INTO match (player_1, player_2, week, grouping, season, sets, play_all_sets, sets_needed) VALUES (?, ?, ?, ?, ?, 0, ?, ?)", (player_1.slack_id, player_2.slack_id, str(week_date), grouping, season, play_all_sets, sets_needed))
     conn.commit()
     conn.close()
     save_commands_to_run(league_name)
 
 
 class Match:
-    def __init__(self, id, p1_id, p2_id, winner_id, week, grouping, season, sets, sets_needed, date_played, message_sent, forfeit):
+    def __init__(self, id, p1_id, p2_id, winner_id, week, grouping, season, sets, play_all_sets, sets_needed, date_played, message_sent, forfeit):
         self.id = id
         self.player_1_id = p1_id
         self.player_2_id = p2_id
@@ -266,6 +267,7 @@ class Match:
         self.grouping = grouping
         self.season = season
         self.sets = sets
+        self.play_all_sets = play_all_sets
         self.sets_needed = sets_needed
         self.date_played = date_played
         self.message_sent = message_sent
@@ -273,7 +275,7 @@ class Match:
 
     @classmethod
     def from_db(cls, row):
-        return Match(row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9], row[10], row[11])
+        return Match(row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9], row[10], row[11], row[12])
 
 
 def get_matches(league_name):
@@ -355,9 +357,15 @@ def _update_match(league_name, winner, loser, sets):
         print('Could not update match')
         return False
 
-    if sets < match.sets_needed or sets > (match.sets_needed*2-1):
-        print('Sets out of range, was {}, but must be between {} and {}'.format(sets, match.sets_needed, match.sets_needed*2-1))
-        return False
+    # If a match has played all sets, we set sets to the winners total
+    if match.play_all_sets:
+        if sets < match.sets_needed/2 + 1:
+            print('Sets out of range, was {}, but must be between {} and {}'.format(sets, int(match.sets_needed/2) + 1, match.sets_needed))
+            return False
+    else:
+        if sets < match.sets_needed or sets > (match.sets_needed*2-1):
+            print('Sets out of range, was {}, but must be between {} and {}'.format(sets, match.sets_needed, match.sets_needed*2-1))
+            return False
 
     conn = get_connection(league_name)
     conn.set_trace_callback(partial(add_command_to_run, league_name))

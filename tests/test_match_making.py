@@ -105,7 +105,7 @@ class Test(TestCase):
 
         week = datetime.date(2022, 1, 3)
         skip_weeks = []
-        match_making.create_matches_for_season(league_name, week, 2, skip_weeks, False)
+        match_making.create_matches_for_season(league_name, week, 2, skip_weeks, False, False)
 
         matches = db.get_matches(league_name)
         self.assertEqual(84, len(matches))
@@ -123,7 +123,7 @@ class Test(TestCase):
         self.assertEqual(12, len(db.get_matches_for_week(league_name, datetime.date(2022, 2, 7))))
         self.assertEqual(12, len(db.get_matches_for_week(league_name, datetime.date(2022, 2, 14))))
 
-        match_making.create_matches_for_season(league_name, datetime.date(2022, 2, 21), 4, skip_weeks, False)
+        match_making.create_matches_for_season(league_name, datetime.date(2022, 2, 21), 4, skip_weeks, False, False)
         matches = db.get_matches(league_name)
         self.assertEqual(168, len(matches))
         self.assertEqual(84, len([x for x in matches if x.sets_needed == 4]))

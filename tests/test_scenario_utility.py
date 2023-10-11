@@ -4,12 +4,13 @@ from backend.scenario_analysis import scenario_utility
 
 
 class Match:
-    def __init__(self, id, p1_id, p2_id, winner_id, sets):
+    def __init__(self, id, p1_id, p2_id, winner_id, play_all_sets, sets):
         self.id = id
         self.player_1_id = p1_id
         self.player_2_id = p2_id
         self.winner_id = winner_id
         self.sets = sets
+        self.play_all_sets = play_all_sets
         self.sets_needed = sets
 
 
@@ -136,16 +137,16 @@ class Test(TestCase):
 
     def test_scenario_sets_identical(self):
         scenario_a = [
-            Match(1, 'a', 'b', 'a', 3),
-            Match(2, 'b', 'c', 'b', 3),
-            Match(3, 'c', 'd', 'c', 3),
-            Match(4, 'd', 'a', 'd', 3),
+            Match(1, 'a', 'b', 'a', 0, 3),
+            Match(2, 'b', 'c', 'b', 0, 3),
+            Match(3, 'c', 'd', 'c', 0, 3),
+            Match(4, 'd', 'a', 'd', 0, 3),
         ]
         scenario_b = [
-            Match(1, 'a', 'b', 'b', 3),
-            Match(2, 'b', 'c', 'c', 3),
-            Match(3, 'c', 'd', 'd', 5),
-            Match(4, 'd', 'a', 'a', 4),
+            Match(1, 'a', 'b', 'b', 0, 3),
+            Match(2, 'b', 'c', 'c', 0, 3),
+            Match(3, 'c', 'd', 'd', 0, 5),
+            Match(4, 'd', 'a', 'a', 0, 4),
         ]
         scenario_list_1 = [scenario_a[:], scenario_b[:]]
         scenario_b.reverse()
@@ -173,11 +174,11 @@ class Test(TestCase):
             return list_a+list_b
 
         theoretical_matches = [
-            Match(99, 'z', 'y', 'z', 3),
-            Match(1, 'a', 'b', 'a', 3),
-            Match(2, 'b', 'c', 'b', 3),
-            Match(3, 'c', 'd', 'c', 3),
-            Match(4, 'd', 'a', 'd', 3)
+            Match(99, 'z', 'y', 'z', 0, 3),
+            Match(1, 'a', 'b', 'a', 0, 3),
+            Match(2, 'b', 'c', 'b', 0, 3),
+            Match(3, 'c', 'd', 'c', 0, 3),
+            Match(4, 'd', 'a', 'd', 0, 3)
         ]
         total_scenarios = [[theoretical_matches[0]]]
         total_scenarios = double_scenarios(total_scenarios, theoretical_matches[1])
@@ -203,10 +204,10 @@ class Test(TestCase):
 
     def test_create_match_scenario(self):
         unplayed_matches = [
-            Match(1, 'a', 'e', None, 3),
-            Match(2, 'b', 'f', None, 3),
-            Match(3, 'c', 'g', None, 3),
-            Match(4, 'd', 'h', None, 3)
+            Match(1, 'a', 'e', None, 0, 3),
+            Match(2, 'b', 'f', None, 0, 3),
+            Match(3, 'c', 'g', None, 0, 3),
+            Match(4, 'd', 'h', None, 0, 3)
         ]
         # Combo index essentially needs to be 0-15 and correspond to a binary combination possible winner outcomes
         # For example, 0000 would be all player 1s as winners. 1111 would be all player 2s

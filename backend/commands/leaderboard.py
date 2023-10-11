@@ -99,13 +99,13 @@ def get_leaderboard(lctx, matches_or_sets, sortby, active_only, reverse_order=Tr
         player_dict[match.player_2_id]['matches_total'] = player_2['matches_total'] + 1
 
         if match.player_1_id == match.winner_id:
-            player_dict[match.player_1_id]['games_won'] = player_1['games_won'] + match.sets_needed
-            player_dict[match.player_2_id]['games_won'] = player_2['games_won'] + match.sets-match.sets_needed
+            player_dict[match.player_1_id]['games_won'] = player_1['games_won'] + match.sets if match.play_all_sets else match.sets_needed
+            player_dict[match.player_2_id]['games_won'] = player_2['games_won'] + match.sets_needed - match.sets if match.play_all_sets else match.sets - match.sets_needed
             player_dict[match.player_1_id]['matches_won'] = player_1['matches_won'] + 1
 
         elif match.player_2_id == match.winner_id:
-            player_dict[match.player_2_id]['games_won'] = player_2['games_won'] + match.sets_needed
-            player_dict[match.player_1_id]['games_won'] = player_1['games_won'] + match.sets - match.sets_needed
+            player_dict[match.player_2_id]['games_won'] = player_2['games_won'] + match.sets if match.play_all_sets else match.sets_needed
+            player_dict[match.player_1_id]['games_won'] = player_1['games_won'] + match.sets_needed - match.sets if match.play_all_sets else match.sets - match.sets_needed
             player_dict[match.player_2_id]['matches_won'] = player_2['matches_won'] + 1
 
     winrate_dict = dict()

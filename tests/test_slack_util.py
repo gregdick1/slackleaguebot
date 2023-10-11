@@ -80,7 +80,7 @@ class Test(TestCase):
         self.assertEqual(0, len(ids))
 
         skip_weeks = []
-        match_making.create_matches_for_season(lctx.league_name, week, 1, skip_weeks, False)
+        match_making.create_matches_for_season(lctx.league_name, week, 1, skip_weeks, False, False)
 
         mock_send_match_message.reset_mock()
         message = 'Match Message @against_user'
@@ -144,7 +144,7 @@ class Test(TestCase):
     def test_send_match_messages_and_reminders(self, mock_send_match_message, mock_time_sleep):
         week = datetime.date(2022, 1, 3)
         skip_weeks = []
-        match_making.create_matches_for_season(lctx.league_name, week, 1, skip_weeks, True)
+        match_making.create_matches_for_season(lctx.league_name, week, 1, skip_weeks, False, True)
 
         message = 'Match Message @against_user'
         sent_match_ids = slack_util.send_match_messages(lctx, message, week+datetime.timedelta(days=1), False, [], False)
@@ -161,7 +161,7 @@ class Test(TestCase):
         week = datetime.date(2022, 1, 3)
         skip_weeks = []
         db.add_player(lctx.league_name, 'playerA6', 'Player A6', 'A')
-        match_making.create_matches_for_season(lctx.league_name, week, 1, skip_weeks, True)
+        match_making.create_matches_for_season(lctx.league_name, week, 1, skip_weeks, False, True)
 
         message = 'Match Message @against_user'
         # Future call, should still find matches to send non-reminders
@@ -212,7 +212,7 @@ class Test(TestCase):
     def test_send_custom_for_missed_games(self, mock_post_message, mock_time_sleep):
         week = datetime.date(2022, 1, 3)
         skip_weeks = []
-        match_making.create_matches_for_season(lctx.league_name, week, 1, skip_weeks, False)
+        match_making.create_matches_for_season(lctx.league_name, week, 1, skip_weeks, False, False)
         matches = db.get_matches_for_week(lctx.league_name, week)
         db.update_match_by_id(lctx.league_name, matches[0].player_1_id, matches[0].player_2_id, 1)
 

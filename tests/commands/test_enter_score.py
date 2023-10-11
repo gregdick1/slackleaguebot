@@ -34,7 +34,7 @@ class Test(TestCase):
 
         week = datetime.date(2022, 1, 3)
         skip_weeks = []
-        match_making.create_matches_for_season(lctx.league_name, week, 3, skip_weeks, True)
+        match_making.create_matches_for_season(lctx.league_name, week, 3, skip_weeks, False, True)
 
     def tearDown(self):
         test_league_setup.teardown_test_league()
@@ -153,7 +153,7 @@ class Test(TestCase):
     def test_handle_message_no_sets(self, mock_post_message, mock_add_reaction):
         week = datetime.date(2022, 1, 24)
         skip_weeks = []
-        match_making.create_matches_for_season(lctx.league_name, week, 1, skip_weeks, True)
+        match_making.create_matches_for_season(lctx.league_name, week, 1, skip_weeks, False, True)
 
         msg = CommandMessage('<@playerA2> over me', 'comp_channel', 'playerA1', 'any_timestamp')
         lctx.configs[configs.MESSAGE_COMMISSIONER_ON_SUCCESS] = 'TRUE'

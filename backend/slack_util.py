@@ -14,7 +14,7 @@ def _get_slack_client(lctx):
 
 def _get_users_list(lctx):
     response = _get_slack_client(lctx).users_list()
-    return response['data']['members']
+    return response.data['members']
 
 
 def post_message(lctx, message, channel):

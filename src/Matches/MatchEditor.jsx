@@ -47,9 +47,9 @@ function MatchEditor({ match, allPlayers }) {
       if (loserSetsInt < 0 || loserSetsInt >= match.sets_needed) return
 
       const updateServer = async () => {
-        await axios.post(`set-score`, { leagueName: leagueState.selectedLeague, matchId: match.id, winnerId, sets: match.sets_needed + loserSetsInt });
+        await axios.post(`set-score`, { leagueName: leagueState.selectedLeague, matchId: match.id, winnerId, sets: match.play_all_sets ? match.sets_needed - loserSetsInt : match.sets_needed + loserSetsInt });
         // TODO Probably wanna grab the match from the db again
-        match.sets = match.sets_needed + loserSetsInt
+        match.sets = match.play_all_sets ? match.sets_needed - loserSetsInt : match.sets_needed + loserSetsInt
         dispatch({ type: "need_to_check_for_commands", checkForCommandsToRun:true})
         setReload(true)
       }
@@ -70,11 +70,11 @@ function MatchEditor({ match, allPlayers }) {
     let p1_score = '';
     let p2_score = '';
     if (match.player_1_id === match.winner_id && match.winner_id !== null) {
-        p1_score = ''+match.sets_needed
-        p2_score = ''+(match.sets - match.sets_needed)
+        p1_score = ''+match.play_all_sets ? match.sets : match.sets_needed
+        p2_score = ''+match.play_all_sets ? (match.sets_needed - match.sets) : (match.sets - match.sets_needed)
     } else if (match.player_2_id === match.winner_id && match.winner_id !== null) {
-        p1_score = ''+(match.sets - match.sets_needed)
-        p2_score = ''+match.sets_needed
+        p1_score = ''+match.play_all_sets ? (match.sets_needed-match.sets) : (match.sets - match.sets_needed)
+        p2_score = ''+match.play_all_sets ? match.sets : match.sets_needed
     }
 
     const p_name = (p_id) => {

@@ -14,6 +14,7 @@ function NewSeason({callback}) {
 
     const [groupSizeWarning, setGroupSizeWarning] = useState(false)
     const [shouldIncludeByes, setShouldIncludeByes] = useState(false)
+    const [shouldPlayAllSets, setShouldPlayAllSets] = useState(false)
 
     useEffect(() => {
       const fetchData = async () => {
@@ -48,6 +49,7 @@ function NewSeason({callback}) {
                 startDate: new Date(startDate.year, startDate.month-1, startDate.day).toISOString(),
                 skipWeeks: weeksToSkip.map(v => new Date(v.year, v.month-1, v.day).toISOString()),
                 setsNeeded: setsNeeded,
+                playAllSets: shouldPlayAllSets,
                 includeByes: shouldIncludeByes
             });
 
@@ -92,11 +94,21 @@ function NewSeason({callback}) {
                         <div className="field-context">If there are weeks you don't want matches scheduled, add them here. It should be the same day of the week as the start date.</div>
                     </div>
                     <div className="new-season-field">
+                        <label>Play All Sets</label>
+                        <input type="checkbox" checked={shouldPlayAllSets} onChange={(e) => setShouldPlayAllSets(e.target.checked)}/>
+                        <div className="field-context">If checked, all sets in a match must be played.  If unchecked, the match will be played as a "best-of" series.</div>
+                    </div>
+                    {shouldPlayAllSets && <div className="new-season-field">
+                        <label>Total Sets to Play</label>
+                        <input id="totalSets" name="totalSets" type="number" onChange={(e) => setSetsNeeded(e.target.value)}/>
+                        <div className="field-context">Total sets to play if not doing a best-of series</div>
+                    </div>}
+                    {!shouldPlayAllSets && <div className="new-season-field">
                         <label>First to</label>
                         <input id="setsNeeded" name="setsNeeded" type="number" onChange={(e) => setSetsNeeded(e.target.value)} />
                         <span>wins</span>
                         <div className="field-context">The number of sets/games a person needs to win to win the match. If there are no sets/games and it's a simple win or lose, just put 1.</div>
-                    </div>
+                    </div>}
                     <div className="new-season-field">
                         <label>Include Byes:</label>
                         <input type="checkbox" checked={shouldIncludeByes} onChange={(e) => setShouldIncludeByes(e.target.checked)} />

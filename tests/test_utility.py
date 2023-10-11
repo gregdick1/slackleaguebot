@@ -23,7 +23,7 @@ class Test(TestCase):
         db.add_player(league_name, u'playerA4', 'Player A4', 'A')
         week = datetime.date(2022, 1, 3)
         skip_weeks = []
-        match_making.create_matches_for_season(league_name, week, 4, skip_weeks, False)
+        match_making.create_matches_for_season(league_name, week, 4, skip_weeks, False, False)
 
         db.update_match(league_name, 'Player A1', 'Player A2', 4)
         db.update_match(league_name, 'Player A1', 'Player A3', 5)

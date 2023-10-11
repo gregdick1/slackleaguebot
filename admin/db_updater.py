@@ -18,6 +18,9 @@ def run_updates(league_name):
     if current_version == '4':
         _update_from_4_to_5(league_name)
         current_version = '5'
+    if current_version == '5':
+        _update_from_5_to_6(league_name)
+        current_version = '6'
 
 
 # Adds the ordering index to players
@@ -113,3 +116,18 @@ def _update_from_4_to_5(league_name):
     conn.close()
 
     db.set_config(league_name, configs.LEAGUE_VERSION, '5')
+
+
+def _update_from_5_to_6(league_name):
+    current_version = db.get_config(league_name, configs.LEAGUE_VERSION)
+    if not current_version or current_version != '5':
+        return False
+
+    conn = db.get_connection(league_name)
+    c = conn.cursor()
+
+    c.execute("ALTER TABLE match ADD play_all_sets INT DEFAULT 0")
+    conn.commit()
+    conn.close()
+
+    db.set_config(league_name, configs.LEAGUE_VERSION, '6')

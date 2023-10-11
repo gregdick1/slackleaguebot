@@ -22,12 +22,12 @@ def build_stat_message(all_matches, user_id):
     for match in my_matches:
         if user_id == match.winner_id:
             total_won_matches += 1
-            total_won_sets += match.sets_needed
-            total_lost_sets += match.sets - match.sets_needed
+            total_won_sets += match.sets if match.play_all_sets else match.sets_needed
+            total_lost_sets += match.sets_needed - match.sets if match.play_all_sets else match.sets - match.sets_needed
         else:
             total_lost_matches += 1
-            total_lost_sets += match.sets_needed
-            total_won_sets += match.sets - match.sets_needed
+            total_lost_sets += match.sets if match.play_all_sets else match.sets_needed
+            total_won_sets += match.sets_needed - match.sets if match.play_all_sets else match.sets - match.sets_needed
 
     message = f"\n Matches Won: {total_won_matches} | Matches Lost: {total_lost_matches} | Sets Won: {total_won_sets} | Sets Lost: {total_lost_sets}"
     return message

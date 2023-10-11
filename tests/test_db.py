@@ -95,13 +95,13 @@ class Test(TestCase):
         week = datetime.date(2020, 1, 1)
 
         num_commands = len(db.get_commands_to_run(league_name))
-        db.add_match(league_name, p1, p2, week, 'A', 1, 3)
+        db.add_match(league_name, p1, p2, week, 'A', 1, 0, 3)
         self.assertEqual(1, len(db.get_commands_to_run(league_name))-num_commands)
         self.assertEqual(1, len(db.get_matches(league_name)))
         # TODO build in protection against adding identical matches
 
-        db.add_match(league_name, p1, None, week, 'A', 1, 3)
-        db.add_match(league_name, None, p2, week, 'A', 1, 3)
+        db.add_match(league_name, p1, None, week, 'A', 1, 0, 3)
+        db.add_match(league_name, None, p2, week, 'A', 1, 0, 3)
         self.assertEqual(3, len(db.get_matches(league_name)))
 
     def test_get_current_season(self):
@@ -112,7 +112,7 @@ class Test(TestCase):
         p1 = db.get_player_by_id(league_name, u'testplayer1')
         p2 = db.get_player_by_id(league_name, u'testplayer2')
         week = datetime.date(2020, 1, 1)
-        db.add_match(league_name, p1, p2, week, 'A', 3, 3)
+        db.add_match(league_name, p1, p2, week, 'A', 3, 0, 3)
 
         num_commands = len(db.get_commands_to_run(league_name))
         self.assertEqual(3, db.get_current_season(league_name))
@@ -124,9 +124,9 @@ class Test(TestCase):
         p1 = db.get_player_by_id(league_name, u'testplayer1')
         p2 = db.get_player_by_id(league_name, u'testplayer2')
         week = datetime.date(2020, 1, 1)
-        db.add_match(league_name, p1, p2, week, 'A', 1, 3)
-        db.add_match(league_name, p1, p2, week, 'B', 2, 3)
-        db.add_match(league_name, p1, p2, week, 'C', 3, 3)
+        db.add_match(league_name, p1, p2, week, 'A', 1, 0, 3)
+        db.add_match(league_name, p1, p2, week, 'B', 2, 0, 3)
+        db.add_match(league_name, p1, p2, week, 'C', 3, 0, 3)
 
         num_commands = len(db.get_commands_to_run(league_name))
         self.assertEqual(1, len(db.get_matches_for_season(league_name, 2)))
@@ -140,8 +140,8 @@ class Test(TestCase):
         p2 = db.get_player_by_id(league_name, u'testplayer2')
         week1 = datetime.date(2020, 1, 1)
         week2 = datetime.date(2021, 1, 1)
-        db.add_match(league_name, p1, p2, week1, 'A', 1, 3)
-        db.add_match(league_name, p1, p2, week2, 'A', 2, 3)
+        db.add_match(league_name, p1, p2, week1, 'A', 1, 0, 3)
+        db.add_match(league_name, p1, p2, week2, 'A', 2, 0, 3)
 
         num_commands = len(db.get_commands_to_run(league_name))
         db.clear_matches_for_season(league_name, 3)
@@ -157,8 +157,8 @@ class Test(TestCase):
         p2 = db.get_player_by_id(league_name, u'testplayer2')
         week1 = datetime.date(2020, 1, 1)
         week2 = datetime.date(2021, 1, 1)
-        db.add_match(league_name, p1, p2, week1, 'A', 1, 3)
-        db.add_match(league_name, p1, p2, week2, 'A', 2, 3)
+        db.add_match(league_name, p1, p2, week1, 'A', 1, 0, 3)
+        db.add_match(league_name, p1, p2, week2, 'A', 2, 0, 3)
 
         num_commands = len(db.get_commands_to_run(league_name))
         self.assertEqual(1, len(db.get_matches_for_week(league_name, week1)))
@@ -174,8 +174,8 @@ class Test(TestCase):
         p3 = db.get_player_by_id(league_name, u'testplayer3')
         week1 = datetime.date(2020, 1, 1)
         week2 = datetime.date(2021, 1, 1)
-        db.add_match(league_name, p1, p2, week1, 'A', 1, 3)
-        db.add_match(league_name, p1, p2, week2, 'A', 2, 3)
+        db.add_match(league_name, p1, p2, week1, 'A', 1, 0, 3)
+        db.add_match(league_name, p1, p2, week2, 'A', 2, 0, 3)
 
         num_commands = len(db.get_commands_to_run(league_name))
         self.assertIsNone(db.get_match_by_players(league_name, p1, p1))
@@ -190,7 +190,7 @@ class Test(TestCase):
         p1 = db.get_player_by_id(league_name, u'testplayer1')
         p2 = db.get_player_by_id(league_name, u'testplayer2')
         week1 = datetime.date(2020, 1, 1)
-        db.add_match(league_name, p1, p2, week1, 'A', 1, 3)
+        db.add_match(league_name, p1, p2, week1, 'A', 1, 0, 3)
 
         self.assertEqual(0, db.get_match_by_players(league_name, p1, p2).sets)
         self.assertIsNone(db.get_match_by_players(league_name, p1, p2).winner_id)
@@ -222,7 +222,7 @@ class Test(TestCase):
         p1 = db.get_player_by_id(league_name, u'testplayer1')
         p2 = db.get_player_by_id(league_name, u'testplayer2')
         week1 = datetime.date(2020, 1, 1)
-        db.add_match(league_name, p1, p2, week1, 'A', 1, 3)
+        db.add_match(league_name, p1, p2, week1, 'A', 1, 0, 3)
 
         num_commands = len(db.get_commands_to_run(league_name))
         db.update_match(league_name, 'Test Player1', 'Test Player2', 3)
@@ -236,7 +236,7 @@ class Test(TestCase):
         p1 = db.get_player_by_id(league_name, u'testplayer1')
         p2 = db.get_player_by_id(league_name, u'testplayer2')
         week1 = datetime.date(2020, 1, 1)
-        db.add_match(league_name, p1, p2, week1, 'A', 1, 3)
+        db.add_match(league_name, p1, p2, week1, 'A', 1, 0, 3)
 
         num_commands = len(db.get_commands_to_run(league_name))
         db.update_match_by_id(league_name, u'testplayer1', u'testplayer2', 3)
@@ -250,7 +250,7 @@ class Test(TestCase):
         p1 = db.get_player_by_id(league_name, u'testplayer1')
         p2 = db.get_player_by_id(league_name, u'testplayer2')
         week1 = datetime.date(2020, 1, 1)
-        db.add_match(league_name, p1, p2, week1, 'A', 1, 3)
+        db.add_match(league_name, p1, p2, week1, 'A', 1, 0, 3)
 
         match = db.get_match_by_players(league_name, p1, p2)
 
@@ -274,7 +274,7 @@ class Test(TestCase):
         p1 = db.get_player_by_id(league_name, u'testplayer1')
         p2 = db.get_player_by_id(league_name, u'testplayer2')
         week1 = datetime.date(2020, 1, 1)
-        db.add_match(league_name, p1, p2, week1, 'A', 1, 3)
+        db.add_match(league_name, p1, p2, week1, 'A', 1, 0, 3)
 
         match = db.get_match_by_players(league_name, p1, p2)
 
@@ -291,9 +291,9 @@ class Test(TestCase):
         p1 = db.get_player_by_id(league_name, u'testplayer1')
         p2 = db.get_player_by_id(league_name, u'testplayer2')
         week1 = datetime.date(2020, 1, 1)
-        db.add_match(league_name, p1, p2, week1, 'A', 1, 3)
-        db.add_match(league_name, p1, p2, week1, 'A', 2, 3)
-        db.add_match(league_name, p1, p2, week1, 'A', 3, 3)
+        db.add_match(league_name, p1, p2, week1, 'A', 1, 0, 3)
+        db.add_match(league_name, p1, p2, week1, 'A', 2, 0, 3)
+        db.add_match(league_name, p1, p2, week1, 'A', 3, 0, 3)
         num_commands = len(db.get_commands_to_run(league_name))
         all_seasons = db.get_all_seasons(league_name)
         all_seasons.sort()
@@ -387,8 +387,8 @@ class Test(TestCase):
         p2 = db.get_player_by_id(league_name, u'testplayer2')
         p3 = db.get_player_by_id(league_name, u'testplayer3')
         week = datetime.date(2020, 1, 1)
-        db.add_match(league_name, p1, p2, week, 'A', 1, 3)
-        db.add_match(league_name, p1, p3, week + datetime.timedelta(weeks=1), 'A', 1, 3)
+        db.add_match(league_name, p1, p2, week, 'A', 1, 0, 3)
+        db.add_match(league_name, p1, p3, week + datetime.timedelta(weeks=1), 'A', 1, 0, 3)
         match = db.get_matches_for_week(league_name, week)[0]
         self.assertEqual(0, match.message_sent)
         num_commands = len(db.get_commands_to_run(league_name))
@@ -412,8 +412,8 @@ class Test(TestCase):
         p2 = db.get_player_by_id(league_name, u'testplayer2')
         p3 = db.get_player_by_id(league_name, u'testplayer3')
         week = datetime.date(2020, 1, 1)
-        db.add_match(league_name, p1, p2, week, 'A', 1, 3)
-        db.add_match(league_name, p1, p3, week + datetime.timedelta(weeks=1), 'A', 1, 3)
+        db.add_match(league_name, p1, p2, week, 'A', 1, 0, 3)
+        db.add_match(league_name, p1, p3, week + datetime.timedelta(weeks=1), 'A', 1, 0, 3)
         match = db.get_matches_for_week(league_name, week)[0]
         self.assertEqual(0, match.forfeit)
         num_commands = len(db.get_commands_to_run(league_name))
@@ -437,8 +437,8 @@ class Test(TestCase):
         p2 = db.get_player_by_id(league_name, u'testplayer2')
         p3 = db.get_player_by_id(league_name, u'testplayer3')
         week = datetime.date(2020, 1, 1)
-        db.add_match(league_name, p1, p2, week, 'A', 1, 3)
-        db.add_match(league_name, p1, p3, week+datetime.timedelta(weeks=1), 'A', 1, 3)
+        db.add_match(league_name, p1, p2, week, 'A', 1, 0, 3)
+        db.add_match(league_name, p1, p3, week+datetime.timedelta(weeks=1), 'A', 1, 0, 3)
 
         db.update_match_by_id(league_name, u'testplayer1', u'testplayer2', 3)
         db.update_match_by_id(league_name, u'testplayer3', u'testplayer1', 4)

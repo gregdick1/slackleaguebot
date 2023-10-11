@@ -32,7 +32,7 @@ class Test(TestCase):
 
         week = datetime.date(2022, 1, 3)
         skip_weeks = []
-        match_making.create_matches_for_season(lctx.league_name, week, 3, skip_weeks, True)
+        match_making.create_matches_for_season(lctx.league_name, week, 3, skip_weeks, False, True)
 
     def tearDown(self):
         test_league_setup.teardown_test_league()

@@ -44,11 +44,12 @@ def create_season():
     skip_weeks_iso = data.get('skipWeeks')
     sets_needed = data.get('setsNeeded')
     include_byes = data.get('includeByes')
+    play_all_sets = data.get('playAllSets')
 
     start_date = datetime.datetime.fromisoformat(start_date_iso[:-1]).date()  # Remove the Z from the end
     skip_weeks = [datetime.datetime.fromisoformat(x[:-1]).date() for x in skip_weeks_iso]  # Remove the Z from the end
 
-    match_making.create_matches_for_season(league_name, start_date, sets_needed, skip_weeks, include_byes)
+    match_making.create_matches_for_season(league_name, start_date, sets_needed, skip_weeks, play_all_sets, include_byes)
     return "Success"
 
 
