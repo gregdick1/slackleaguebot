@@ -44,8 +44,8 @@ def gather_scores(group_matches):
                 player_scores[match.player_2_id][2] += match.sets
                 player_scores[match.player_1_id][3] += match.sets
                 if match.sets != match.sets_needed:
-                    player_scores[match.player_1_id][3] += match.sets_needed - match.sets
-                    player_scores[match.player_2_id][2] += match.sets_needed - match.sets
+                    player_scores[match.player_1_id][2] += match.sets_needed - match.sets
+                    player_scores[match.player_2_id][3] += match.sets_needed - match.sets
             continue
         if match.player_1_id == match.winner_id:
             player_scores[match.player_1_id][0] += 1
