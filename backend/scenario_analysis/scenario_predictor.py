@@ -145,7 +145,7 @@ def can_player_make_top_x(group_matches, player_id, top_xs, reverse=False):
                 for combo_index in range(0, tie_scenario_combinations):
                     combo_array = scenario_utility.build_combo_array(combo_index, 3, len(theoretical_matches))
                     for i in range(0, len(theoretical_matches)):  # 0 or 1
-                        theoretical_matches[i].sets = theoretical_matches[i].sets_needed + combo_array[i]
+                        theoretical_matches[i].sets = (int(theoretical_matches[i].sets_needed/2) + 1 if theoretical_matches[i].play_all_sets else theoretical_matches[i].sets_needed) + combo_array[i]
                     full_scenario = played_matches + players_unplayed + inconsequential_matches + theoretical_matches
                     ordered_players = utility.gather_scores(full_scenario)
                     if reverse:
