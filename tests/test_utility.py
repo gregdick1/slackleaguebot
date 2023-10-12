@@ -16,6 +16,7 @@ class Test(TestCase):
     def tearDown(self):
         test_league_setup.teardown_test_league()
 
+
     def test_gather_scores(self):
         db.add_player(league_name, u'playerA1', 'Player A1', 'A')
         db.add_player(league_name, u'playerA2', 'Player A2', 'A')
@@ -28,9 +29,9 @@ class Test(TestCase):
         db.update_match(league_name, 'Player A1', 'Player A2', 4, 0, 0)
         db.update_match(league_name, 'Player A1', 'Player A3', 4, 1, 0)
         db.update_match(league_name, 'Player A1', 'Player A4', 4, 2, 0)
-        db.update_match(league_name, 'Player A3', 'Player A2', 3, 4, 0)
-        db.update_match(league_name, 'Player A4', 'Player A2', 2, 4, 0)
-        db.update_match(league_name, 'Player A4', 'Player A3', 1, 4, 0)
+        db.update_match(league_name, 'Player A3', 'Player A2', 4, 3, 0)
+        db.update_match(league_name, 'Player A4', 'Player A2', 4, 2, 0)
+        db.update_match(league_name, 'Player A4', 'Player A3', 4, 1, 0)
 
         matches = db.get_matches(league_name)
         results = utility.gather_scores(matches)
