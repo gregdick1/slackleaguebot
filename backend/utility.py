@@ -24,48 +24,26 @@ def gather_scores(group_matches):
     player_scores = {}
     for match in group_matches:
         if match.player_1_id not in player_scores:
-            player_scores[match.player_1_id] = [0, 0, 0, 0]  # matches won/lost, sets won/lost
+            player_scores[match.player_1_id] = [0, 0, 0, 0, 0]  # matches won/lost, sets won/lost/tied
         if match.player_2_id not in player_scores:
-            player_scores[match.player_2_id] = [0, 0, 0, 0]
+            player_scores[match.player_2_id] = [0, 0, 0, 0, 0]
         if match.winner_id is None:
-            continue
-        if match.play_all_sets:
-            if match.player_1_id == match.winner_id:
-                player_scores[match.player_1_id][0] += 1
-                player_scores[match.player_2_id][1] += 1
-                player_scores[match.player_1_id][2] += match.sets
-                player_scores[match.player_2_id][3] += match.sets
-                if match.sets != match.sets_needed:
-                    player_scores[match.player_1_id][3] += match.sets_needed - match.sets
-                    player_scores[match.player_2_id][2] += match.sets_needed - match.sets
-            else:
-                player_scores[match.player_2_id][0] += 1
-                player_scores[match.player_1_id][1] += 1
-                player_scores[match.player_2_id][2] += match.sets
-                player_scores[match.player_1_id][3] += match.sets
-                if match.sets != match.sets_needed:
-                    player_scores[match.player_1_id][2] += match.sets_needed - match.sets
-                    player_scores[match.player_2_id][3] += match.sets_needed - match.sets
             continue
         if match.player_1_id == match.winner_id:
             player_scores[match.player_1_id][0] += 1
             player_scores[match.player_2_id][1] += 1
-            player_scores[match.player_1_id][2] += match.sets_needed
-            player_scores[match.player_2_id][3] += match.sets_needed
-            if match.sets > match.sets_needed:
-                player_scores[match.player_2_id][2] += match.sets - match.sets_needed
-                player_scores[match.player_1_id][3] += match.sets - match.sets_needed
         else:
             player_scores[match.player_2_id][0] += 1
             player_scores[match.player_1_id][1] += 1
-            player_scores[match.player_2_id][2] += match.sets_needed
-            player_scores[match.player_1_id][3] += match.sets_needed
-            if match.sets > match.sets_needed:
-                player_scores[match.player_1_id][2] += match.sets - match.sets_needed
-                player_scores[match.player_2_id][3] += match.sets - match.sets_needed
+        player_scores[match.player_1_id][2] += match.player_1_score
+        player_scores[match.player_1_id][3] += match.player_2_score
+        player_scores[match.player_1_id][4] += match.tie_score
+        player_scores[match.player_2_id][2] += match.player_2_score
+        player_scores[match.player_2_id][3] += match.player_1_score
+        player_scores[match.player_2_id][4] += match.tie_score
 
-    players = [{'player_id': k, 'm_w': v[0], 'm_l': v[1], 's_w': v[2], 's_l': v[3]} for k, v in player_scores.items()]
-    players = sorted(players, key=lambda k: (-k['m_w'], k['m_l'], -k['s_w'], k['s_l']))
+    players = [{'player_id': k, 'm_w': v[0], 'm_l': v[1], 's_w': v[2], 's_l': v[3], 's_t': v[4]} for k, v in player_scores.items()]
+    players = sorted(players, key=lambda k: (-k['m_w'], k['m_l'], -k['s_w'], k['s_l'], k['s_t']))
 
     return tie_breaker.order_players(players, group_matches)
 

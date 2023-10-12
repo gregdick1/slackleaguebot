@@ -42,7 +42,7 @@ def build_matchup_summary(matches, player_id, opponent_id):
         'matches': len(matches),
         'wins': len([x for x in matches if x.winner_id == player_id]),
         'sets': sum([x.sets for x in matches]),
-        'set_wins': sum([x.sets if x.play_all_sets else x.sets_needed for x in matches if x.winner_id == player_id]) + sum([x.sets_needed - x.sets if x.play_all_sets else x.sets - x.sets_needed for x in matches if x.winner_id != player_id])
+        'set_wins': sum([max(x.player_1_score, x.player_2_score) for x in matches if x.winner_id == player_id]) + sum([min(x.player_1_score, x.player_2_score) for x in matches if x.winner_id != player_id])
     }
     summary['losses'] = summary['matches'] - summary['wins']
     summary['set_losses'] = summary['sets'] - summary['set_wins']

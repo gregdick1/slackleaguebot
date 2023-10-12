@@ -15,7 +15,7 @@ class Test(TestCase):
         test_league_setup.teardown_test_league()
         test_league_setup.create_test_league()
 
-        league_name = 'test'
+        league_name = 'unittest'
         global lctx
         lctx = LeagueContext.load_from_db(league_name)
 

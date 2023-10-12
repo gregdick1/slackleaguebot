@@ -19,15 +19,17 @@ def build_stat_message(all_matches, user_id):
     total_lost_matches = 0
     total_won_sets = 0
     total_lost_sets = 0
+    total_tied_sets = 0
     for match in my_matches:
         if user_id == match.winner_id:
             total_won_matches += 1
-            total_won_sets += match.sets if match.play_all_sets else match.sets_needed
-            total_lost_sets += match.sets_needed - match.sets if match.play_all_sets else match.sets - match.sets_needed
+            total_won_sets += max(match.player_1_score, match.play_2_score)
+            total_lost_sets += min(match.player_1_score, match.player_2_score)
         else:
             total_lost_matches += 1
-            total_lost_sets += match.sets if match.play_all_sets else match.sets_needed
-            total_won_sets += match.sets_needed - match.sets if match.play_all_sets else match.sets - match.sets_needed
+            total_lost_sets += max(match.player_1_score, match.player_2_score)
+            total_won_sets += min(match.player_1_score, match.player_2_score)
+        total_tied_sets += match.tie_score
 
-    message = f"\n Matches Won: {total_won_matches} | Matches Lost: {total_lost_matches} | Sets Won: {total_won_sets} | Sets Lost: {total_lost_sets}"
+    message = f"\n Matches Won: {total_won_matches} | Matches Lost: {total_lost_matches} | Sets Won: {total_won_sets} | Sets Lost: {total_lost_sets} | Sets Tied: {total_tied_sets}"
     return message

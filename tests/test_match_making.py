@@ -4,7 +4,7 @@ from unittest import TestCase
 import test_league_setup
 from backend import db, match_making
 
-league_name = 'test'
+league_name = 'unittest'
 
 
 class Test(TestCase):

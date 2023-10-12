@@ -2,7 +2,7 @@ import os
 
 from backend import db
 
-league_name = "test"
+league_name = "unittest"
 
 
 def teardown_test_league():

@@ -16,7 +16,7 @@ class Test(TestCase):
         test_league_setup.teardown_test_league()
         test_league_setup.create_test_league()
 
-        league_name = 'test'
+        league_name = 'unittest'
         db.set_config(league_name, configs.COMPETITION_CHANNEL_SLACK_ID, 'comp_channel')
         db.set_config(league_name, configs.COMMISSIONER_SLACK_ID, 'commish')
 

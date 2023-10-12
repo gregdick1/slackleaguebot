@@ -126,8 +126,25 @@ def _update_from_5_to_6(league_name):
     conn = db.get_connection(league_name)
     c = conn.cursor()
 
+    c.execute("ALTER TABLE match ADD player_1_score INT")
+    c.execute("ALTER TABLE match ADD player_2_score INT")
+    c.execute("ALTER TABLE match ADD tie_score INT")
     c.execute("ALTER TABLE match ADD play_all_sets INT DEFAULT 0")
     conn.commit()
     conn.close()
 
+    all_matches = db.get_matches(league_name)
+    conn = db.get_connection(league_name)
+    c = conn.cursor()
+
+    for match in all_matches:
+        if match.winner_id is None:
+            continue
+        if match.winner_id == match.player_1_id:
+            c.execute("UPDATE match SET player_1_score=?, player_2_score=?, tie_score=0 WHERE rowid=?", (match.sets_needed, match.sets-match.sets_needed, match.id))
+        else:
+            c.execute("UPDATE match SET player_2_score=?, player_1_score=?, tie_score=0 WHERE rowid=?", (match.sets_needed, match.sets-match.sets_needed, match.id))
+
+    conn.commit()
+    conn.close()
     db.set_config(league_name, configs.LEAGUE_VERSION, '6')
