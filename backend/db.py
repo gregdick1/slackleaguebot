@@ -377,19 +377,19 @@ def get_match_by_players(league_name, player_a, player_b):
     return Match.from_db(row)
 
 
-def update_match(league_name, winner_name, loser_name, p1_score, p2_score, tie_score):
+def update_match(league_name, winner_name, loser_name, winner_score, loser_score, tie_score):
     winner = get_player_by_name(league_name, winner_name)
     loser = get_player_by_name(league_name, loser_name)
-    return _update_match(league_name, winner, loser, p1_score, p2_score, tie_score)
+    return _update_match(league_name, winner, loser, winner_score, loser_score, tie_score)
 
 
-def update_match_by_id(league_name, winner_id, loser_id, p1_score, p2_score, tie_score):
+def update_match_by_id(league_name, winner_id, loser_id, winner_score, loser_score, tie_score):
     winner = get_player_by_id(league_name, winner_id)
     loser = get_player_by_id(league_name, loser_id)
-    return _update_match(league_name, winner, loser, p1_score, p2_score, tie_score)
+    return _update_match(league_name, winner, loser, winner_score, loser_score, tie_score)
 
 
-def _update_match(league_name, winner, loser, p1_score, p2_score, tie_score):
+def _update_match(league_name, winner, loser, winner_score, loser_score, tie_score):
     if winner is None or loser is None:
         print('Could not update match')
         return False
@@ -399,7 +399,7 @@ def _update_match(league_name, winner, loser, p1_score, p2_score, tie_score):
         print('Could not update match')
         return False
 
-    sets = p1_score+p2_score+tie_score
+    sets = winner_score+loser_score+tie_score
 
     if match.play_all_sets:
         if sets != match.sets_needed:
@@ -409,6 +409,9 @@ def _update_match(league_name, winner, loser, p1_score, p2_score, tie_score):
         if sets < match.sets_needed or sets > (match.sets_needed*2-1):
             print('Sets out of range, was {}, but must be between {} and {}'.format(sets, match.sets_needed, match.sets_needed*2-1))
             return False
+
+    p1_score = winner_score if winner.slack_id == match.player_1_id else loser_score
+    p2_score = winner_score if winner.slack_id == match.player_2_id else loser_score
 
     try:
         conn = get_connection(league_name)

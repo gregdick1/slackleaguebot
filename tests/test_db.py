@@ -243,7 +243,7 @@ class Test(TestCase):
         self.assertEqual(p1.slack_id, m.winner_id)
         self.assertEqual(datetime.date.today(), m.date_played)
 
-        db._update_match(league_name, p2, p1, 0, 3, 0)
+        db._update_match(league_name, p2, p1, 3, 0, 0)
         m = db.get_match_by_players(league_name, p1, p2)
         self.assertEqual(3, m.sets)
         self.assertEqual(3, m.player_2_score)
@@ -251,7 +251,7 @@ class Test(TestCase):
         self.assertEqual(0, m.tie_score)
         self.assertEqual(p2.slack_id, m.winner_id)
 
-        db._update_match(league_name, p2, p1, 0, 2, 1)
+        db._update_match(league_name, p2, p1, 2, 0, 1)
         m = db.get_match_by_players(league_name, p1, p2)
         self.assertEqual(3, m.sets)
         self.assertEqual(2, m.player_2_score)
