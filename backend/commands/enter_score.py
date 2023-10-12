@@ -50,26 +50,40 @@ def handle_message(lctx, command_object):
         return
 
     match = tmp[0]
-
-    if match.sets_needed > 1:
+    p1_score = 0
+    p2_score = 0
+    tie_score = 0
+    if match.play_all_sets:  # Total score needs to match the sets_needed value
+        try:
+            score_1, score_2 = parse_score(command_object.text)
+            if score_1 + score_2 != match.sets_needed:
+                raise Exception("Incorrect points")
+            p1_score = score_1 if users['winner_id'] == match.player_1_id else score_2
+            p2_score = score_1 if users['winner_id'] == match.player_2_id else score_2
+        except Exception as e:
+            slack_util.post_message(lctx, get_format_message(lctx), command_object.channel)
+            return
+    elif match.sets_needed > 1:
         try:
             score_1, score_2 = parse_score(command_object.text)
             if score_1 != match.sets_needed and score_2 != match.sets_needed:
                 raise Exception("Incorrect points")
-            total_score = score_1 + score_2
+            if score_1 + score_2 < match.sets_needed or score_1 + score_2 >= match.sets_needed*2:
+                raise Exception("Incorrect points")
+            p1_score = score_1 if users['winner_id'] == match.player_1_id else score_2
+            p2_score = score_1 if users['winner_id'] == match.player_2_id else score_2
         except Exception as e:
             slack_util.post_message(lctx, get_format_message(lctx), command_object.channel)
             return
     else:
-        total_score = 1
-
-    if total_score < match.sets_needed or total_score >= match.sets_needed*2:
-        slack_util.post_message(lctx, get_format_message(lctx), command_object.channel)
-        return
+        if users['winner_id'] == match.player_1_id:
+            p1_score = 1
+        else:
+            p2_score = 1
 
     is_admin = command_object.user == lctx.configs[configs.COMMISSIONER_SLACK_ID] and command_object.is_dm()
     try:
-        db.update_match_by_id(lctx.league_name, users['winner_id'], users['loser_id'], total_score)
+        db.update_match_by_id(lctx.league_name, users['winner_id'], users['loser_id'], p1_score, p2_score, tie_score)
         slack_util.add_reaction(lctx, command_object.channel, command_object.timestamp, WORKED_REACTION)
 
     except Exception as e:

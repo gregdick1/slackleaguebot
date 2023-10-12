@@ -67,9 +67,9 @@ class Test(TestCase):
         group.handle_message(lctx, msg)
         mock_post_message.assert_called_once()
 
-        db.update_match_by_id(lctx.league_name, 'playerA1', 'playerA2', 5)
-        db.update_match_by_id(lctx.league_name, 'playerA1', 'playerA3', 4)
-        db.update_match_by_id(lctx.league_name, 'playerA2', 'playerA3', 3)
+        db.update_match_by_id(lctx.league_name, 'playerA1', 'playerA2', 3, 2, 0)
+        db.update_match_by_id(lctx.league_name, 'playerA1', 'playerA3', 3, 1, 0)
+        db.update_match_by_id(lctx.league_name, 'playerA2', 'playerA3', 3, 0, 0)
         printout = 'Group A:\nPlayer A1 2-0 (6-3)\nPlayer A2 1-1 (5-3)\nPlayer A3 0-2 (1-6)\nPlayer A4 0-0 (0-0)'
 
         mock_post_message.reset_mock()
@@ -78,10 +78,10 @@ class Test(TestCase):
         mock_post_message.assert_called_once_with(lctx, printout, 'any_channel')
 
         # No 'Bye' player in printout
-        db.update_match_by_id(lctx.league_name, 'playerB1', 'playerB2', 5)
-        db.update_match_by_id(lctx.league_name, 'playerB1', 'playerB3', 4)
-        db.update_match_by_id(lctx.league_name, 'playerB2', 'playerB3', 3)
-        db.update_match_by_id(lctx.league_name, 'playerB5', 'playerB4', 3)
+        db.update_match_by_id(lctx.league_name, 'playerB1', 'playerB2', 3, 2, 0)
+        db.update_match_by_id(lctx.league_name, 'playerB1', 'playerB3', 3, 1, 0)
+        db.update_match_by_id(lctx.league_name, 'playerB2', 'playerB3', 3, 0, 0)
+        db.update_match_by_id(lctx.league_name, 'playerB5', 'playerB4', 0, 3, 0)
         printout = 'Group B:\nPlayer B1 2-0 (6-3)\nPlayer B2 1-1 (5-3)\nPlayer B5 1-0 (3-0)\nPlayer B3 0-2 (1-6)\nPlayer B4 0-1 (0-3)'
 
         mock_post_message.reset_mock()

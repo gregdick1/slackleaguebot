@@ -25,12 +25,12 @@ class Test(TestCase):
         skip_weeks = []
         match_making.create_matches_for_season(league_name, week, 4, skip_weeks, False)
 
-        db.update_match(league_name, 'Player A1', 'Player A2', 4)
-        db.update_match(league_name, 'Player A1', 'Player A3', 5)
-        db.update_match(league_name, 'Player A1', 'Player A4', 6)
-        db.update_match(league_name, 'Player A3', 'Player A2', 7)
-        db.update_match(league_name, 'Player A4', 'Player A2', 6)
-        db.update_match(league_name, 'Player A4', 'Player A3', 5)
+        db.update_match(league_name, 'Player A1', 'Player A2', 4, 0, 0)
+        db.update_match(league_name, 'Player A1', 'Player A3', 4, 1, 0)
+        db.update_match(league_name, 'Player A1', 'Player A4', 4, 2, 0)
+        db.update_match(league_name, 'Player A3', 'Player A2', 3, 4, 0)
+        db.update_match(league_name, 'Player A4', 'Player A2', 2, 4, 0)
+        db.update_match(league_name, 'Player A4', 'Player A3', 1, 4, 0)
 
         matches = db.get_matches(league_name)
         results = utility.gather_scores(matches)
