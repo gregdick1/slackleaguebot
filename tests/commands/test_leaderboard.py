@@ -2,7 +2,7 @@ from unittest import TestCase
 from unittest.mock import patch
 import datetime, collections
 
-from backend import slack_util, db, match_making
+from backend import slack_util, db, match_making, configs
 from backend.commands import leaderboard
 from backend.commands.command_message import CommandMessage
 from backend.league_context import LeagueContext
@@ -61,6 +61,10 @@ class Test(TestCase):
         self.assertEqual(True, leaderboard.handles_message(lctx, CommandMessage('leaderboard ', 'any_channel', 'any_user', 'any_timestamp')))
         self.assertEqual(False, leaderboard.handles_message(lctx, CommandMessage(' leaderboard', 'any_channel', 'any_user', 'any_timestamp')))
         self.assertEqual(False, leaderboard.handles_message(lctx, CommandMessage('nothing', 'any_channel', 'any_user', 'any_timestamp')))
+
+        db.set_config(lctx.league_name, configs.ENABLE_COMMAND_LEADERBOARD, 'FALSE')
+        fresh_lctx = LeagueContext.load_from_db(lctx.league_name)
+        self.assertEqual(False, leaderboard.handles_message(fresh_lctx, CommandMessage('LeAdErBoArD', 'any_channel', 'any_user', 'any_timestamp')))
 
     def test_build_post(self):
         sorted_winrates = collections.OrderedDict({
