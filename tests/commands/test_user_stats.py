@@ -27,20 +27,20 @@ class Test(TestCase):
         match_making.create_matches_for_season(lctx.league_name, datetime.date(2022, 1, 3), 3, [])
 
         for i in range(2, 9):
-            db.update_match_by_id(lctx.league_name, 'playerA1', 'playerA{}'.format(i), 3)
+            db.update_match_by_id(lctx.league_name, 'playerA1', 'playerA{}'.format(i), 3, 0, 0)
         for i in range(2, 9):
-            db.update_match_by_id(lctx.league_name, 'playerB1', 'playerB{}'.format(i), 4)
+            db.update_match_by_id(lctx.league_name, 'playerB1', 'playerB{}'.format(i), 3, 1, 0)
         for i in range(2, 9):
-            db.update_match_by_id(lctx.league_name, 'playerC1', 'playerC{}'.format(i), 5)
+            db.update_match_by_id(lctx.league_name, 'playerC1', 'playerC{}'.format(i), 3, 2, 0)
 
         # new season with more sets needed
         match_making.create_matches_for_season(lctx.league_name, datetime.date(2022, 1, 3), 4, [])
         for i in range(2, 9):
-            db.update_match_by_id(lctx.league_name, 'playerA1', 'playerA{}'.format(i), 5)
+            db.update_match_by_id(lctx.league_name, 'playerA1', 'playerA{}'.format(i), 4, 1, 0)
         for i in range(2, 9):
-            db.update_match_by_id(lctx.league_name, 'playerB1', 'playerB{}'.format(i), 6)
+            db.update_match_by_id(lctx.league_name, 'playerB1', 'playerB{}'.format(i), 4, 2, 0)
         for i in range(2, 9):
-            db.update_match_by_id(lctx.league_name, 'playerC1', 'playerC{}'.format(i), 7)
+            db.update_match_by_id(lctx.league_name, 'playerC1', 'playerC{}'.format(i), 4, 3, 0)
 
     def test_handles_message(self):
         self.assertEqual(True, user_stats.handles_message(lctx, CommandMessage('My ToTaL StAtS', 'Dchannel', 'any_user', 'any_timestamp')))
@@ -52,10 +52,10 @@ class Test(TestCase):
     def test_build_stat_message(self):
         matches = db.get_matches(lctx.league_name)
         result = user_stats.build_stat_message(matches, 'playerA1')
-        self.assertEqual('\n Matches Won: 14 | Matches Lost: 0 | Sets Won: 49 | Sets Lost: 7', result)
+        self.assertEqual('\n Matches Won: 14 | Matches Lost: 0 | Sets Won: 49 | Sets Lost: 7 | Sets Tied: 0', result)
 
         result = user_stats.build_stat_message(matches, 'playerA2')
-        self.assertEqual('\n Matches Won: 0 | Matches Lost: 2 | Sets Won: 1 | Sets Lost: 7', result)
+        self.assertEqual('\n Matches Won: 0 | Matches Lost: 2 | Sets Won: 1 | Sets Lost: 7 | Sets Tied: 0', result)
 
     @patch.object(slack_util, 'post_message')
     def test_handle_message(self, mock_post_message):

@@ -214,7 +214,7 @@ class Test(TestCase):
         skip_weeks = []
         match_making.create_matches_for_season(lctx.league_name, week, 1, skip_weeks, False, False)
         matches = db.get_matches_for_week(lctx.league_name, week)
-        db.update_match_by_id(lctx.league_name, matches[0].player_1_id, matches[0].player_2_id, 1)
+        db.update_match_by_id(lctx.league_name, matches[0].player_1_id, matches[0].player_2_id, 1, 0, 0)
 
         message = 'Play your games!'
         slack_util.send_custom_for_missed_games(lctx, message, 3, datetime.date(2022, 1, 17), debug=False)

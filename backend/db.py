@@ -273,7 +273,7 @@ def set_active(league_name, slack_id, active):
         raise e
 
 
-def add_match(league_name, player_1, player_2, week_date, grouping, season, sets_needed):
+def add_match(league_name, player_1, player_2, week_date, grouping, season, play_all_sets, sets_needed):
     try:
         conn = get_connection(league_name)
         conn.set_trace_callback(partial(add_command_to_run, league_name))
@@ -281,9 +281,9 @@ def add_match(league_name, player_1, player_2, week_date, grouping, season, sets
 
         if player_1 is None or player_2 is None:
             p_id = player_1.slack_id if player_1 is not None else player_2.slack_id
-            c.execute("INSERT INTO match (player_1, week, grouping, season, sets, sets_needed) VALUES (?, ?, ?, ?, 0, ?)", (p_id, str(week_date), grouping, season, sets_needed))
+            c.execute("INSERT INTO match (player_1, week, grouping, season, sets, play_all_sets, sets_needed, player_1_score, player_2_score, tie_score) VALUES (?, ?, ?, ?, ?, 0, ?, 0, 0, 0)", (p_id, str(week_date), grouping, season, play_all_sets, sets_needed))
         else:
-            c.execute("INSERT INTO match (player_1, player_2, week, grouping, season, sets, sets_needed) VALUES (?, ?, ?, ?, ?, 0, ?)", (player_1.slack_id, player_2.slack_id, str(week_date), grouping, season, sets_needed))
+            c.execute("INSERT INTO match (player_1, player_2, week, grouping, season, sets, play_all_sets, sets_needed, player_1_score, player_2_score, tie_score) VALUES (?, ?, ?, ?, ?, 0, ?, ?, 0, 0, 0)", (player_1.slack_id, player_2.slack_id, str(week_date), grouping, season, play_all_sets, sets_needed))
         conn.commit()
         conn.close()
         save_commands_to_run(league_name)
@@ -378,19 +378,19 @@ def get_match_by_players(league_name, player_a, player_b):
     return Match.from_db(row)
 
 
-def update_match(league_name, winner_name, loser_name, sets):
+def update_match(league_name, winner_name, loser_name, p1_score, p2_score, tie_score):
     winner = get_player_by_name(league_name, winner_name)
     loser = get_player_by_name(league_name, loser_name)
-    return _update_match(league_name, winner, loser, sets)
+    return _update_match(league_name, winner, loser, p1_score, p2_score, tie_score)
 
 
-def update_match_by_id(league_name, winner_id, loser_id, sets):
+def update_match_by_id(league_name, winner_id, loser_id, p1_score, p2_score, tie_score):
     winner = get_player_by_id(league_name, winner_id)
     loser = get_player_by_id(league_name, loser_id)
-    return _update_match(league_name, winner, loser, sets)
+    return _update_match(league_name, winner, loser, p1_score, p2_score, tie_score)
 
 
-def _update_match(league_name, winner, loser, sets):
+def _update_match(league_name, winner, loser, p1_score, p2_score, tie_score):
     if winner is None or loser is None:
         print('Could not update match')
         return False
@@ -400,7 +400,13 @@ def _update_match(league_name, winner, loser, sets):
         print('Could not update match')
         return False
 
-    if not match.play_all_sets:
+    sets = p1_score+p2_score+tie_score
+
+    if match.play_all_sets:
+        if sets != match.sets_needed:
+            print('Sets out of range, was {}, but must be be'.format(sets, match.sets_needed))
+            return False
+    else:
         if sets < match.sets_needed or sets > (match.sets_needed*2-1):
             print('Sets out of range, was {}, but must be between {} and {}'.format(sets, match.sets_needed, match.sets_needed*2-1))
             return False
@@ -409,7 +415,8 @@ def _update_match(league_name, winner, loser, sets):
         conn = get_connection(league_name)
         conn.set_trace_callback(partial(add_command_to_run, league_name))
         c = conn.cursor()
-        c.execute("UPDATE match SET winner=?, sets=?, date_played=? WHERE player_1 = ? and player_2 = ? and season=?", (winner.slack_id, sets, str(datetime.date.today()), match.player_1_id, match.player_2_id, match.season))
+        c.execute("UPDATE match SET winner=?, player_1_score=?, player_2_score=?, tie_score=?, sets=?, date_played=? WHERE player_1 = ? and player_2 = ? and season=?",
+                  (winner.slack_id, p1_score, p2_score, tie_score, sets, str(datetime.date.today()), match.player_1_id, match.player_2_id, match.season))
         conn.commit()
         conn.close()
         save_commands_to_run(league_name)
@@ -424,7 +431,7 @@ def clear_score_for_match(league_name, match_id):
         conn = get_connection(league_name)
         conn.set_trace_callback(partial(add_command_to_run, league_name))
         c = conn.cursor()
-        c.execute("UPDATE match SET winner=?, sets=?, date_played=? WHERE rowid=?", (None, 0, None, match_id))
+        c.execute("UPDATE match SET winner=?, sets=?, player_1_score=?, player_2_score=?, tie_score=?, date_played=? WHERE rowid=?", (None, 0, 0, 0, 0, None, match_id))
         conn.commit()
         conn.close()
         save_commands_to_run(league_name)
