@@ -302,7 +302,6 @@ class Match:
         self.grouping = grouping
         self.season = season
         self.sets = sets
-        self.play_all_sets = play_all_sets
         self.sets_needed = sets_needed
         self.date_played = date_played
         self.message_sent = message_sent
