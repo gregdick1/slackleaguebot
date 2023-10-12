@@ -35,10 +35,10 @@ class Test(TestCase):
 
         matches = db.get_matches(league_name)
         results = utility.gather_scores(matches)
-        self.assertEqual(results[0], {'player_id': 'playerA1', 'm_w': 3, 'm_l': 0, 's_w': 12, 's_l': 3})
-        self.assertEqual(results[1], {'player_id': 'playerA4', 'm_w': 2, 'm_l': 1, 's_w': 10, 's_l': 7})
-        self.assertEqual(results[2], {'player_id': 'playerA3', 'm_w': 1, 'm_l': 2, 's_w': 6, 's_l': 11})
-        self.assertEqual(results[3], {'player_id': 'playerA2', 'm_w': 0, 'm_l': 3, 's_w': 5, 's_l': 12})
+        self.assertEqual(results[0], {'player_id': 'playerA1', 'm_w': 3, 'm_l': 0, 's_w': 12, 's_l': 3, 's_t': 0})
+        self.assertEqual(results[1], {'player_id': 'playerA4', 'm_w': 2, 'm_l': 1, 's_w': 10, 's_l': 7, 's_t': 0})
+        self.assertEqual(results[2], {'player_id': 'playerA3', 'm_w': 1, 'm_l': 2, 's_w': 6, 's_l': 11, 's_t': 0})
+        self.assertEqual(results[3], {'player_id': 'playerA2', 'm_w': 0, 'm_l': 3, 's_w': 5, 's_l': 12, 's_t': 0})
 
     def test_replace_message_variables(self):
         message = 'stuff @bot_name and #competition_channel stuff'

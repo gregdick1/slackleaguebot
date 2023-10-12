@@ -273,7 +273,7 @@ def set_active(league_name, slack_id, active):
         raise e
 
 
-def add_match(league_name, player_1, player_2, week_date, grouping, season, sets_needed):
+def add_match(league_name, player_1, player_2, week_date, grouping, season, sets_needed, play_all_sets=0):
     try:
         conn = get_connection(league_name)
         conn.set_trace_callback(partial(add_command_to_run, league_name))
@@ -281,9 +281,9 @@ def add_match(league_name, player_1, player_2, week_date, grouping, season, sets
 
         if player_1 is None or player_2 is None:
             p_id = player_1.slack_id if player_1 is not None else player_2.slack_id
-            c.execute("INSERT INTO match (player_1, week, grouping, season, sets, sets_needed, player_1_score, player_2_score, tie_score) VALUES (?, ?, ?, ?, 0, ?, 0, 0, 0)", (p_id, str(week_date), grouping, season, sets_needed))
+            c.execute("INSERT INTO match (player_1, week, grouping, season, sets, sets_needed, play_all_sets, player_1_score, player_2_score, tie_score) VALUES (?, ?, ?, ?, 0, ?, ?, 0, 0, 0)", (p_id, str(week_date), grouping, season, sets_needed, play_all_sets))
         else:
-            c.execute("INSERT INTO match (player_1, player_2, week, grouping, season, sets, sets_needed, player_1_score, player_2_score, tie_score) VALUES (?, ?, ?, ?, ?, 0, ?, 0, 0, 0)", (player_1.slack_id, player_2.slack_id, str(week_date), grouping, season, sets_needed))
+            c.execute("INSERT INTO match (player_1, player_2, week, grouping, season, sets, sets_needed, play_all_sets, player_1_score, player_2_score, tie_score) VALUES (?, ?, ?, ?, ?, 0, ?, ?, 0, 0, 0)", (player_1.slack_id, player_2.slack_id, str(week_date), grouping, season, sets_needed, play_all_sets))
         conn.commit()
         conn.close()
         save_commands_to_run(league_name)
