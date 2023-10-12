@@ -1,4 +1,4 @@
-from backend import slack_util
+from backend import slack_util, configs
 from backend.scenario_analysis import scenario_predictor
 
 MISFORMAT_MSG = 'Not a group. Format is simply `Analyze Group A`'
@@ -6,6 +6,9 @@ NOT_A_GROUP_MSG = 'Not a group (or I messed up).'
 
 
 def handles_message(lctx, command_object):
+    if lctx.configs[configs.ENABLE_COMMAND_GROUP_ANALYSIS] == 'FALSE':
+        return False
+
     if command_object.text.upper().startswith('ANALYZE GROUP '):
         return True
     return False

@@ -1,7 +1,7 @@
 from unittest import TestCase
 from unittest.mock import patch
 import datetime
-from backend import slack_util, db, match_making
+from backend import slack_util, db, match_making, configs
 from backend.commands import week_matches
 from backend.commands.command_message import CommandMessage
 from backend.league_context import LeagueContext
@@ -44,6 +44,10 @@ class Test(TestCase):
         self.assertEqual(False, week_matches.handles_message(lctx, CommandMessage('who do i play', 'any_channel', 'any_user', 'any_timestamp')))
         self.assertEqual(False, week_matches.handles_message(lctx, CommandMessage('matches blah week', 'any_channel', 'any_user', 'any_timestamp')))
         self.assertEqual(False, week_matches.handles_message(lctx, CommandMessage('who play huh', 'any_channel', 'any_user', 'any_timestamp')))
+
+        db.set_config(lctx.league_name, configs.ENABLE_COMMAND_WEEK_MATCHES, 'FALSE')
+        fresh_lctx = LeagueContext.load_from_db(lctx.league_name)
+        self.assertEqual(False, week_matches.handles_message(fresh_lctx, CommandMessage('mAtChEs FoR wEeK', 'any_channel', 'any_user', 'any_timestamp')))
 
     def test_build_whole_week_message(self):
         matches = db.get_matches_for_week(lctx.league_name, datetime.date(2022, 1, 3))

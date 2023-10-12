@@ -1,12 +1,15 @@
 import datetime
 
-from backend import slack_util, db, utility
+from backend import slack_util, db, utility, configs
 
 whole_week = 'MATCHES FOR WEEK'
 user_week = 'WHO DO I PLAY'
 
 
 def handles_message(lctx, command_object):
+    if lctx.configs[configs.ENABLE_COMMAND_WEEK_MATCHES] == 'FALSE':
+        return False
+
     if command_object.text.upper() == whole_week:
         return True
     if command_object.text.upper() == user_week and command_object.is_dm():

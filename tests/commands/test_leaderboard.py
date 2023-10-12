@@ -2,7 +2,7 @@ from unittest import TestCase
 from unittest.mock import patch
 import datetime, collections
 
-from backend import slack_util, db, match_making
+from backend import slack_util, db, match_making, configs
 from backend.commands import leaderboard
 from backend.commands.command_message import CommandMessage
 from backend.league_context import LeagueContext
@@ -29,27 +29,27 @@ class Test(TestCase):
         match_making.create_matches_for_season(lctx.league_name, datetime.date(2022, 1, 3), 3, [], include_byes=True)
 
         for i in range(2, 12):
-            db.update_match_by_id(lctx.league_name, 'playerA1', 'playerA{}'.format(i), 3)
+            db.update_match_by_id(lctx.league_name, 'playerA1', 'playerA{}'.format(i), 3, 0, 0)
         for i in range(2, 12):
-            db.update_match_by_id(lctx.league_name, 'playerB1', 'playerB{}'.format(i), 4)
+            db.update_match_by_id(lctx.league_name, 'playerB1', 'playerB{}'.format(i), 3, 1, 0)
         for i in range(2, 12):
-            db.update_match_by_id(lctx.league_name, 'playerC1', 'playerC{}'.format(i), 5)
+            db.update_match_by_id(lctx.league_name, 'playerC1', 'playerC{}'.format(i), 3, 2, 0)
         for i in range(2, 13):
-            db.update_match_by_id(lctx.league_name, 'playerD1', 'playerD{}'.format(i), 5)
-        db.update_match_by_id(league_name, 'playerA2', 'playerA1', 3)  # make player a1 lose one game
-        db.update_match_by_id(league_name, 'playerC2', 'playerC1', 5)  # make player c1 lose two
-        db.update_match_by_id(league_name, 'playerC3', 'playerC1', 5)
+            db.update_match_by_id(lctx.league_name, 'playerD1', 'playerD{}'.format(i), 3, 2, 0)
+        db.update_match_by_id(league_name, 'playerA2', 'playerA1', 0, 3, 0)  # make player a1 lose one game
+        db.update_match_by_id(league_name, 'playerC2', 'playerC1', 2, 3, 0)  # make player c1 lose two
+        db.update_match_by_id(league_name, 'playerC3', 'playerC1', 2, 3, 0)
 
         # new season with more sets needed
         match_making.create_matches_for_season(lctx.league_name, datetime.date(2022, 1, 3), 4, [])
         for i in range(2, 12):
-            db.update_match_by_id(lctx.league_name, 'playerA1', 'playerA{}'.format(i), 4)
+            db.update_match_by_id(lctx.league_name, 'playerA1', 'playerA{}'.format(i), 4, 0, 0)
         for i in range(2, 12):
-            db.update_match_by_id(lctx.league_name, 'playerB1', 'playerB{}'.format(i), 5)
+            db.update_match_by_id(lctx.league_name, 'playerB1', 'playerB{}'.format(i), 4, 1, 0)
         for i in range(2, 12):
-            db.update_match_by_id(lctx.league_name, 'playerC1', 'playerC{}'.format(i), 6)
+            db.update_match_by_id(lctx.league_name, 'playerC1', 'playerC{}'.format(i), 4, 2, 0)
         for i in range(2, 13):
-            db.update_match_by_id(lctx.league_name, 'playerD1', 'playerD{}'.format(i), 7)
+            db.update_match_by_id(lctx.league_name, 'playerD1', 'playerD{}'.format(i), 4, 3, 0)
 
     def tearDown(self):
         test_league_setup.teardown_test_league()
@@ -61,6 +61,10 @@ class Test(TestCase):
         self.assertEqual(True, leaderboard.handles_message(lctx, CommandMessage('leaderboard ', 'any_channel', 'any_user', 'any_timestamp')))
         self.assertEqual(False, leaderboard.handles_message(lctx, CommandMessage(' leaderboard', 'any_channel', 'any_user', 'any_timestamp')))
         self.assertEqual(False, leaderboard.handles_message(lctx, CommandMessage('nothing', 'any_channel', 'any_user', 'any_timestamp')))
+
+        db.set_config(lctx.league_name, configs.ENABLE_COMMAND_LEADERBOARD, 'FALSE')
+        fresh_lctx = LeagueContext.load_from_db(lctx.league_name)
+        self.assertEqual(False, leaderboard.handles_message(fresh_lctx, CommandMessage('LeAdErBoArD', 'any_channel', 'any_user', 'any_timestamp')))
 
     def test_build_post(self):
         sorted_winrates = collections.OrderedDict({

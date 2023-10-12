@@ -2,7 +2,7 @@ import datetime
 from unittest import TestCase
 from unittest.mock import patch
 
-from backend import slack_util, db, match_making
+from backend import slack_util, db, match_making, configs
 from backend.commands import user_stats
 from backend.commands.command_message import CommandMessage
 from backend.league_context import LeagueContext
@@ -27,20 +27,20 @@ class Test(TestCase):
         match_making.create_matches_for_season(lctx.league_name, datetime.date(2022, 1, 3), 3, [])
 
         for i in range(2, 9):
-            db.update_match_by_id(lctx.league_name, 'playerA1', 'playerA{}'.format(i), 3)
+            db.update_match_by_id(lctx.league_name, 'playerA1', 'playerA{}'.format(i), 3, 0, 0)
         for i in range(2, 9):
-            db.update_match_by_id(lctx.league_name, 'playerB1', 'playerB{}'.format(i), 4)
+            db.update_match_by_id(lctx.league_name, 'playerB1', 'playerB{}'.format(i), 3, 1, 0)
         for i in range(2, 9):
-            db.update_match_by_id(lctx.league_name, 'playerC1', 'playerC{}'.format(i), 5)
+            db.update_match_by_id(lctx.league_name, 'playerC1', 'playerC{}'.format(i), 3, 2, 0)
 
         # new season with more sets needed
         match_making.create_matches_for_season(lctx.league_name, datetime.date(2022, 1, 3), 4, [])
         for i in range(2, 9):
-            db.update_match_by_id(lctx.league_name, 'playerA1', 'playerA{}'.format(i), 5)
+            db.update_match_by_id(lctx.league_name, 'playerA1', 'playerA{}'.format(i), 4, 1, 0)
         for i in range(2, 9):
-            db.update_match_by_id(lctx.league_name, 'playerB1', 'playerB{}'.format(i), 6)
+            db.update_match_by_id(lctx.league_name, 'playerB1', 'playerB{}'.format(i), 4, 2, 0)
         for i in range(2, 9):
-            db.update_match_by_id(lctx.league_name, 'playerC1', 'playerC{}'.format(i), 7)
+            db.update_match_by_id(lctx.league_name, 'playerC1', 'playerC{}'.format(i), 4, 3, 0)
 
     def test_handles_message(self):
         self.assertEqual(True, user_stats.handles_message(lctx, CommandMessage('My ToTaL StAtS', 'Dchannel', 'any_user', 'any_timestamp')))
@@ -48,6 +48,10 @@ class Test(TestCase):
         self.assertEqual(False, user_stats.handles_message(lctx, CommandMessage('a my total stats', 'any_channel', 'any_user', 'any_timestamp')))
         self.assertEqual(False, user_stats.handles_message(lctx, CommandMessage('my total stats and more', 'any_channel', 'any_user', 'any_timestamp')))
         self.assertEqual(False, user_stats.handles_message(lctx, CommandMessage('just stats', 'any_channel', 'any_user', 'any_timestamp')))
+
+        db.set_config(lctx.league_name, configs.ENABLE_COMMAND_USER_STATS, 'FALSE')
+        fresh_lctx = LeagueContext.load_from_db(lctx.league_name)
+        self.assertEqual(False, user_stats.handles_message(fresh_lctx, CommandMessage('My ToTaL StAtS', 'Dchannel', 'any_user', 'any_timestamp')))
 
     def test_build_stat_message(self):
         matches = db.get_matches(lctx.league_name)
