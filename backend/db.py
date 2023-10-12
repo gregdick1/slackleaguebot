@@ -377,6 +377,18 @@ def get_match_by_players(league_name, player_a, player_b):
     return Match.from_db(row)
 
 
+def get_match_by_id(league_name, id):
+    conn = get_connection(league_name)
+    c = conn.cursor()
+    c.execute("SELECT rowid, * FROM match WHERE rowid = ?", (id,))
+    row = c.fetchone()
+    conn.close()
+    if row is None or len(row) == 0:
+        print('Could not find match with id:', id)
+        return None
+    return Match.from_db(row)
+
+
 def update_match(league_name, winner_name, loser_name, winner_score, loser_score, tie_score):
     winner = get_player_by_name(league_name, winner_name)
     loser = get_player_by_name(league_name, loser_name)
@@ -470,12 +482,17 @@ def set_match_forfeit(league_name, match_id, forfeit=1):
         raise e
 
 
-def admin_update_match_score(league_name, match_id, winner_id, sets):
+def admin_update_match_score(league_name, match_id, winner_id, winner_score, loser_score, tie_score):
     try:
         conn = get_connection(league_name)
         conn.set_trace_callback(partial(add_command_to_run, league_name))
         c = conn.cursor()
-        c.execute("UPDATE match SET winner=?, sets=? WHERE rowid=?", (winner_id, sets, match_id))
+        match = get_match_by_id(league_name, match_id)
+        p1_score = winner_score if winner_id == match.player_1_id else loser_score
+        p2_score = winner_score if winner_id == match.player_2_id else loser_score
+        sets = p1_score + p2_score + tie_score
+        c.execute("UPDATE match SET winner=?, player_1_score=?, player_2_score=?, tie_score=?, sets=? WHERE rowid=?",
+                  (winner_id, p1_score, p2_score, tie_score, sets, match_id))
         conn.commit()
         conn.close()
         save_commands_to_run(league_name)

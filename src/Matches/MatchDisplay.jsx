@@ -3,15 +3,9 @@ import { Envelope, EnvelopeCheck } from 'react-bootstrap-icons';
 import './MatchDisplay.css'
 
 function MatchDisplay({ match, allPlayers }) {
-    let p1_score = '';
-    let p2_score = '';
-    if (match.player_1_id === match.winner_id && match.winner_id !== null) {
-        p1_score = ''+match.sets_needed
-        p2_score = ''+(match.sets - match.sets_needed)
-    } else if (match.player_2_id === match.winner_id && match.winner_id !== null) {
-        p1_score = ''+(match.sets - match.sets_needed)
-        p2_score = ''+match.sets_needed
-    }
+    let p1_score = match.winner_id === null ? '' : ''+match.player_1_score;
+    let p2_score = match.winner_id === null ? '' : ''+match.player_2_score;
+    let tie_score = match.winner_id === null ? '' : ''+match.tie_score;
 
     const p_name = (p_id) => {
         if (p_id === null) {
@@ -42,6 +36,7 @@ function MatchDisplay({ match, allPlayers }) {
             <div>
                 <div>{p1_score}</div>
                 <div>{p2_score}</div>
+                {match.play_all_sets === 1 && <div>{tie_score}</div>}
             </div>
 
         </div>

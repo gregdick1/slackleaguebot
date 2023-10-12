@@ -306,16 +306,22 @@ class Test(TestCase):
         match = db.get_match_by_players(league_name, p1, p2)
 
         num_commands = len(db.get_commands_to_run(league_name))
-        db.admin_update_match_score(league_name, match.id, u'testplayer1', 3)
+        db.admin_update_match_score(league_name, match.id, u'testplayer1', 3, 1, 1)
         self.assertEqual(1, len(db.get_commands_to_run(league_name)) - num_commands)
         updated_match = db.get_matches(league_name)[0]
         self.assertEqual(u'testplayer1', updated_match.winner_id)
-        self.assertEqual(3, updated_match.sets)
+        self.assertEqual(5, updated_match.sets)
+        self.assertEqual(3, updated_match.player_1_score)
+        self.assertEqual(1, updated_match.player_2_score)
+        self.assertEqual(1, updated_match.tie_score)
 
-        db.admin_update_match_score(league_name, match.id, u'testplayer2', 5)
+        db.admin_update_match_score(league_name, match.id, u'testplayer2', 5, 0, 0)
         updated_match = db.get_matches(league_name)[0]
         self.assertEqual(u'testplayer2', updated_match.winner_id)
         self.assertEqual(5, updated_match.sets)
+        self.assertEqual(0, updated_match.player_1_score)
+        self.assertEqual(5, updated_match.player_2_score)
+        self.assertEqual(0, updated_match.tie_score)
 
     def test_update_match_players(self):
         db.add_player(league_name, u'testplayer1', 'Test Player1', 'A')
