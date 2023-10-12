@@ -81,7 +81,7 @@ class Test(TestCase):
         db.update_match_by_id(lctx.league_name, 'playerB1', 'playerB2', 3, 2, 0)
         db.update_match_by_id(lctx.league_name, 'playerB1', 'playerB3', 3, 1, 0)
         db.update_match_by_id(lctx.league_name, 'playerB2', 'playerB3', 3, 0, 0)
-        db.update_match_by_id(lctx.league_name, 'playerB5', 'playerB4', 0, 3, 0)
+        db.update_match_by_id(lctx.league_name, 'playerB5', 'playerB4', 3, 0, 0)
         printout = 'Group B:\nPlayer B1 2-0 (6-3)\nPlayer B2 1-1 (5-3)\nPlayer B5 1-0 (3-0)\nPlayer B3 0-2 (1-6)\nPlayer B4 0-1 (0-3)'
 
         mock_post_message.reset_mock()
