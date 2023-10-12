@@ -4,7 +4,7 @@ import datetime
 from functools import partial
 from backend import configs
 
-LATEST_VERSION = 5
+LATEST_VERSION = 6
 
 
 def path(league_name):
@@ -39,6 +39,10 @@ def initialize(league_name):
               'date_played DATE, '
               'message_sent INT DEFAULT 0, '
               'forfeit INT DEFAULT 0, '
+              'player_1_score INT, '
+              'player_2_score INT, '
+              'tie_score INT, '
+              'play_all_sets DEFAULT 0, '
               'FOREIGN KEY (player_1) REFERENCES player, '
               'FOREIGN KEY (player_2) REFERENCES player, '
               'FOREIGN KEY (winner) REFERENCES player)')
@@ -289,7 +293,7 @@ def add_match(league_name, player_1, player_2, week_date, grouping, season, sets
 
 
 class Match:
-    def __init__(self, id, p1_id, p2_id, winner_id, week, grouping, season, sets, sets_needed, date_played, message_sent, forfeit):
+    def __init__(self, id, p1_id, p2_id, winner_id, week, grouping, season, sets, sets_needed, date_played, message_sent, forfeit, p1_score, p2_score, tie_score, play_all_sets):
         self.id = id
         self.player_1_id = p1_id
         self.player_2_id = p2_id
@@ -302,10 +306,14 @@ class Match:
         self.date_played = date_played
         self.message_sent = message_sent
         self.forfeit = forfeit
+        self.player_1_score = p1_score
+        self.player_2_score = p2_score
+        self.tie_score = tie_score
+        self.play_all_sets = play_all_sets
 
     @classmethod
     def from_db(cls, row):
-        return Match(row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9], row[10], row[11])
+        return Match(row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9], row[10], row[11], row[12], row[13], row[14], row[15])
 
 
 def get_matches(league_name):
