@@ -138,13 +138,13 @@ def resolve_group_tie_for_all_sets_played(players, group_matches):
             tied_players.remove(move_down)
             continue
 
-        move_up = check_less_sets_lost(tied_players)
+        move_up = check_more_sets_lost(tied_players)  # Reward the people that have played their matches. A 10-3-0 person should be above a 10-0-0 person
         if move_up:
             moved_up.append(move_up)
             tied_players.remove(move_up)
             continue
 
-        move_down = check_more_sets_lost(tied_players)
+        move_down = check_less_sets_lost(tied_players)
         if move_down:
             moved_down.append(move_down)
             tied_players.remove(move_down)
