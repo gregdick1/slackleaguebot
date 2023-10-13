@@ -81,6 +81,26 @@ class Test(TestCase):
         enter_score.handle_message(lctx, msg)
         mock_post_message.assert_called_once_with(lctx, enter_score.NO_MATCH_MSG, 'Dchannel')
 
+    def test_parse_score(self):
+        with self.assertRaises(Exception):
+            enter_score.parse_score('3 2')
+        with self.assertRaises(Exception):
+            enter_score.parse_score('a-b')
+        with self.assertRaises(Exception):
+            enter_score.parse_score('3 - 2')
+        with self.assertRaises(Exception):
+            enter_score.parse_score('3-2-a')
+
+        winner_score, loser_score, tie_score = enter_score.parse_score('asdf 3-2 fdsa')
+        self.assertEqual(3, winner_score)
+        self.assertEqual(2, loser_score)
+        self.assertEqual(0, tie_score)
+
+        winner_score, loser_score, tie_score = enter_score.parse_score('asdf 3-2-1 fdsa')
+        self.assertEqual(3, winner_score)
+        self.assertEqual(2, loser_score)
+        self.assertEqual(1, tie_score)
+
     @patch.object(slack_util, 'post_message')
     def test_handle_message_parse_score(self, mock_post_message):
         msg = CommandMessage('<@playerA2> over me blah', 'comp_channel', 'playerA1', 'any_timestamp')
@@ -114,6 +134,11 @@ class Test(TestCase):
 
         mock_post_message.reset_mock()
         msg = CommandMessage('<@playerA2> over me 2-1', 'comp_channel', 'playerA1', 'any_timestamp')
+        enter_score.handle_message(lctx, msg)
+        mock_post_message.assert_called_once_with(lctx, enter_score.get_format_message(lctx), 'comp_channel')
+
+        mock_post_message.reset_mock()
+        msg = CommandMessage('<@playerA2> over me 3-1-1', 'comp_channel', 'playerA1', 'any_timestamp')
         enter_score.handle_message(lctx, msg)
         mock_post_message.assert_called_once_with(lctx, enter_score.get_format_message(lctx), 'comp_channel')
 

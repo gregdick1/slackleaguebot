@@ -2,6 +2,9 @@ from backend import slack_util, configs, db, utility
 
 
 def handles_message(lctx, command_object):
+    if lctx.configs[configs.ENABLE_COMMAND_MATCHUP_HISTORY] == 'FALSE':
+        return False
+
     if command_object.text.upper().startswith('MATCHUP HISTORY') and command_object.is_dm():
         return True
     return False

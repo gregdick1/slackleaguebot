@@ -8,6 +8,9 @@ BAD_OPTION_MSG = 'The only options I recognize are `matches`, `sets`, `played`, 
 
 
 def handles_message(lctx, command_object):
+    if lctx.configs[configs.ENABLE_COMMAND_LEADERBOARD] == 'FALSE':
+        return False
+
     if command_object.text.upper().startswith('LEADERBOARD'):
         return True
     return False

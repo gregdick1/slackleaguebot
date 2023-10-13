@@ -1,6 +1,7 @@
 import random
 # player structure {'player_id': u'U03NSJJJN', 'm_w': 7, 's_l': 0, 's_w': 21, 'm_l': 0}
 
+
 def get_tied_players(players):
     tied_groups = []
     for i in range(0, len(players)):
@@ -64,6 +65,14 @@ def check_less_sets_lost(players):
     return _check_less_of_player_attribute(players, 's_l')
 
 
+def check_more_sets_tied(players):
+    return _check_more_of_player_attribute(players, 's_t')
+
+
+def check_less_sets_tied(players):
+    return _check_less_of_player_attribute(players, 's_t')
+
+
 def resolve_group_tie(players, group_matches):
     tied_players = players[:]
     moved_up = []
@@ -120,16 +129,35 @@ def resolve_group_tie_for_all_sets_played(players, group_matches):
     # will have to reverse this one when putting the two together
     moved_down = []
     while len(tied_players) > 1:
-        move_up = check_h2h_won_all(tied_players, group_matches)
+        move_up = check_more_sets_tied(tied_players)
         if move_up:
             moved_up.append(move_up)
             tied_players.remove(move_up)
             continue
 
-        move_up = check_for_more_sets_tied(tied_players)
+        move_down = check_less_sets_tied(tied_players)
+        if move_down:
+            moved_down.append(move_down)
+            tied_players.remove(move_down)
+            continue
+
+        move_up = check_more_sets_lost(tied_players)  # Reward the people that have played their matches. A 10-3-0 person should be above a 10-0-0 person
         if move_up:
             moved_up.append(move_up)
             tied_players.remove(move_up)
+            continue
+
+        move_down = check_less_sets_lost(tied_players)
+        if move_down:
+            moved_down.append(move_down)
+            tied_players.remove(move_down)
+            continue
+
+        move_up = check_h2h_won_all(tied_players, group_matches)
+        if move_up:
+            moved_up.append(move_up)
+            tied_players.remove(move_up)
+            continue
 
         move_down = check_h2h_lost_all(tied_players, group_matches)
         if move_down:
@@ -137,7 +165,7 @@ def resolve_group_tie_for_all_sets_played(players, group_matches):
             tied_players.remove(move_down)
             continue
 
-        # TODO: Check records against strongest opponent(s)
+        # TODO: Could check records against strongest opponent(s)
 
         # just take whoever
         move_up = random.choice(tied_players)
@@ -149,7 +177,14 @@ def resolve_group_tie_for_all_sets_played(players, group_matches):
 
 def order_players(group_players, group_matches):
     final_order = []
-    use_sets_for_ordering = group_matches[0].play_all_sets
+
+    if group_matches[0].play_all_sets:
+        max_sets_won = max([p['s_w'] for p in group_players])
+        for wins in range(max_sets_won, -1, -1):
+            temp = [p for p in group_players if p['s_w'] == wins]
+            final_order = final_order + resolve_group_tie_for_all_sets_played(temp, group_matches)
+        return final_order
+
     max_wins = max([p['m_w'] for p in group_players])
     max_losses = max([p['m_l'] for p in group_players])
     if use_sets_for_ordering:

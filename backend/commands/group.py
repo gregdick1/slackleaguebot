@@ -19,14 +19,18 @@ def build_message_for_group(lctx, group):
     if not len(group_matches):
         return None
 
+    all_sets_mode = group_matches[0].play_all_sets
     players = utility.gather_scores(group_matches)
     message = 'Group ' + group + ':'
 
     for p in players:
         if p['player_id'] is None:
             continue
-        message += '\n' + utility.get_player_name(all_players, p['player_id']) + ' ' + str(p['m_w']) + '-' + str(p['m_l'])
-        message += ' (' + str(p['s_w']) + '-' + str(p['s_l']) + ')'
+        if all_sets_mode:
+            message += '\n' + utility.get_player_name(all_players, p['player_id']) + ' ' + str(p['s_w']) + '-' + str(p['s_l']) + '-' + str(p['s_t'])
+        else:
+            message += '\n' + utility.get_player_name(all_players, p['player_id']) + ' ' + str(p['m_w']) + '-' + str(p['m_l'])
+            message += ' (' + str(p['s_w']) + '-' + str(p['s_l']) + ')'
     return message
 
 

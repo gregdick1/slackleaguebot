@@ -3,9 +3,9 @@ import { Envelope, EnvelopeCheck } from 'react-bootstrap-icons';
 import './MatchDisplay.css'
 
 function MatchDisplay({ match, allPlayers }) {
-    let p1_score = ''+match.player_1_score;
-    let p2_score = ''+match.player_2_score;
-    let tie_score = ''+match.tie_score;
+    let p1_score = match.winner_id === null ? '' : ''+match.player_1_score;
+    let p2_score = match.winner_id === null ? '' : ''+match.player_2_score;
+    let tie_score = match.winner_id === null ? '' : ''+match.tie_score;
 
     const p_name = (p_id) => {
         if (p_id === null) {

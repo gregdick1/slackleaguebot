@@ -273,7 +273,11 @@ def set_active(league_name, slack_id, active):
         raise e
 
 
+<<<<<<< HEAD
 def add_match(league_name, player_1, player_2, week_date, grouping, season, play_all_sets, sets_needed):
+=======
+def add_match(league_name, player_1, player_2, week_date, grouping, season, sets_needed, play_all_sets=0):
+>>>>>>> master
     try:
         conn = get_connection(league_name)
         conn.set_trace_callback(partial(add_command_to_run, league_name))
@@ -281,9 +285,15 @@ def add_match(league_name, player_1, player_2, week_date, grouping, season, play
 
         if player_1 is None or player_2 is None:
             p_id = player_1.slack_id if player_1 is not None else player_2.slack_id
+<<<<<<< HEAD
             c.execute("INSERT INTO match (player_1, week, grouping, season, sets, play_all_sets, sets_needed, player_1_score, player_2_score, tie_score) VALUES (?, ?, ?, ?, ?, 0, ?, 0, 0, 0)", (p_id, str(week_date), grouping, season, play_all_sets, sets_needed))
         else:
             c.execute("INSERT INTO match (player_1, player_2, week, grouping, season, sets, play_all_sets, sets_needed, player_1_score, player_2_score, tie_score) VALUES (?, ?, ?, ?, ?, 0, ?, ?, 0, 0, 0)", (player_1.slack_id, player_2.slack_id, str(week_date), grouping, season, play_all_sets, sets_needed))
+=======
+            c.execute("INSERT INTO match (player_1, week, grouping, season, sets, sets_needed, play_all_sets, player_1_score, player_2_score, tie_score) VALUES (?, ?, ?, ?, 0, ?, ?, 0, 0, 0)", (p_id, str(week_date), grouping, season, sets_needed, play_all_sets))
+        else:
+            c.execute("INSERT INTO match (player_1, player_2, week, grouping, season, sets, sets_needed, play_all_sets, player_1_score, player_2_score, tie_score) VALUES (?, ?, ?, ?, ?, 0, ?, ?, 0, 0, 0)", (player_1.slack_id, player_2.slack_id, str(week_date), grouping, season, sets_needed, play_all_sets))
+>>>>>>> master
         conn.commit()
         conn.close()
         save_commands_to_run(league_name)
@@ -482,7 +492,11 @@ def set_match_forfeit(league_name, match_id, forfeit=1):
         raise e
 
 
+<<<<<<< HEAD
 def admin_update_match_score(league_name, match_id, winner_id, winner_score, loser_score, sets_tied, sets):
+=======
+def admin_update_match_score(league_name, match_id, winner_id, winner_score, loser_score, tie_score):
+>>>>>>> master
     try:
         conn = get_connection(league_name)
         conn.set_trace_callback(partial(add_command_to_run, league_name))
@@ -490,8 +504,14 @@ def admin_update_match_score(league_name, match_id, winner_id, winner_score, los
         match = get_match_by_id(league_name, match_id)
         p1_score = winner_score if winner_id == match.player_1_id else loser_score
         p2_score = winner_score if winner_id == match.player_2_id else loser_score
+<<<<<<< HEAD
         c.execute("UPDATE match SET winner=?, player_1_score=?, player_2_score=?, tie_score=?, sets=? WHERE rowid=?",
                   (winner_id, p1_score, p2_score, sets_tied, sets, match_id))
+=======
+        sets = p1_score + p2_score + tie_score
+        c.execute("UPDATE match SET winner=?, player_1_score=?, player_2_score=?, tie_score=?, sets=? WHERE rowid=?",
+                  (winner_id, p1_score, p2_score, tie_score, sets, match_id))
+>>>>>>> master
         conn.commit()
         conn.close()
         save_commands_to_run(league_name)

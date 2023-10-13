@@ -22,11 +22,10 @@ def set_score():
     league_name = request.get_json().get('leagueName')
     match_id = request.get_json().get('matchId')
     winner_id = request.get_json().get('winnerId')
-    sets = request.get_json().get('sets')
-    sets_tied = request.get_json().get('tiedSets')
-    winner_score = request.get_json().get('winnerScore')
-    loser_score = request.get_json().get('loserScore')
-    db.admin_update_match_score(league_name, match_id, winner_id, winner_score, loser_score, sets_tied, sets)
+    tie_score = int(request.get_json().get('tieScore'))
+    winner_score = int(request.get_json().get('winnerScore'))
+    loser_score = int(request.get_json().get('loserScore'))
+    db.admin_update_match_score(league_name, match_id, winner_id, winner_score, loser_score, tie_score)
     return "Success"
 
 

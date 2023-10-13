@@ -2,7 +2,7 @@ import datetime
 from unittest import TestCase
 from unittest.mock import patch
 
-from backend import slack_util, db, match_making
+from backend import slack_util, db, match_making, configs
 from backend.commands import user_stats
 from backend.commands.command_message import CommandMessage
 from backend.league_context import LeagueContext
@@ -48,6 +48,10 @@ class Test(TestCase):
         self.assertEqual(False, user_stats.handles_message(lctx, CommandMessage('a my total stats', 'any_channel', 'any_user', 'any_timestamp')))
         self.assertEqual(False, user_stats.handles_message(lctx, CommandMessage('my total stats and more', 'any_channel', 'any_user', 'any_timestamp')))
         self.assertEqual(False, user_stats.handles_message(lctx, CommandMessage('just stats', 'any_channel', 'any_user', 'any_timestamp')))
+
+        db.set_config(lctx.league_name, configs.ENABLE_COMMAND_USER_STATS, 'FALSE')
+        fresh_lctx = LeagueContext.load_from_db(lctx.league_name)
+        self.assertEqual(False, user_stats.handles_message(fresh_lctx, CommandMessage('My ToTaL StAtS', 'Dchannel', 'any_user', 'any_timestamp')))
 
     def test_build_stat_message(self):
         matches = db.get_matches(lctx.league_name)
