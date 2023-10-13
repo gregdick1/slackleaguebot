@@ -22,7 +22,7 @@ def channel_help(lctx):
     message = message + '\n`{} group [a, b, c, etc]` - see the current rankings of a group'.format(bot_name)
     message = message + '\n`{} analyze group [a, b, c, etc]` - see a summary of who can still get promoted and relegated'.format(bot_name)
     message = message + '\n`{} leaderboard [matches, sets] [won, played, winrate] [all]` - see the leaderboard, counting matches or sets, sorted by wins, # played, or winrate. 20 match minimum for winrate. This will only include active players by default. Add `all` to include all historical players.'.format(bot_name)
-    message = message + '\n`{} record @player1 @player2 - shows the win / loss ratio of player1 vs player2.'.format(bot_name)
+    message = message + '\n`{} record @player1 @player2` - shows the win / loss ratio of player1 vs player2.'.format(bot_name)
     # message = message + '\n`{} loserboard` - see the loserboard, sorted by winrate'.format(bot_name)
     # message = message + '\n`{} matches for week` - see all matches occuring this week in all groups'.format(bot_name)
     return message
