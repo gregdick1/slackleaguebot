@@ -56,7 +56,7 @@ function MatchEditor({ match, allPlayers }) {
 
     const updateNonWinnerScore = (winnerId, loserId, loserScore, tieScore) => {
       if (loserScore < 0 || loserScore >= match.sets_needed) return
-      if (tieScore < 0 || tieScore >= match.sets_needed) return
+      if (tieScore < 0 || tieScore > match.sets_needed) return
 
       const updateServer = async () => {
         let winnerScore = match.play_all_sets === 1 ? match.sets_needed - loserScore - tieScore : match.sets_needed
