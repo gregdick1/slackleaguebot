@@ -1,4 +1,4 @@
-from backend import slack_util, configs, db
+from backend import slack_util, configs, db, utility
 from backend.commands import group
 
 BLOCK_NEW_SCORES_MSG = "Sorry, not accepting any scores at this time."
@@ -83,7 +83,17 @@ def handle_message(lctx, command_object):
             slack_util.post_message(lctx, 'Entered into db', lctx.configs[configs.COMMISSIONER_SLACK_ID])
         player = db.get_player_by_id(lctx.league_name, users['winner_id'])
         group_msg = group.build_message_for_group(lctx, player.grouping)
-        slack_util.post_message(lctx, group_msg, command_object.channel)
+        rivary_msg = build_message_for_rivary_record(lctx, users['winner_id'], users['loser_id'])
+        slack_util.post_message(lctx, '{}\n{}'.format(rivary_msg, group_msg), command_object.channel)
+
+
+def build_message_for_rivary_record(lctx, p1_id, p2_id):
+    record = utility.get_players_record(lctx, p1_id, p2_id)
+    p1 = db.get_player_by_id(lctx.league_name, p1_id)
+    p2 = db.get_player_by_id(lctx.league_name, p2_id)
+    include_oof = True if abs(record['p1_wins'] - record['p2_wins']) > 5 else False
+    return '_{} is now {}-{} against {}._{}'.format(
+        p1.name, record['p1_wins'], record['p2_wins'], p2.name, ' :oof:' if include_oof else '')
 
 
 def parse_first_slack_id(message):
