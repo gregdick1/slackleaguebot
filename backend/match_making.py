@@ -80,7 +80,7 @@ def add_player_to_group(league_name, player_name, season_num, sets_needed):
         db.add_match(league_name, player, group_players.pop(0), week, player.grouping, season_num, sets_needed)
 
 
-def create_matches_for_season(league_name, start_date, sets_needed, skip_weeks=None, include_byes=False):
+def create_matches_for_season(league_name, start_date, sets_needed, skip_weeks=None, include_byes=False, play_all_sets=False):
     if skip_weeks is None:
         skip_weeks = []
     all_players = db.get_active_players(league_name)
@@ -99,4 +99,4 @@ def create_matches_for_season(league_name, start_date, sets_needed, skip_weeks=N
     season = db.get_current_season(league_name)
     season += 1
     for match in all_matches:
-        db.add_match(league_name, match['player_1'], match['player_2'], match['week'], match['grouping'], season, sets_needed)
+        db.add_match(league_name, match['player_1'], match['player_2'], match['week'], match['grouping'], season, sets_needed, play_all_sets=play_all_sets)

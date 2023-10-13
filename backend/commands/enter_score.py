@@ -50,26 +50,35 @@ def handle_message(lctx, command_object):
         return
 
     match = tmp[0]
-
-    if match.sets_needed > 1:
+    winner_score = 0
+    loser_score = 0
+    tie_score = 0
+    if match.play_all_sets:  # Total score needs to match the sets_needed value
         try:
-            score_1, score_2 = parse_score(command_object.text)
-            if score_1 != match.sets_needed and score_2 != match.sets_needed:
+            winner_score, loser_score, tie_score = parse_score(command_object.text)
+            if winner_score + loser_score != match.sets_needed:
                 raise Exception("Incorrect points")
-            total_score = score_1 + score_2
+        except Exception as e:
+            slack_util.post_message(lctx, get_format_message(lctx), command_object.channel)
+            return
+    elif match.sets_needed > 1:
+        try:
+            winner_score, loser_score, tie_score = parse_score(command_object.text)
+            if tie_score > 0:
+                raise Exception("Incorrect points")
+            if winner_score != match.sets_needed and loser_score != match.sets_needed:
+                raise Exception("Incorrect points")
+            if winner_score + loser_score < match.sets_needed or winner_score + loser_score >= match.sets_needed*2:
+                raise Exception("Incorrect points")
         except Exception as e:
             slack_util.post_message(lctx, get_format_message(lctx), command_object.channel)
             return
     else:
-        total_score = 1
-
-    if total_score < match.sets_needed or total_score >= match.sets_needed*2:
-        slack_util.post_message(lctx, get_format_message(lctx), command_object.channel)
-        return
+        winner_score = 1
 
     is_admin = command_object.user == lctx.configs[configs.COMMISSIONER_SLACK_ID] and command_object.is_dm()
     try:
-        db.update_match_by_id(lctx.league_name, users['winner_id'], users['loser_id'], total_score)
+        db.update_match_by_id(lctx.league_name, users['winner_id'], users['loser_id'], winner_score, loser_score, tie_score)
         slack_util.add_reaction(lctx, command_object.channel, command_object.timestamp, WORKED_REACTION)
 
     except Exception as e:
@@ -131,7 +140,12 @@ def parse_score(message):
     dash_index = message.index('-')
     score_substring = message[dash_index - 1: dash_index + 2]
 
-    score_1 = int(score_substring[0])
-    score_2 = int(score_substring[2])
+    winner_score = int(score_substring[0])
+    loser_score = int(score_substring[2])
+    tie_score = 0
 
-    return score_1, score_2
+    after_dash = message[dash_index+1:]
+    if '-' in after_dash:
+        tie_score = int(after_dash[after_dash.index('-')+1:after_dash.index('-')+2])
+
+    return winner_score, loser_score, tie_score

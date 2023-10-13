@@ -64,8 +64,11 @@ function Configuration() {
     }
 
 
-    const checkbox = (label, config) => {
-      var checked = state.leagueConfigs[config] === 'TRUE' ? "checked" : ""
+    const checkbox = (label, config, nullIsTrue) => {
+      var checked = "checked"
+      if (state.leagueConfigs[config] === 'FALSE' || !nullIsTrue) {
+        checked = ""
+      }
       return (
       <div className="inline-editor">
         <label>{label}:</label>
@@ -129,10 +132,18 @@ function Configuration() {
                 { editExisting && editor('Example Score', 'SCORE_EXAMPLE') }
               </div>
               <div className="config-box">
+                <label>Enable Commands</label>
+                { editExisting && checkbox('Group Analysis', 'ENABLE_COMMAND_GROUP_ANALYSIS', true) }
+                { editExisting && checkbox('Leaderboard', 'ENABLE_COMMAND_LEADERBOARD', true) }
+                { editExisting && checkbox('Matchup History', 'ENABLE_COMMAND_MATCHUP_HISTORY', true) }
+                { editExisting && checkbox('User Stats', 'ENABLE_COMMAND_USER_STATS', true) }
+                { editExisting && checkbox('Week Matches', 'ENABLE_COMMAND_WEEK_MATCHES', true) }
+              </div>
+              <div className="config-box">
                 <label>Other Configs</label>
                 { editExisting && editor('Log Path', 'LOG_PATH') }
-                { editExisting && checkbox('Block New Scores', 'BLOCK_NEW_SCORES')}
-                { editExisting && checkbox('Message Commissioner On Score Entry', 'MESSAGE_COMMISSIONER_ON_SUCCESS')}
+                { editExisting && checkbox('Block New Scores', 'BLOCK_NEW_SCORES', false)}
+                { editExisting && checkbox('Message Commissioner On Score Entry', 'MESSAGE_COMMISSIONER_ON_SUCCESS', false)}
               </div>
               <div className="config-box">
                 <label>Message Configs</label>

@@ -22,8 +22,10 @@ def set_score():
     league_name = request.get_json().get('leagueName')
     match_id = request.get_json().get('matchId')
     winner_id = request.get_json().get('winnerId')
-    sets = request.get_json().get('sets')
-    db.admin_update_match_score(league_name, match_id, winner_id, sets)
+    tie_score = int(request.get_json().get('tieScore'))
+    winner_score = int(request.get_json().get('winnerScore'))
+    loser_score = int(request.get_json().get('loserScore'))
+    db.admin_update_match_score(league_name, match_id, winner_id, winner_score, loser_score, tie_score)
     return "Success"
 
 
@@ -42,13 +44,14 @@ def create_season():
     league_name = data.get('leagueName')
     start_date_iso = data.get('startDate')
     skip_weeks_iso = data.get('skipWeeks')
+    play_all_sets = data.get('playAllSets')
     sets_needed = data.get('setsNeeded')
     include_byes = data.get('includeByes')
 
     start_date = datetime.datetime.fromisoformat(start_date_iso[:-1]).date()  # Remove the Z from the end
     skip_weeks = [datetime.datetime.fromisoformat(x[:-1]).date() for x in skip_weeks_iso]  # Remove the Z from the end
 
-    match_making.create_matches_for_season(league_name, start_date, sets_needed, skip_weeks, include_byes)
+    match_making.create_matches_for_season(league_name, start_date, sets_needed, skip_weeks=skip_weeks, include_byes=include_byes, play_all_sets=play_all_sets)
     return "Success"
 
 

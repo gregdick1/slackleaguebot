@@ -14,7 +14,7 @@ class Test(TestCase):
         test_league_setup.teardown_test_league()
         test_league_setup.create_test_league()
 
-        league_name = 'test'
+        league_name = 'unittest'
         db.set_config(league_name, configs.COMMISSIONER_SLACK_ID, 'commissioner_slack_id')
         global lctx
         lctx = LeagueContext.load_from_db(league_name)
@@ -214,7 +214,7 @@ class Test(TestCase):
         skip_weeks = []
         match_making.create_matches_for_season(lctx.league_name, week, 1, skip_weeks, False)
         matches = db.get_matches_for_week(lctx.league_name, week)
-        db.update_match_by_id(lctx.league_name, matches[0].player_1_id, matches[0].player_2_id, 1)
+        db.update_match_by_id(lctx.league_name, matches[0].player_1_id, matches[0].player_2_id, 1, 0, 0)
 
         message = 'Play your games!'
         slack_util.send_custom_for_missed_games(lctx, message, 3, datetime.date(2022, 1, 17), debug=False)

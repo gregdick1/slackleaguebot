@@ -4,7 +4,7 @@ import datetime
 from functools import partial
 from backend import configs
 
-LATEST_VERSION = 5
+LATEST_VERSION = 6
 
 
 def path(league_name):
@@ -39,6 +39,10 @@ def initialize(league_name):
               'date_played DATE, '
               'message_sent INT DEFAULT 0, '
               'forfeit INT DEFAULT 0, '
+              'player_1_score INT, '
+              'player_2_score INT, '
+              'tie_score INT, '
+              'play_all_sets DEFAULT 0, '
               'FOREIGN KEY (player_1) REFERENCES player, '
               'FOREIGN KEY (player_2) REFERENCES player, '
               'FOREIGN KEY (winner) REFERENCES player)')
@@ -88,6 +92,10 @@ def add_command_to_run(league_name, command):
     _tmp_commands_to_run[league_name].append(command)
 
 
+def clear_tmp_commands_to_run(league_name):
+    _tmp_commands_to_run[league_name] = []
+
+
 def save_commands_to_run(league_name):
     conn = get_connection(league_name)
     c = conn.cursor()
@@ -107,13 +115,17 @@ def clear_commands_to_run(league_name):
 
 
 def set_config(league_name, name, value):
-    conn = get_connection(league_name)
-    conn.set_trace_callback(partial(add_command_to_run, league_name))
-    c = conn.cursor()
-    c.execute("INSERT INTO config VALUES (?, ?) ON CONFLICT(name) DO UPDATE SET value=? where name=?", (name, value, value, name))
-    conn.commit()
-    conn.close()
-    save_commands_to_run(league_name)
+    try:
+        conn = get_connection(league_name)
+        conn.set_trace_callback(partial(add_command_to_run, league_name))
+        c = conn.cursor()
+        c.execute("INSERT INTO config VALUES (?, ?) ON CONFLICT(name) DO UPDATE SET value=? where name=?", (name, value, value, name))
+        conn.commit()
+        conn.close()
+        save_commands_to_run(league_name)
+    except Exception as e:
+        clear_tmp_commands_to_run(league_name)
+        raise e
 
 
 def get_config(league_name, name):
@@ -129,13 +141,17 @@ def get_config(league_name, name):
 
 
 def add_player(league_name, slack_id, name, grouping):
-    conn = get_connection(league_name)
-    conn.set_trace_callback(partial(add_command_to_run, league_name))
-    c = conn.cursor()
-    c.execute("INSERT INTO player (slack_id, name, grouping, active) VALUES (?, ?, ?, 1)", (slack_id, name, grouping))
-    conn.commit()
-    conn.close()
-    save_commands_to_run(league_name)
+    try:
+        conn = get_connection(league_name)
+        conn.set_trace_callback(partial(add_command_to_run, league_name))
+        c = conn.cursor()
+        c.execute("INSERT INTO player (slack_id, name, grouping, active) VALUES (?, ?, ?, 1)", (slack_id, name, grouping))
+        conn.commit()
+        conn.close()
+        save_commands_to_run(league_name)
+    except Exception as e:
+        clear_tmp_commands_to_run(league_name)
+        raise e
 
 
 class Player:
@@ -200,64 +216,84 @@ def get_player_by_id(league_name, id):
 
 
 def update_grouping(league_name, slack_id, grouping):
-    conn = get_connection(league_name)
-    conn.set_trace_callback(partial(add_command_to_run, league_name))
-    c = conn.cursor()
-    c.execute("UPDATE player SET grouping=? WHERE slack_id = ?", (grouping, slack_id))
-    conn.commit()
-    conn.close()
-    save_commands_to_run(league_name)
+    try:
+        conn = get_connection(league_name)
+        conn.set_trace_callback(partial(add_command_to_run, league_name))
+        c = conn.cursor()
+        c.execute("UPDATE player SET grouping=? WHERE slack_id = ?", (grouping, slack_id))
+        conn.commit()
+        conn.close()
+        save_commands_to_run(league_name)
+    except Exception as e:
+        clear_tmp_commands_to_run(league_name)
+        raise e
 
 
 def updating_grouping_and_orders(league_name, slack_ids, grouping):
-    conn = get_connection(league_name)
-    conn.set_trace_callback(partial(add_command_to_run, league_name))
-    c = conn.cursor()
-    for idx, slack_id in enumerate(slack_ids):
-        c.execute("UPDATE player SET grouping=?, order_idx=?, active=1 WHERE slack_id = ?", (grouping, idx, slack_id))
-    conn.commit()
-    conn.close()
-    save_commands_to_run(league_name)
+    try:
+        conn = get_connection(league_name)
+        conn.set_trace_callback(partial(add_command_to_run, league_name))
+        c = conn.cursor()
+        for idx, slack_id in enumerate(slack_ids):
+            c.execute("UPDATE player SET grouping=?, order_idx=?, active=1 WHERE slack_id = ?", (grouping, idx, slack_id))
+        conn.commit()
+        conn.close()
+        save_commands_to_run(league_name)
+    except Exception as e:
+        clear_tmp_commands_to_run(league_name)
+        raise e
 
 
 def update_player_order_idx(league_name, slack_id, order_idx):
-    conn = get_connection(league_name)
-    conn.set_trace_callback(partial(add_command_to_run, league_name))
-    c = conn.cursor()
-    c.execute("UPDATE player set order_idx=? WHERE slack_id = ?", (order_idx, slack_id))
-    conn.commit()
-    conn.close()
-    save_commands_to_run(league_name)
+    try:
+        conn = get_connection(league_name)
+        conn.set_trace_callback(partial(add_command_to_run, league_name))
+        c = conn.cursor()
+        c.execute("UPDATE player set order_idx=? WHERE slack_id = ?", (order_idx, slack_id))
+        conn.commit()
+        conn.close()
+        save_commands_to_run(league_name)
+    except Exception as e:
+        clear_tmp_commands_to_run(league_name)
+        raise e
 
 
 def set_active(league_name, slack_id, active):
-    active_int = 1 if active else 0
-    conn = get_connection(league_name)
-    conn.set_trace_callback(partial(add_command_to_run, league_name))
-    c = conn.cursor()
-    c.execute("UPDATE player SET active=? WHERE slack_id = ?", (active_int, slack_id))
-    conn.commit()
-    conn.close()
-    save_commands_to_run(league_name)
+    try:
+        active_int = 1 if active else 0
+        conn = get_connection(league_name)
+        conn.set_trace_callback(partial(add_command_to_run, league_name))
+        c = conn.cursor()
+        c.execute("UPDATE player SET active=? WHERE slack_id = ?", (active_int, slack_id))
+        conn.commit()
+        conn.close()
+        save_commands_to_run(league_name)
+    except Exception as e:
+        clear_tmp_commands_to_run(league_name)
+        raise e
 
 
-def add_match(league_name, player_1, player_2, week_date, grouping, season, sets_needed):
-    conn = get_connection(league_name)
-    conn.set_trace_callback(partial(add_command_to_run, league_name))
-    c = conn.cursor()
+def add_match(league_name, player_1, player_2, week_date, grouping, season, sets_needed, play_all_sets=0):
+    try:
+        conn = get_connection(league_name)
+        conn.set_trace_callback(partial(add_command_to_run, league_name))
+        c = conn.cursor()
 
-    if player_1 is None or player_2 is None:
-        p_id = player_1.slack_id if player_1 is not None else player_2.slack_id
-        c.execute("INSERT INTO match (player_1, week, grouping, season, sets, sets_needed) VALUES (?, ?, ?, ?, 0, ?)", (p_id, str(week_date), grouping, season, sets_needed))
-    else:
-        c.execute("INSERT INTO match (player_1, player_2, week, grouping, season, sets, sets_needed) VALUES (?, ?, ?, ?, ?, 0, ?)", (player_1.slack_id, player_2.slack_id, str(week_date), grouping, season, sets_needed))
-    conn.commit()
-    conn.close()
-    save_commands_to_run(league_name)
+        if player_1 is None or player_2 is None:
+            p_id = player_1.slack_id if player_1 is not None else player_2.slack_id
+            c.execute("INSERT INTO match (player_1, week, grouping, season, sets, sets_needed, play_all_sets, player_1_score, player_2_score, tie_score) VALUES (?, ?, ?, ?, 0, ?, ?, 0, 0, 0)", (p_id, str(week_date), grouping, season, sets_needed, play_all_sets))
+        else:
+            c.execute("INSERT INTO match (player_1, player_2, week, grouping, season, sets, sets_needed, play_all_sets, player_1_score, player_2_score, tie_score) VALUES (?, ?, ?, ?, ?, 0, ?, ?, 0, 0, 0)", (player_1.slack_id, player_2.slack_id, str(week_date), grouping, season, sets_needed, play_all_sets))
+        conn.commit()
+        conn.close()
+        save_commands_to_run(league_name)
+    except Exception as e:
+        clear_tmp_commands_to_run(league_name)
+        raise e
 
 
 class Match:
-    def __init__(self, id, p1_id, p2_id, winner_id, week, grouping, season, sets, sets_needed, date_played, message_sent, forfeit):
+    def __init__(self, id, p1_id, p2_id, winner_id, week, grouping, season, sets, sets_needed, date_played, message_sent, forfeit, p1_score, p2_score, tie_score, play_all_sets):
         self.id = id
         self.player_1_id = p1_id
         self.player_2_id = p2_id
@@ -270,10 +306,14 @@ class Match:
         self.date_played = date_played
         self.message_sent = message_sent
         self.forfeit = forfeit
+        self.player_1_score = p1_score
+        self.player_2_score = p2_score
+        self.tie_score = tie_score
+        self.play_all_sets = play_all_sets
 
     @classmethod
     def from_db(cls, row):
-        return Match(row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9], row[10], row[11])
+        return Match(row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9], row[10], row[11], row[12], row[13], row[14], row[15])
 
 
 def get_matches(league_name):
@@ -306,13 +346,17 @@ def get_matches_for_season(league_name, season):
 
 
 def clear_matches_for_season(league_name, season):
-    conn = get_connection(league_name)
-    conn.set_trace_callback(partial(add_command_to_run, league_name))
-    c = conn.cursor()
-    c.execute('DELETE FROM match WHERE season = ?', (season,))
-    conn.commit()
-    conn.close()
-    save_commands_to_run(league_name)
+    try:
+        conn = get_connection(league_name)
+        conn.set_trace_callback(partial(add_command_to_run, league_name))
+        c = conn.cursor()
+        c.execute('DELETE FROM match WHERE season = ?', (season,))
+        conn.commit()
+        conn.close()
+        save_commands_to_run(league_name)
+    except Exception as e:
+        clear_tmp_commands_to_run(league_name)
+        raise e
 
 
 def get_matches_for_week(league_name, week):
@@ -342,19 +386,31 @@ def get_match_by_players(league_name, player_a, player_b):
     return Match.from_db(row)
 
 
-def update_match(league_name, winner_name, loser_name, sets):
+def get_match_by_id(league_name, id):
+    conn = get_connection(league_name)
+    c = conn.cursor()
+    c.execute("SELECT rowid, * FROM match WHERE rowid = ?", (id,))
+    row = c.fetchone()
+    conn.close()
+    if row is None or len(row) == 0:
+        print('Could not find match with id:', id)
+        return None
+    return Match.from_db(row)
+
+
+def update_match(league_name, winner_name, loser_name, winner_score, loser_score, tie_score):
     winner = get_player_by_name(league_name, winner_name)
     loser = get_player_by_name(league_name, loser_name)
-    return _update_match(league_name, winner, loser, sets)
+    return _update_match(league_name, winner, loser, winner_score, loser_score, tie_score)
 
 
-def update_match_by_id(league_name, winner_id, loser_id, sets):
+def update_match_by_id(league_name, winner_id, loser_id, winner_score, loser_score, tie_score):
     winner = get_player_by_id(league_name, winner_id)
     loser = get_player_by_id(league_name, loser_id)
-    return _update_match(league_name, winner, loser, sets)
+    return _update_match(league_name, winner, loser, winner_score, loser_score, tie_score)
 
 
-def _update_match(league_name, winner, loser, sets):
+def _update_match(league_name, winner, loser, winner_score, loser_score, tie_score):
     if winner is None or loser is None:
         print('Could not update match')
         return False
@@ -364,69 +420,109 @@ def _update_match(league_name, winner, loser, sets):
         print('Could not update match')
         return False
 
-    if sets < match.sets_needed or sets > (match.sets_needed*2-1):
-        print('Sets out of range, was {}, but must be between {} and {}'.format(sets, match.sets_needed, match.sets_needed*2-1))
-        return False
+    sets = winner_score+loser_score+tie_score
 
-    conn = get_connection(league_name)
-    conn.set_trace_callback(partial(add_command_to_run, league_name))
-    c = conn.cursor()
-    c.execute("UPDATE match SET winner=?, sets=?, date_played=? WHERE player_1 = ? and player_2 = ? and season=?", (winner.slack_id, sets, str(datetime.date.today()), match.player_1_id, match.player_2_id, match.season))
-    conn.commit()
-    conn.close()
-    save_commands_to_run(league_name)
-    return True
+    if match.play_all_sets:
+        if sets != match.sets_needed:
+            print('Sets out of range, was {}, but must be be'.format(sets, match.sets_needed))
+            return False
+    else:
+        if sets < match.sets_needed or sets > (match.sets_needed*2-1):
+            print('Sets out of range, was {}, but must be between {} and {}'.format(sets, match.sets_needed, match.sets_needed*2-1))
+            return False
+
+    p1_score = winner_score if winner.slack_id == match.player_1_id else loser_score
+    p2_score = winner_score if winner.slack_id == match.player_2_id else loser_score
+
+    try:
+        conn = get_connection(league_name)
+        conn.set_trace_callback(partial(add_command_to_run, league_name))
+        c = conn.cursor()
+        c.execute("UPDATE match SET winner=?, player_1_score=?, player_2_score=?, tie_score=?, sets=?, date_played=? WHERE player_1 = ? and player_2 = ? and season=?",
+                  (winner.slack_id, p1_score, p2_score, tie_score, sets, str(datetime.date.today()), match.player_1_id, match.player_2_id, match.season))
+        conn.commit()
+        conn.close()
+        save_commands_to_run(league_name)
+        return True
+    except Exception as e:
+        clear_tmp_commands_to_run(league_name)
+        raise e
 
 
 def clear_score_for_match(league_name, match_id):
-    conn = get_connection(league_name)
-    conn.set_trace_callback(partial(add_command_to_run, league_name))
-    c = conn.cursor()
-    c.execute("UPDATE match SET winner=?, sets=?, date_played=? WHERE rowid=?", (None, 0, None, match_id))
-    conn.commit()
-    conn.close()
-    save_commands_to_run(league_name)
+    try:
+        conn = get_connection(league_name)
+        conn.set_trace_callback(partial(add_command_to_run, league_name))
+        c = conn.cursor()
+        c.execute("UPDATE match SET winner=?, sets=?, player_1_score=?, player_2_score=?, tie_score=?, date_played=? WHERE rowid=?", (None, 0, 0, 0, 0, None, match_id))
+        conn.commit()
+        conn.close()
+        save_commands_to_run(league_name)
+    except Exception as e:
+        clear_tmp_commands_to_run(league_name)
+        raise e
 
 
 def mark_match_message_sent(league_name, match_id, sent=1):
-    conn = get_connection(league_name)
-    conn.set_trace_callback(partial(add_command_to_run, league_name))
-    c = conn.cursor()
-    c.execute("UPDATE match SET message_sent=? WHERE rowid=?", (sent, match_id))
-    conn.commit()
-    conn.close()
-    save_commands_to_run(league_name)
+    try:
+        conn = get_connection(league_name)
+        conn.set_trace_callback(partial(add_command_to_run, league_name))
+        c = conn.cursor()
+        c.execute("UPDATE match SET message_sent=? WHERE rowid=?", (sent, match_id))
+        conn.commit()
+        conn.close()
+        save_commands_to_run(league_name)
+    except Exception as e:
+        clear_tmp_commands_to_run(league_name)
+        raise e
 
 
 def set_match_forfeit(league_name, match_id, forfeit=1):
-    conn = get_connection(league_name)
-    conn.set_trace_callback(partial(add_command_to_run, league_name))
-    c = conn.cursor()
-    c.execute("UPDATE match SET forfeit=? WHERE rowid=?", (forfeit, match_id))
-    conn.commit()
-    conn.close()
-    save_commands_to_run(league_name)
+    try:
+        conn = get_connection(league_name)
+        conn.set_trace_callback(partial(add_command_to_run, league_name))
+        c = conn.cursor()
+        c.execute("UPDATE match SET forfeit=? WHERE rowid=?", (forfeit, match_id))
+        conn.commit()
+        conn.close()
+        save_commands_to_run(league_name)
+    except Exception as e:
+        clear_tmp_commands_to_run(league_name)
+        raise e
 
 
-def admin_update_match_score(league_name, match_id, winner_id, sets):
-    conn = get_connection(league_name)
-    conn.set_trace_callback(partial(add_command_to_run, league_name))
-    c = conn.cursor()
-    c.execute("UPDATE match SET winner=?, sets=? WHERE rowid=?", (winner_id, sets, match_id))
-    conn.commit()
-    conn.close()
-    save_commands_to_run(league_name)
-    return True
+def admin_update_match_score(league_name, match_id, winner_id, winner_score, loser_score, tie_score):
+    try:
+        conn = get_connection(league_name)
+        conn.set_trace_callback(partial(add_command_to_run, league_name))
+        c = conn.cursor()
+        match = get_match_by_id(league_name, match_id)
+        p1_score = winner_score if winner_id == match.player_1_id else loser_score
+        p2_score = winner_score if winner_id == match.player_2_id else loser_score
+        sets = p1_score + p2_score + tie_score
+        c.execute("UPDATE match SET winner=?, player_1_score=?, player_2_score=?, tie_score=?, sets=? WHERE rowid=?",
+                  (winner_id, p1_score, p2_score, tie_score, sets, match_id))
+        conn.commit()
+        conn.close()
+        save_commands_to_run(league_name)
+        return True
+    except Exception as e:
+        clear_tmp_commands_to_run(league_name)
+        raise e
 
 
 def update_match_players(league_name, match_id, player_1_id, player_2_id):
-    conn = get_connection(league_name)
-    conn.set_trace_callback(partial(add_command_to_run, league_name))
-    c = conn.cursor()
-    c.execute("UPDATE match SET player_1=?, player_2=? WHERE rowid=?", (player_1_id, player_2_id, match_id))
-    conn.commit()
-    conn.close()
-    save_commands_to_run(league_name)
+    try:
+        conn = get_connection(league_name)
+        conn.set_trace_callback(partial(add_command_to_run, league_name))
+        c = conn.cursor()
+        c.execute("UPDATE match SET player_1=?, player_2=? WHERE rowid=?", (player_1_id, player_2_id, match_id))
+        conn.commit()
+        conn.close()
+        save_commands_to_run(league_name)
+    except Exception as e:
+        clear_tmp_commands_to_run(league_name)
+        raise e
 
 
 def get_current_season(league_name):
@@ -455,33 +551,45 @@ def get_all_seasons(league_name):
 
 
 def add_reminder_day(league_name, season, date):
-    conn = get_connection(league_name)
-    conn.set_trace_callback(partial(add_command_to_run, league_name))
-    c = conn.cursor()
-    c.execute("INSERT INTO reminder_days (date, season, sent) VALUES (?,?,0)", (date, season))
-    conn.commit()
-    conn.close()
-    save_commands_to_run(league_name)
+    try:
+        conn = get_connection(league_name)
+        conn.set_trace_callback(partial(add_command_to_run, league_name))
+        c = conn.cursor()
+        c.execute("INSERT INTO reminder_days (date, season, sent) VALUES (?,?,0)", (date, season))
+        conn.commit()
+        conn.close()
+        save_commands_to_run(league_name)
+    except Exception as e:
+        clear_tmp_commands_to_run(league_name)
+        raise e
 
 
 def remove_reminder_day(league_name, season, date):
-    conn = get_connection(league_name)
-    conn.set_trace_callback(partial(add_command_to_run, league_name))
-    c = conn.cursor()
-    c.execute("DELETE FROM reminder_days WHERE date=? and season=?", (date, season))
-    conn.commit()
-    conn.close()
-    save_commands_to_run(league_name)
+    try:
+        conn = get_connection(league_name)
+        conn.set_trace_callback(partial(add_command_to_run, league_name))
+        c = conn.cursor()
+        c.execute("DELETE FROM reminder_days WHERE date=? and season=?", (date, season))
+        conn.commit()
+        conn.close()
+        save_commands_to_run(league_name)
+    except Exception as e:
+        clear_tmp_commands_to_run(league_name)
+        raise e
 
 
 def mark_reminder_day_sent(league_name, season, date):
-    conn = get_connection(league_name)
-    conn.set_trace_callback(partial(add_command_to_run, league_name))
-    c = conn.cursor()
-    c.execute("UPDATE reminder_days SET sent=1 WHERE date=? and season=?", (date, season))
-    conn.commit()
-    conn.close()
-    save_commands_to_run(league_name)
+    try:
+        conn = get_connection(league_name)
+        conn.set_trace_callback(partial(add_command_to_run, league_name))
+        c = conn.cursor()
+        c.execute("UPDATE reminder_days SET sent=1 WHERE date=? and season=?", (date, season))
+        conn.commit()
+        conn.close()
+        save_commands_to_run(league_name)
+    except Exception as e:
+        clear_tmp_commands_to_run(league_name)
+        raise e
 
 
 def get_reminder_days_for_season(league_name, season):

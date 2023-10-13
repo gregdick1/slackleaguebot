@@ -104,8 +104,8 @@ function PlayerBoard2() {
     const addPlayer = (playerName) => {
         setOrderedActivePlayersAndMarkers([...orderedActivePlayersAndMarkers, {slack_id: 'waiting', name:playerName}])
         let groups = orderedActivePlayersAndMarkers.filter(p => p.slack_id.length === 1).map(p => p.slack_id)
-        let bottomGroup = groups[groups.length-1]
-        if (slackUsersRefreshState.totalUsers == 0) {
+        let bottomGroup = groups.length > 0 ? groups[groups.length-1] : 'A'
+        if (slackUsersRefreshState.totalUsers === 0) {
             alert('This will take ~20 seconds. Next time click the refresh users button if the list of users is not cached.')
         }
 
@@ -123,7 +123,7 @@ function PlayerBoard2() {
       }
 
     const addGroup = () => {
-      let lastGroup = ''
+      let lastGroup = '@' //The ascii code that comes before 'A'
       for (const [index, playerOrMarker] of orderedActivePlayersAndMarkers.entries()) {
         if (playerOrMarker.slack_id.length === 1) lastGroup = playerOrMarker.slack_id
       }
@@ -191,6 +191,7 @@ function PlayerBoard2() {
             if (i === result.destination.index) destinationGroup = currentGroup;
             if (!movedDown && slack_id.length === 1) currentGroup = slack_id
           }
+          if (result.destination.index === playersAndGroups.length) destinationGroup = currentGroup
 
           let newSpot = result.destination.index + (movedDown ? 1 : 0)
           if (result.source.droppableId === 'active') {

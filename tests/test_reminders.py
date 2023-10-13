@@ -7,7 +7,7 @@ from backend import db, reminders, match_making, slack_util, configs
 from backend.league_context import LeagueContext
 
 lctx = None
-league_name = 'test'
+league_name = 'unittest'
 
 
 class Test(TestCase):
