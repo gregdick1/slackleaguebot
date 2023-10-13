@@ -1,21 +1,27 @@
-# smashleaguebot
+# SlackLeagueBot
 A bot used to create round robin seasons for matches between players via Slack.
 
 # Developer Getting Started:
-Install pipenv (If not already installed)
+Install python 3.9 or greater
+
+Create a new virtual environment somewhere
 ```
-pip install pipenv
+python3 -m venv venv
+```
+
+Activate your environment
+```
+source venv/bin/activate
 ```
 
 Install dependencies
 ```
-pipenv install
+pip install slack-bolt
+pip install slackclient
+pip install Flask
+pip install paramiko
 ```
 
-Enter the environment
-```
-pipenv shell
-```
 
 Download and install node.js
 
@@ -34,10 +40,6 @@ Run the Admin API
 python start_api.py
 ```
 
-Run the Bot
-```
-python start_smashbot.py
-```
 
 When you're done you can exit the environment
 ```
