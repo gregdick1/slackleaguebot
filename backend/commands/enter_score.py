@@ -92,11 +92,11 @@ def handle_message(lctx, command_object):
             slack_util.post_message(lctx, 'Entered into db', lctx.configs[configs.COMMISSIONER_SLACK_ID])
         player = db.get_player_by_id(lctx.league_name, users['winner_id'])
         group_msg = group.build_message_for_group(lctx, player.grouping)
-        rivary_msg = build_message_for_rivary_record(lctx, users['winner_id'], users['loser_id'])
-        slack_util.post_message(lctx, '{}\n{}'.format(rivary_msg, group_msg), command_object.channel)
+        rivalry_msg = build_message_for_rivalry_record(lctx, users['winner_id'], users['loser_id'])
+        slack_util.post_message(lctx, '{}\n{}'.format(rivalry_msg, group_msg), command_object.channel)
 
 
-def build_message_for_rivary_record(lctx, p1_id, p2_id):
+def build_message_for_rivalry_record(lctx, p1_id, p2_id):
     record = utility.get_players_record(lctx, p1_id, p2_id)
     p1 = db.get_player_by_id(lctx.league_name, p1_id)
     p2 = db.get_player_by_id(lctx.league_name, p2_id)

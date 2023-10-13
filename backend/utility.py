@@ -136,13 +136,13 @@ def replace_message_variables(lctx, message):
 
 
 def get_players_record(lctx, p1_id, p2_id):
-    rivary_matches = db.get_matches_between_players(lctx.league_name, p1_id, p2_id)
+    rivalry_matches = db.get_matches_between_players(lctx.league_name, p1_id, p2_id)
     p1_wins = 0
     p2_wins = 0
-    if len(rivary_matches) == 0:
+    if len(rivalry_matches) == 0:
         return {'p1_wins': 0, 'p2_wins': 0}
 
-    for m in rivary_matches:
+    for m in rivalry_matches:
         if m.winner_id == p1_id:
             p1_wins += 1
         elif m.winner_id == p2_id:
