@@ -66,7 +66,7 @@ function Configuration() {
 
     const checkbox = (label, config, nullIsTrue) => {
       var checked = "checked"
-      if (state.leagueConfigs[config] === 'FALSE' || !nullIsTrue) {
+      if (state.leagueConfigs[config] === 'FALSE' || (state.leagueConfigs[config] !== 'TRUE' && !nullIsTrue)) {
         checked = ""
       }
       return (
