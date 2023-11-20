@@ -72,10 +72,18 @@ def reduce_scenarios(scenarios, theoretical_matches):
     for m in theoretical_matches:
         m1 = copy.copy(m)
         m2 = copy.copy(m)
+
         m1.winner_id = m1.player_1_id
+        m1.player_1_score = m1.sets_needed
+        m1.player_2_score = 0
         m1.sets = m1.sets_needed
+        m1.tie_score = 0
+
         m2.winner_id = m2.player_2_id
+        m2.player_2_score = m2.sets_needed
+        m2.player_1_score = 0
         m2.sets = m2.sets_needed
+        m2.tie_score = 0
 
         m1_scenarios = []
         m2_scenarios = []
@@ -109,7 +117,12 @@ def create_match_scenario(unplayed_matches, combo_index):
         m = theoretical_matches[i]
         if combo_array[i] == 0:
             m.winner_id = m.player_1_id
+            m.player_1_score = m.sets_needed
+            m.player_2_score = 0
         else:
             m.winner_id = m.player_2_id
+            m.player_2_score = m.sets_needed
+            m.player_1_score = 0
         m.sets = m.sets_needed
+        m.tie_score = 0
     return theoretical_matches

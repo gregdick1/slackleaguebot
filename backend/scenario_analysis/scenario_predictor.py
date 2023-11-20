@@ -56,6 +56,9 @@ def can_player_make_top_x(group_matches, player_id, top_xs, reverse=False):
     for m in players_unplayed:
         m.winner_id = player_id if not reverse else [x for x in [m.player_1_id, m.player_2_id] if x != player_id][0]
         m.sets = m.sets_needed
+        m.player_1_score = m.sets_needed if m.winner_id == m.player_1_id else 0
+        m.player_2_score = m.sets_needed if m.winner_id == m.player_2_id else 0
+        m.tie_score = 0
 
     # Most bullish scenario, they win the rest of their matches and nobody else plays the rest of theirs
     # only bother with this one if reverse=False
@@ -134,6 +137,9 @@ def can_player_make_top_x(group_matches, player_id, top_xs, reverse=False):
                     if m.id not in consequential_match_ids:
                         new_m = copy.copy(m)
                         new_m.winner_id = new_m.player_1_id
+                        new_m.player_1_score = new_m.sets_needed
+                        new_m.player_2_score = 0
+                        new_m.tie_score = 0
                         new_m.sets = new_m.sets_needed
                         inconsequential_matches.append(new_m)
 
@@ -146,6 +152,11 @@ def can_player_make_top_x(group_matches, player_id, top_xs, reverse=False):
                     combo_array = scenario_utility.build_combo_array(combo_index, 3, len(theoretical_matches))
                     for i in range(0, len(theoretical_matches)):  # 0 or 1
                         theoretical_matches[i].sets = theoretical_matches[i].sets_needed + combo_array[i]
+                        if theoretical_matches[i].winner_id == theoretical_matches[i].player_1_id:
+                            theoretical_matches[i].player_2_score = combo_array[i]
+                        else:
+                            theoretical_matches[i].player_1_score = combo_array[i]
+                        theoretical_matches[i].tie_score = 0
                     full_scenario = played_matches + players_unplayed + inconsequential_matches + theoretical_matches
                     ordered_players = utility.gather_scores(full_scenario)
                     if reverse:
