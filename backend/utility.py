@@ -95,7 +95,7 @@ def print_season_markup(lctx, season = None):
                     record_format = f'{str(p["s_w"])}-{str(p["s_l"])}' if play_all_sets else f'{str(p["m_w"])}-{str(p["m_l"])}'
                     if p['s_t'] > 0:
                         record_format + str(p['s_t']) 
-                    output += get_player_name(all_players, p['player_id']) + ' ' + record_format  # + ' (' + str(p['s_w']) + '-' + str(p['s_l']) + ')'
+                    output += get_player_name(all_players, p['player_id']) + ' ' + record_format
                 else:
                     output += ' '
                 output += '|'
