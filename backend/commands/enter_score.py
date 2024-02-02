@@ -56,7 +56,7 @@ def handle_message(lctx, command_object):
     if match.play_all_sets:  # Total score needs to match the sets_needed value
         try:
             winner_score, loser_score, tie_score = parse_score(command_object.text)
-            if winner_score + loser_score != match.sets_needed:
+            if winner_score + loser_score + tie_score != match.sets_needed:
                 raise Exception("Incorrect points")
         except Exception as e:
             slack_util.post_message(lctx, get_format_message(lctx), command_object.channel)
