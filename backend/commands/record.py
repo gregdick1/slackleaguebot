@@ -11,7 +11,7 @@ def handles_message(lctx, command_object):
 
 
 def get_format_message(lctx):
-    return 'aaaaaaaa'
+    return 'NA'
 
 
 def handle_message(lctx, command_object):
