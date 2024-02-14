@@ -20,6 +20,7 @@ def channel_help(lctx):
     message = 'In the channel, I support the following:'
     message = message + '\n`{} me over @them {}` or `{} @them over me {}` - report a score'.format(bot_name, example_score, bot_name, example_score)
     message = message + '\n`{} group [a, b, c, etc]` - see the current rankings of a group'.format(bot_name)
+    message = message + '\n`{} record @player1 @player2` - shows the win / loss ratio of player1 vs player2.'.format(bot_name)
     if lctx.configs[configs.ENABLE_COMMAND_GROUP_ANALYSIS] != 'FALSE':
         message = message + '\n`{} analyze group [a, b, c, etc]` - see a summary of who can still get promoted and relegated'.format(bot_name)
     if lctx.configs[configs.ENABLE_COMMAND_LEADERBOARD] != 'FALSE':

@@ -1,10 +1,11 @@
 from unittest import TestCase
 from unittest.mock import patch, call
-import datetime, time
+import datetime
 
 from backend import slack_util, configs, db, match_making
 from backend.commands import enter_score, group
 from backend.commands.command_message import CommandMessage
+from backend.commands.enter_score import build_message_for_rivalry_record
 from backend.league_context import LeagueContext
 from tests import test_league_setup
 
@@ -154,10 +155,11 @@ class Test(TestCase):
         self.assertEqual(4, tmp[0].sets)
 
         mock_add_reaction.assert_called_once_with(lctx, 'comp_channel', 'any_timestamp', enter_score.WORKED_REACTION)
+        rivary_msg = build_message_for_rivalry_record(lctx, 'playerA2', 'playerA1')
         group_msg = group.build_message_for_group(lctx, 'A')
         calls = [
             call(lctx, 'Entered into db', 'commish'),
-            call(lctx, group_msg, 'comp_channel')
+            call(lctx, '{}\n{}'.format(rivary_msg, group_msg), 'comp_channel')
         ]
         mock_post_message.assert_has_calls(calls)
 
@@ -189,10 +191,11 @@ class Test(TestCase):
         self.assertEqual(1, tmp[0].sets)
 
         mock_add_reaction.assert_called_once_with(lctx, 'comp_channel', 'any_timestamp', enter_score.WORKED_REACTION)
+        rivary_msg = build_message_for_rivalry_record(lctx, 'playerA2', 'playerA1')
         group_msg = group.build_message_for_group(lctx, 'A')
         calls = [
             call(lctx, 'Entered into db', 'commish'),
-            call(lctx, group_msg, 'comp_channel')
+            call(lctx, '{}\n{}'.format(rivary_msg, group_msg), 'comp_channel')
         ]
         mock_post_message.assert_has_calls(calls)
 
@@ -206,10 +209,11 @@ class Test(TestCase):
         self.assertEqual(1, tmp[0].sets)
 
         mock_add_reaction.assert_called_once_with(lctx, 'comp_channel', 'any_timestamp', enter_score.WORKED_REACTION)
+        rivary_msg = build_message_for_rivalry_record(lctx, 'playerA1', 'playerA2')
         group_msg = group.build_message_for_group(lctx, 'A')
         calls = [
             call(lctx, 'Entered into db', 'commish'),
-            call(lctx, group_msg, 'comp_channel')
+            call(lctx, '{}\n{}'.format(rivary_msg, group_msg), 'comp_channel')
         ]
         mock_post_message.assert_has_calls(calls)
 

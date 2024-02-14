@@ -1,5 +1,5 @@
 from backend import configs
-from backend.commands import enter_score, help, group, leaderboard, week_matches, user_stats, group_analysis, matchup_history
+from backend.commands import enter_score, help, group, leaderboard, week_matches, user_stats, group_analysis, matchup_history, record
 from backend.commands.command_message import CommandMessage
 
 
@@ -48,6 +48,7 @@ def determine_command(lctx, message_object):
         enter_score,
         leaderboard,
         week_matches,
+        record,
         user_stats,
         group_analysis,
         matchup_history

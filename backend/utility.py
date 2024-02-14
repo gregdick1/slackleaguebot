@@ -48,7 +48,7 @@ def gather_scores(group_matches):
     return tie_breaker.order_players(players, group_matches)
 
 
-def print_season_markup(lctx, season = None):
+def print_season_markup(lctx, season=None):
     if season is None:
         season = db.get_current_season(lctx.league_name)
     all_matches = db.get_matches_for_season(lctx.league_name, season)
@@ -91,7 +91,8 @@ def print_season_markup(lctx, season = None):
                 players = [x for x in players if x['player_id'] is not None]
                 if len(players) > i:
                     p = players[i]
-                    output += get_player_name(all_players, p['player_id']) + ' ' + str(p['m_w']) + '-' + str(p['m_l'])  # + ' (' + str(p['s_w']) + '-' + str(p['s_l']) + ')'
+                    output += get_player_name(all_players, p['player_id']) + ' ' + str(p['m_w']) + '-' + str(
+                        p['m_l'])  # + ' (' + str(p['s_w']) + '-' + str(p['s_l']) + ')'
                 else:
                     output += ' '
                 output += '|'
@@ -99,10 +100,10 @@ def print_season_markup(lctx, season = None):
 
     for grouping in groupings:
         group_matches = [m for m in all_matches if m.grouping == grouping]
-        output += '\nh2. Group '+grouping+'\n'
+        output += '\nh2. Group ' + grouping + '\n'
         matches_by_week = {}
         for week in weeks:
-            output += '||'+str(week)
+            output += '||' + str(week)
             matches_by_week[week] = [m for m in group_matches if m.week == week]
         output += '||\n'
 
@@ -111,7 +112,9 @@ def print_season_markup(lctx, season = None):
                 if i >= len(matches_by_week[week]):
                     break
                 m = matches_by_week[week][i]
-                output += '|' + get_player_print(all_players, m.player_1_id, m) + '\\\\' + get_player_print(all_players, m.player_2_id, m)
+                output += '|' + get_player_print(all_players, m.player_1_id, m) + '\\\\' + get_player_print(all_players,
+                                                                                                            m.player_2_id,
+                                                                                                            m)
             output += '|\n'
 
     return output
@@ -127,5 +130,22 @@ def get_players_dictionary(lctx):
 
 def replace_message_variables(lctx, message):
     message = message.replace('@bot_name', '<@{}>'.format(lctx.configs[configs.BOT_SLACK_USER_ID]))
-    message = message.replace('#competition_channel', '<#{}>'.format(lctx.configs[configs.COMPETITION_CHANNEL_SLACK_ID]))
+    message = message.replace('#competition_channel',
+                              '<#{}>'.format(lctx.configs[configs.COMPETITION_CHANNEL_SLACK_ID]))
     return message
+
+
+def get_players_record(lctx, p1_id, p2_id):
+    rivalry_matches = db.get_matches_between_players(lctx.league_name, p1_id, p2_id)
+    p1_wins = 0
+    p2_wins = 0
+    if len(rivalry_matches) == 0:
+        return {'p1_wins': 0, 'p2_wins': 0}
+
+    for m in rivalry_matches:
+        if m.winner_id == p1_id:
+            p1_wins += 1
+        elif m.winner_id == p2_id:
+            p2_wins += 1
+    return {'p1_wins': p1_wins, 'p2_wins': p2_wins}
+
