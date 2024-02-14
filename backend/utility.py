@@ -2,14 +2,14 @@ from backend import tie_breaker, db, configs
 
 
 def get_player_print(players, id, match):
+    sets_won = match.tie_score/2       
     for player in players:
-        if player.slack_id == id:
-            if match.winner_id == id:
-                return player.name + ' - 3'
-            elif match.winner_id is not None:
-                return player.name + ' - ' + str(match.sets - 3)
-            else:
-                return player.name
+        if player.slack_id == id:   
+            if match.player_1_id == id:
+                sets_won += match.player_1_score
+            elif match.player_2_id == id:
+                sets_won += match.player_2_score
+            return f'{player.name} - {int(sets_won) if int(sets_won) == sets_won else sets_won}'
     return 'Bye'
 
 
@@ -52,6 +52,7 @@ def print_season_markup(lctx, season = None):
     if season is None:
         season = db.get_current_season(lctx.league_name)
     all_matches = db.get_matches_for_season(lctx.league_name, season)
+    play_all_sets = all_matches[0].play_all_sets
     all_players = db.get_players(lctx.league_name)
     groupings = list(set(map(lambda match: match.grouping, all_matches)))
     weeks = list(set(map(lambda match: match.week, all_matches)))
@@ -91,7 +92,10 @@ def print_season_markup(lctx, season = None):
                 players = [x for x in players if x['player_id'] is not None]
                 if len(players) > i:
                     p = players[i]
-                    output += get_player_name(all_players, p['player_id']) + ' ' + str(p['m_w']) + '-' + str(p['m_l'])  # + ' (' + str(p['s_w']) + '-' + str(p['s_l']) + ')'
+                    record_format = f'{str(p["s_w"])}-{str(p["s_l"])}' if play_all_sets else f'{str(p["m_w"])}-{str(p["m_l"])}'
+                    if p['s_t'] > 0:
+                        record_format += f'-{str(p["s_t"])}'
+                    output += get_player_name(all_players, p['player_id']) + ' ' + record_format
                 else:
                     output += ' '
                 output += '|'
