@@ -5,9 +5,15 @@ def get_player_print(players, id, match):
     for player in players:
         if player.slack_id == id:   
             if match.player_1_id == id:
-                return player.name + f' - {str(match.player_1_score)}'
+                if match.tie_score > 0:
+                    return player.name + f' - {str(match.player_1_score + match.tie_score/2)}'
+                else:
+                    return player.name + f' - {str(match.player_1_score)}'
             elif match.player_2_id == id:
-                return player.name + f' - {str(match.player_2_score)}'
+                if match.tie_score > 0:
+                    return player.name + f' - {str(match.player_2_score + match.tie_score/2)}'
+                else:
+                    return player.name + f' - {str(match.player_2_score)}'
             else:
                 return player.name
     return 'Bye'
@@ -94,7 +100,7 @@ def print_season_markup(lctx, season = None):
                     p = players[i]
                     record_format = f'{str(p["s_w"])}-{str(p["s_l"])}' if play_all_sets else f'{str(p["m_w"])}-{str(p["m_l"])}'
                     if p['s_t'] > 0:
-                        record_format + str(p['s_t']) 
+                        record_format += f'-{str(p["s_t"])}'
                     output += get_player_name(all_players, p['player_id']) + ' ' + record_format
                 else:
                     output += ' '
