@@ -1,21 +1,15 @@
 from backend import tie_breaker, db, configs
 
 
-def get_player_print(players, id, match):        
+def get_player_print(players, id, match):
+    sets_won = match.tie_score/2       
     for player in players:
         if player.slack_id == id:   
             if match.player_1_id == id:
-                if match.tie_score > 0:
-                    return player.name + f' - {str(match.player_1_score + match.tie_score/2)}'
-                else:
-                    return player.name + f' - {str(match.player_1_score)}'
+                sets_won += match.player_1_score
             elif match.player_2_id == id:
-                if match.tie_score > 0:
-                    return player.name + f' - {str(match.player_2_score + match.tie_score/2)}'
-                else:
-                    return player.name + f' - {str(match.player_2_score)}'
-            else:
-                return player.name
+                sets_won += match.player_2_score
+            return f'{player.name} - {int(sets_won) if int(sets_won) == sets_won else sets_won}'
     return 'Bye'
 
 
