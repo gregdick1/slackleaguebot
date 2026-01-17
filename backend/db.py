@@ -325,6 +325,15 @@ def get_matches(league_name):
 
     return [Match.from_db(m) for m in rows]
 
+def get_matches_between_players(league_name, p1_id, p2_id):
+    conn = get_connection(league_name)
+    c = conn.cursor()
+    c.execute('SELECT rowid, * FROM match WHERE (player_1,player_2) IN ((?, ?),(?, ?))', (p1_id, p2_id, p2_id, p1_id))
+    rows = c.fetchall()
+    conn.close()
+
+    return [Match.from_db(m) for m in rows]
+
 
 def get_matches_for_season(league_name, season):
     conn = get_connection(league_name)
