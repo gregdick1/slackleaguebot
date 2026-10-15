@@ -52,3 +52,17 @@ class Test(TestCase):
         self.assertEqual(message, utility.replace_message_variables(lctx, message))
 
     # TODO test the printout function
+
+    def test_get_player_print_uses_own_score(self):
+        db.add_player(league_name, u'playerA1', 'Player A1', 'A')
+        db.add_player(league_name, u'playerA2', 'Player A2', 'A')
+        match_making.create_matches_for_season(league_name, datetime.date(2022, 1, 3), 2, [], False)
+        db.update_match(league_name, 'Player A2', 'Player A1', 2, 1, 0)
+        m = db.get_matches(league_name)[0]
+        names = {'playerA1': 'Player A1', 'playerA2': 'Player A2'}
+        self.assertEqual('Player A2 - 2', utility.get_player_print(names, 'playerA2', m))
+        self.assertEqual('Player A1 - 1', utility.get_player_print(db.get_players(league_name), 'playerA1', m))
+        self.assertEqual('Bye', utility.get_player_print(names, None, m))
+        self.assertEqual('Player A1', utility.get_player_name(names, 'playerA1'))
+        self.assertEqual('Bye', utility.get_player_name(names, 'nobody'))
+        self.assertEqual('Bye', utility.get_player_name(names, None))

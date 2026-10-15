@@ -3,6 +3,7 @@ from unittest import TestCase, mock
 from unittest.mock import call, patch
 
 import test_league_setup
+import doubles_fixture
 from backend import db, match_making, utility, slack_util, configs
 from backend.league_context import LeagueContext
 
@@ -207,26 +208,54 @@ class Test(TestCase):
         slack_util.send_custom_messages(lctx, message, debug=True)
         mock_post_message.assert_called_once_with(lctx, message, 'commissioner_slack_id')
 
+
+class TestDoublesMessages(TestCase):
+    def setUp(self):
+        test_league_setup.teardown_test_league()
+        test_league_setup.create_test_league()
+        self.t = doubles_fixture.make_doubles_league(season_matches=False)
+        week = datetime.date(2022, 1, 3)
+        db.add_match_by_ids('unittest', self.t['AB'], self.t['CD'], week, 'A', 1, 3)
+        db.add_match_by_ids('unittest', self.t['EF'], None, week, 'B', 1, 3)
+        self.lctx = LeagueContext.load_from_db('unittest')
+        self.week = week
+
+    def tearDown(self):
+        test_league_setup.teardown_test_league()
+
     @patch('time.sleep', return_value=None)
     @patch.object(slack_util, 'post_message')
-    def test_send_custom_for_missed_games(self, mock_post_message, mock_time_sleep):
-        week = datetime.date(2022, 1, 3)
-        skip_weeks = []
-        match_making.create_matches_for_season(lctx.league_name, week, 1, skip_weeks, False)
-        matches = db.get_matches_for_week(lctx.league_name, week)
-        db.update_match_by_id(lctx.league_name, matches[0].player_1_id, matches[0].player_2_id, 1, 0, 0)
+    def test_four_dms_per_match_and_two_for_bye(self, mock_post, _sleep):
+        message = 'You and @partner_user vs @against_user'
+        slack_util.send_match_messages(self.lctx, message, self.week, False, [], debug=False)
+        sent = {c.args[2]: c.args[1] for c in mock_post.call_args_list}
+        self.assertEqual('You and <@uB> vs <@uC> & <@uD>', sent['uA'])
+        self.assertEqual('You and <@uA> vs <@uC> & <@uD>', sent['uB'])
+        self.assertEqual('You and <@uD> vs Bob-omb Squad (<@uA> & <@uB>)', sent['uC'])
+        self.assertEqual('You and <@uC> vs Bob-omb Squad (<@uA> & <@uB>)', sent['uD'])
+        bye = 'This week, you have a bye. Relax and get some practice in.'
+        self.assertEqual((bye, bye), (sent['uE'], sent['uF']))
+        self.assertEqual(6, mock_post.call_count)
 
-        message = 'Play your games!'
-        slack_util.send_custom_for_missed_games(lctx, message, 3, datetime.date(2022, 1, 17), debug=False)
-        calls = [
-            call(lctx, message, matches[1].player_1_id),
-            call(lctx, message, matches[1].player_2_id),
-            call(lctx, message, matches[2].player_1_id),
-            call(lctx, message, matches[2].player_2_id),
-        ]
-        mock_post_message.assert_has_calls(calls)
-        self.assertEqual(4, mock_post_message.call_count)
+    @patch.object(slack_util, 'post_message')
+    def test_debug_output_names_recipients(self, mock_post):
+        out = slack_util.send_match_message(self.lctx, 'vs @against_user', 'uA', self.t['CD'], utility.get_players_dictionary(self.lctx), debug=True)
+        self.assertEqual('Debug sent to Alice: vs <@Carol> & <@Dan>', out)
+        mock_post.assert_not_called()
 
-        mock_post_message.reset_mock()
-        slack_util.send_custom_for_missed_games(lctx, message, 2, datetime.date(2022, 1, 17), debug=True)  # change num_missed to 2 to ensure commissioner missed 2
-        mock_post_message.assert_called_once_with(lctx, message, 'commissioner_slack_id')
+    @patch('time.sleep', return_value=None)
+    @patch.object(slack_util, 'post_message')
+    def test_custom_messages_only_current_team_members(self, mock_post, _sleep):
+        slack_util.send_custom_messages(self.lctx, 'hi', debug=False)
+        self.assertEqual(['uA', 'uB', 'uC', 'uD', 'uE', 'uF', 'uG', 'uH'], sorted(c.args[2] for c in mock_post.call_args_list))
+
+    @patch.object(slack_util, 'post_message')
+    def test_singles_strips_partner_variable(self, mock_post):
+        test_league_setup.teardown_test_league()
+        test_league_setup.create_test_league()
+        db.add_player('unittest', 'p1', 'P1', 'A')
+        db.add_player('unittest', 'p2', 'P2', 'A')
+        lctx = LeagueContext.load_from_db('unittest')
+        slack_util.send_match_message(lctx, 'Partner:@partner_user vs @against_user', 'p1', 'p2', utility.get_players_dictionary(lctx), debug=False)
+        mock_post.assert_called_once_with(lctx, 'Partner: vs <@p2>', 'p1')
+

@@ -16,7 +16,7 @@ function Matches() {
     const [season, setSeason] = useState(-1)
     const [seasons, setSeasons] = useState([])
     const [loadedForLeague, setLoadedForLeague] = useState('')
-    const [allPlayers, setAllPlayers] = useState([])
+    const [names, setNames] = useState({})
 
     const [loadNewSeason, setLoadNewSeason] = useState(false)
 
@@ -40,8 +40,8 @@ function Matches() {
         }
         setLoadNewSeason(false)
 
-        const players = (await axios.get('/get-all-players')).data
-        setAllPlayers(players)
+        const names = (await axios.get('get-participant-names', { params: { leagueName: leagueState.selectedLeague } })).data
+        setNames(names)
         let matches = (await axios.get('get-matches-for-season', { params: { leagueName: leagueState.selectedLeague, season: seasonToLoad}})).data
         setSeasonMatches(matches)
       }
@@ -99,7 +99,7 @@ function Matches() {
                         {weekMatches.map(match => (
                           <>
                             <div className="match-box" data-toggle="modal" data-target={`#modal-${match.id}`}>
-                              <MatchDisplay match={match} allPlayers={allPlayers} />
+                              <MatchDisplay match={match} names={names} />
                             </div>
 
                             <div class="modal show" id={`modal-${match.id}`} tabIndex="-1" role="dialog" aria-labelledBy="modalLabel" aria-hidden="true">
@@ -112,7 +112,7 @@ function Matches() {
                                     </button>
                                   </div>
                                   <div class="modal-body">
-                                      <MatchEditor match={match} allPlayers={allPlayers} />
+                                      <MatchEditor match={match} names={names} />
                                   </div >
                                   <div class="modal-footer">
                                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>

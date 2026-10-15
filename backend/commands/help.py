@@ -1,4 +1,4 @@
-from backend import slack_util, configs
+from backend import slack_util, configs, participants
 
 
 def handles_message(lctx, command_object):
@@ -18,7 +18,10 @@ def channel_help(lctx):
     bot_name = lctx.configs[configs.BOT_NAME]
     example_score = lctx.configs[configs.SCORE_EXAMPLE]
     message = 'In the channel, I support the following:'
-    message = message + '\n`{} me over @them {}` or `{} @them over me {}` - report a score'.format(bot_name, example_score, bot_name, example_score)
+    score_line = '\n`{} me over @them {}` or `{} @them over me {}` - report a score'.format(bot_name, example_score, bot_name, example_score)
+    if participants.is_doubles(lctx):
+        score_line = '\n`{} me over @anyOpponent {}` or `{} @anyOpponent over me {}` - report a score (either partner can report; tagging your partner and both opponents is optional)'.format(bot_name, example_score, bot_name, example_score)
+    message = message + score_line
     message = message + '\n`{} group [a, b, c, etc]` - see the current rankings of a group'.format(bot_name)
     if lctx.configs[configs.ENABLE_COMMAND_GROUP_ANALYSIS] != 'FALSE':
         message = message + '\n`{} analyze group [a, b, c, etc]` - see a summary of who can still get promoted and relegated'.format(bot_name)

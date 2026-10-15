@@ -5,7 +5,7 @@ import { LeagueContext } from "../contexts/League"
 import ToolTip from "../Components/ToolTip"
 import './MatchEditor.css'
 
-function MatchEditor({ match, allPlayers }) {
+function MatchEditor({ match, names }) {
 
     const [ leagueState, dispatch ] = React.useContext(LeagueContext)
     const [ reload, setReload ] = useState(false)
@@ -98,10 +98,7 @@ function MatchEditor({ match, allPlayers }) {
         if (p_id === null) {
             return "Bye"
         }
-        for (var p of allPlayers) {
-            if (p.slack_id === p_id) return p.name
-        }
-        return p_id
+        return names[p_id] || p_id
     }
 
     return (

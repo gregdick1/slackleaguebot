@@ -1,0 +1,26 @@
+## Standings
+|Group A|Group B|
+|---|---|
+|Player A1 2-1|Player B1 1-0|
+|Player A2 1-1|Player B3 1-0|
+|Player A4 1-0|Player B4 0-1|
+|Player A3 0-2|Player B2 0-1|
+## Standings Cont.
+|
+|
+|
+|
+|
+|
+
+## Group A
+|2022-01-03|2022-01-10|2022-01-17|
+|---|---|---|
+|Player A1 - 3<br>Player A3 - 0|Player A1 - 2<br>Player A4 - 3|Player A1 - 3<br>Player A2 - 1|
+|Player A2<br>Player A4|Player A3 - 2<br>Player A2 - 3|Player A4<br>Player A3|
+
+## Group B
+|2022-01-03|2022-01-10|2022-01-17|
+|---|---|---|
+|Player B2<br>Player B4|Player B2 - 0<br>Player B1 - 3|Player B2<br>Player B3|
+|Player B3<br>Player B1|Player B4 - 1<br>Player B3 - 3|Player B1<br>Player B4|

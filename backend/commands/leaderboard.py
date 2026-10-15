@@ -1,4 +1,4 @@
-from backend import slack_util, configs, db
+from backend import slack_util, configs, db, participants
 import collections
 
 matches_or_sets_options = ['MATCHES', 'SETS']
@@ -85,31 +85,23 @@ def get_leaderboard(lctx, matches_or_sets, sortby, active_only, reverse_order=Tr
             'is_active': player.active
         }
 
+    r = participants.resolver(lctx.league_name)
     for match in matches:
-        games_played = match.sets
-
         if match.player_1_id is None or match.player_2_id is None:
             continue
         if match.winner_id is None:
             continue
-
-        player_1 = player_dict[match.player_1_id]
-        player_2 = player_dict[match.player_2_id]
-
-        player_dict[match.player_1_id]['games_total'] = player_1['games_total'] + games_played
-        player_dict[match.player_2_id]['games_total'] = player_2['games_total'] + games_played
-        player_dict[match.player_1_id]['matches_total'] = player_1['matches_total'] + 1
-        player_dict[match.player_2_id]['matches_total'] = player_2['matches_total'] + 1
-
-        if match.player_1_id == match.winner_id:
-            player_dict[match.player_1_id]['games_won'] = player_1['games_won'] + match.sets_needed
-            player_dict[match.player_2_id]['games_won'] = player_2['games_won'] + match.sets-match.sets_needed
-            player_dict[match.player_1_id]['matches_won'] = player_1['matches_won'] + 1
-
-        elif match.player_2_id == match.winner_id:
-            player_dict[match.player_2_id]['games_won'] = player_2['games_won'] + match.sets_needed
-            player_dict[match.player_1_id]['games_won'] = player_1['games_won'] + match.sets - match.sets_needed
-            player_dict[match.player_2_id]['matches_won'] = player_2['matches_won'] + 1
+        for side_id in (match.player_1_id, match.player_2_id):
+            won = side_id == match.winner_id
+            for member in r.slack_ids(side_id):
+                stats = player_dict[member]
+                stats['games_total'] += match.sets
+                stats['matches_total'] += 1
+                if won:
+                    stats['games_won'] += match.sets_needed
+                    stats['matches_won'] += 1
+                else:
+                    stats['games_won'] += match.sets - match.sets_needed
 
     winrate_dict = dict()
     for player_id, player in player_dict.items():

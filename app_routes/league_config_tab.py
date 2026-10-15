@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 
-from backend import db
+from backend import db, configs, participants
 from backend.league_context import LeagueContext
 
 league_config_api = Blueprint('league_config_api', __name__)
@@ -16,6 +16,12 @@ def get_league_configs():
     return jsonify(LeagueContext.load_from_db(league_name).configs)
 
 
+@league_config_api.route('/get-league-has-matches', methods=['GET'])
+def get_league_has_matches():
+    league_name = request.args.get("leagueName", default="", type=str)
+    return jsonify({'hasMatches': bool(league_name) and db.has_matches(league_name)})
+
+
 @league_config_api.route('/set-league-config', methods=['POST'])
 def set_league_config():
     data = request.get_json()
@@ -24,5 +30,11 @@ def set_league_config():
         return "no-op"
     config_key = data.get('configKey')
     config_value = data.get('configValue')
+    if config_key == configs.LEAGUE_FORMAT:
+        try:
+            participants.set_league_format(league_name, config_value)
+            return jsonify({'success': True})
+        except ValueError as e:
+            return jsonify({'success': False, 'message': str(e)})
     db.set_config(league_name, config_key, config_value)
     return "Success"

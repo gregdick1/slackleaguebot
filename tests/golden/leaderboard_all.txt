@@ -1,0 +1,9 @@
+
+ Player A1: 8
+ Player A2: 4
+ Player A4: 3
+ Player B1: 3
+ Player B3: 3
+ Player A3: 2
+ Player B4: 1
+ Player B2: 0

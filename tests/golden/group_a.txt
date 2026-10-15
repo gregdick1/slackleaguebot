@@ -1,0 +1,5 @@
+Group A:
+Player A1 2-1 (8-4)
+Player A2 1-1 (4-5)
+Player A4 1-0 (3-2)
+Player A3 0-2 (2-6)

@@ -1,4 +1,4 @@
-from backend import db, utility, slack_util
+from backend import db, utility, slack_util, participants
 
 MISFORMAT_MSG = 'Not a group. Format is simply `Group A`'
 NOT_A_GROUP_MSG = 'Not a group (or I messed up).'
@@ -13,7 +13,7 @@ def handles_message(lctx, command_object):
 def build_message_for_group(lctx, group):
     season = db.get_current_season(lctx.league_name)
     all_matches = db.get_matches_for_season(lctx.league_name, season)
-    all_players = db.get_players(lctx.league_name)
+    all_players = participants.resolver(lctx.league_name).names_map()
     group_matches = [m for m in all_matches if m.grouping.upper() == group]
 
     if not len(group_matches):

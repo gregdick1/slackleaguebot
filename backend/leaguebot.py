@@ -31,6 +31,8 @@ class LeagueBot:
 
     def message_received(self, body, logger):
         message = command_parser.validate_and_clean_message(self.lctx, body['event'])
+        if message is None:
+            return
         try:
             command = command_parser.determine_command(self.lctx, message)
             if command is not None:

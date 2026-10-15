@@ -522,3 +522,102 @@ class Test(TestCase):
         self.assertEqual(u'testplayer3', unaffected.winner_id)
         self.assertEqual(4, unaffected.sets)
         self.assertIsNotNone(unaffected.date_played)
+
+    def test_failed_write_does_not_lock_db(self):
+        db.add_player(league_name, u'testplayer', 'Test Player', 'A')
+        for _ in range(3):
+            with self.assertRaises(sqlite3.IntegrityError):
+                db.add_player(league_name, u'testplayer', 'Dup', 'A')
+        db.set_config(league_name, 'after_failure', 'ok')
+        self.assertEqual('ok', db.get_config(league_name, 'after_failure'))
+        self.assertEqual(['testplayer'], [p.slack_id for p in db.get_players(league_name)])
+
+    def _roster(self, n=4):
+        for i in range(1, n + 1):
+            db.add_player(league_name, 'u{}'.format(i), 'User {}'.format(i), '')
+
+    def test_add_and_get_team(self):
+        self._roster()
+        tid = db.add_team(league_name, 1, 'u1', 'u2', 'A', name='  Bob-omb Squad ')
+        self.assertEqual('T1-1', tid)
+        t = db.get_team_by_id(league_name, tid)
+        self.assertEqual(('Bob-omb Squad', ['u1', 'u2'], 'A', 1), (t.name, t.members, t.grouping, t.season))
+        self.assertEqual('T1-2', db.add_team(league_name, 1, 'u3', 'u4', 'A'))
+        self.assertIsNone(db.get_team_by_id(league_name, 'T1-2').name)
+        self.assertEqual(tid, db.get_team_for_user(league_name, 'u2', 1).team_id)
+        self.assertIsNone(db.get_team_for_user(league_name, 'u2', 2))
+        self.assertEqual(['T1-1', 'T1-2'], [t.team_id for t in db.get_teams_for_season(league_name, 1)])
+
+    def test_add_team_rules(self):
+        self._roster()
+        with self.assertRaises(ValueError):
+            db.add_team(league_name, 1, 'u1', 'u1', 'A')
+        with self.assertRaises(ValueError):
+            db.add_team(league_name, 1, 'u1', 'ghost', 'A')
+        db.add_team(league_name, 1, 'u1', 'u2', 'A')
+        with self.assertRaises(ValueError):
+            db.add_team(league_name, 1, 'u2', 'u3', 'A')
+        self.assertEqual('T2-1', db.add_team(league_name, 2, 'u2', 'u3', 'A'))  # new season, new partners
+
+    def test_team_name_rules(self):
+        self._roster()
+        for bad in ['a|b', '<@u1>', 'a>b', 'line\nbreak', 'line\rbreak', 'x' * 41]:
+            with self.assertRaises(ValueError) as ctx:
+                db.add_team(league_name, 1, 'u1', 'u2', 'A', name=bad)
+            self.assertEqual(db.TEAM_NAME_ERROR, str(ctx.exception))
+        self.assertIsNone(db.get_team_by_id(league_name, db.add_team(league_name, 1, 'u1', 'u2', 'A', name='   ')).name)
+
+    def test_update_team(self):
+        self._roster()
+        tid = db.add_team(league_name, 1, 'u1', 'u2', 'A')
+        db.update_team(league_name, tid, name='Renamed')
+        self.assertEqual('Renamed', db.get_team_by_id(league_name, tid).name)
+        db.update_team(league_name, tid, member_2='u3')
+        self.assertEqual(['u1', 'u3'], db.get_team_by_id(league_name, tid).members)
+        self.assertEqual('Renamed', db.get_team_by_id(league_name, tid).name)
+        db.update_team(league_name, tid, name=None)
+        self.assertIsNone(db.get_team_by_id(league_name, tid).name)
+        other = db.add_team(league_name, 1, 'u2', 'u4', 'A')
+        with self.assertRaises(ValueError):
+            db.update_team(league_name, other, member_1='u1')
+
+    def test_update_team_referenced_raises(self):
+        self._roster(5)
+        t1 = db.add_team(league_name, 1, 'u1', 'u2', 'A')
+        t2 = db.add_team(league_name, 1, 'u3', 'u4', 'A')
+        db.add_match_by_ids(league_name, t1, t2, datetime.date(2022, 1, 3), 'A', 1, 3)
+        with self.assertRaisesRegex(ValueError, 'has matches'):
+            db.update_team(league_name, t1, member_2='u5')
+        db.update_team(league_name, t1, name='New')
+        self.assertEqual('New', db.get_team_by_id(league_name, t1).name)
+
+    def test_delete_team_and_orders(self):
+        self._roster()
+        t1 = db.add_team(league_name, 1, 'u1', 'u2', 'A')
+        t2 = db.add_team(league_name, 1, 'u3', 'u4', 'A')
+        db.update_team_grouping_and_orders(league_name, [t2, t1], 'B')
+        self.assertEqual([t2, t1], [t.team_id for t in db.get_teams_for_season(league_name, 1)])
+        self.assertEqual({'B'}, {t.grouping for t in db.get_teams_for_season(league_name, 1)})
+        self.assertEqual(1, db.get_players(league_name)[0].active)  # player rows untouched
+        db.add_match_by_ids(league_name, t1, t2, datetime.date(2022, 1, 3), 'B', 1, 3)
+        with self.assertRaises(ValueError):
+            db.delete_team(league_name, t1)
+        t3 = db.add_team(league_name, 2, 'u1', 'u2', 'A')
+        db.delete_team(league_name, t3)
+        self.assertIsNone(db.get_team_by_id(league_name, t3))
+
+    def test_id_based_match_helpers(self):
+        self._roster()
+        self.assertFalse(db.has_matches(league_name))
+        db.add_match_by_ids(league_name, 'T1-1', 'T1-2', datetime.date(2022, 1, 3), 'A', 1, 3)
+        db.add_match_by_ids(league_name, 'T1-3', None, datetime.date(2022, 1, 3), 'A', 1, 3)
+        self.assertTrue(db.has_matches(league_name))
+        bye = [m for m in db.get_matches(league_name) if m.player_2_id is None][0]
+        self.assertEqual('T1-3', bye.player_1_id)
+        self.assertIsNone(db.get_match_by_participants(league_name, 'T1-1', 'T1-1'))
+        self.assertEqual('T1-2', db.get_match_by_participants(league_name, 'T1-2', 'T1-1').player_2_id)
+        self.assertFalse(db.update_match_by_participants(league_name, 'T1-2', 'T1-1', 2, 0, 0))  # too few sets
+        self.assertTrue(db.update_match_by_participants(league_name, 'T1-2', 'T1-1', 3, 1, 0))
+        m = db.get_match_by_participants(league_name, 'T1-1', 'T1-2')
+        self.assertEqual(('T1-2', 1, 3, 4), (m.winner_id, m.player_1_score, m.player_2_score, m.sets))
+        self.assertFalse(db.update_match_by_participants(league_name, 'T1-1', 'T9-9', 3, 0, 0))

@@ -1,7 +1,7 @@
 from math import pow
 import copy
 
-from backend import db, utility
+from backend import db, utility, participants
 from backend.scenario_analysis import scenario_utility
 
 
@@ -277,11 +277,11 @@ def analyze_group_possibilities(league_name, group, num_promoted=2):
     no_relegations = group == all_groups[-1]
     #TODO we could get away with calculating less if we know we're in top or bottom group
 
-    all_players = db.get_players(league_name)
+    all_players = participants.resolver(league_name).names_map()
     group_matches = [m for m in all_matches if m.grouping == group and m.player_1_id is not None and m.player_2_id is not None]
     unplayed_matches = [m for m in group_matches if m.winner_id is None]
 
-    player_ids = list(set([m.player_1_id for m in group_matches] + [m.player_2_id for m in group_matches]))
+    player_ids = sorted(set([m.player_1_id for m in group_matches] + [m.player_2_id for m in group_matches]))
     num_players = len(player_ids)
     promotion_locked = []
     promotion_destiny_controlled = []

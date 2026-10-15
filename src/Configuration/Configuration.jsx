@@ -17,6 +17,7 @@ function Configuration() {
     const [state, setState] = useState({
         leagueConfigs: {...blankConfigs}
     })
+    const [hasMatches, setHasMatches] = useState(false)
 
     const [ leagueState, dispatch ] = React.useContext(LeagueContext)
 
@@ -29,6 +30,8 @@ function Configuration() {
           ...state,
           leagueConfigs
         });
+        var hasMatchesResponse = await axios.get('get-league-has-matches', { params: { leagueName: leagueState.selectedLeague } })
+        setHasMatches(hasMatchesResponse.data.hasMatches)
       }
 
       fetchData().catch(console.error);
@@ -63,6 +66,37 @@ function Configuration() {
         dispatch({ type: "need_to_check_for_commands", checkForCommandsToRun:true})
     }
 
+
+    const handleSelect = async ({target: { name, value }}) => {
+        const previous = state.leagueConfigs[name]
+        setState({ ...state, leagueConfigs: {...state.leagueConfigs, [name]: value} })
+        const response = await axios.post('set-league-config', {
+                selectedLeague: leagueState.selectedLeague,
+                configKey: name,
+                configValue: value
+            });
+        if (response.data && response.data.success === false) {
+            alert(response.data.message)
+            setState({ ...state, leagueConfigs: {...state.leagueConfigs, [name]: previous} })
+            return
+        }
+        // The backend may also swap MATCH_MESSAGE to the doubles default; reload so the editor shows it.
+        const refreshed = await axios.get('get-league-configs', { params: { leagueName: leagueState.selectedLeague } })
+        setState({ ...state, leagueConfigs: refreshed.data })
+        dispatch({ type: "need_to_check_for_commands", checkForCommandsToRun:true})
+    }
+
+    const select = (label, config, options, disabled, help) => {
+      return (
+      <div className="inline-editor">
+        <label htmlFor={config}>{label}:</label>
+        <select id={config} name={config} value={state.leagueConfigs[config] || options[0]} disabled={disabled} onChange={handleSelect}>
+          {options.map((o) => <option key={o} value={o}>{o === 'SINGLES' ? 'Singles' : 'Doubles'}</option>)}
+        </select>
+        {help && <div className="field-context">{help}</div>}
+      </div>
+      );
+    }
 
     const checkbox = (label, config, nullIsTrue) => {
       var checked = "checked"
@@ -118,6 +152,11 @@ function Configuration() {
                 <div>Please select or create a League first</div>
             }
             <div className="config-area">
+              <div className="config-box">
+                <label>League Format</label>
+                { editExisting && select('Format', 'LEAGUE_FORMAT', ['SINGLES', 'DOUBLES'], hasMatches,
+                    hasMatches ? 'Locked: this league already has matches.' : 'Doubles leagues pair two players per team each season. Restart the bot after changing.') }
+              </div>
               <div className="config-box">
                 <label>Slack Configs</label>
                 { editExisting && editor('Slack API Key', 'SLACK_API_KEY') }

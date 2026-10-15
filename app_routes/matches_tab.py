@@ -1,10 +1,10 @@
 import datetime
 import json
 
-from flask import Blueprint, request
+from flask import Blueprint, request, jsonify
 
 from admin import admin_config
-from backend import db, match_making
+from backend import db, match_making, participants
 
 matches_api = Blueprint('matches_api', __name__)
 
@@ -38,6 +38,12 @@ def set_forfeit():
     return "Success"
 
 
+@matches_api.route('/get-participant-names', methods=['GET'])
+def get_participant_names():
+    league_name = request.args.get("leagueName", default="", type=str) or admin_config.get_current_league()
+    return jsonify(participants.resolver(league_name).names_map())
+
+
 @matches_api.route('/create-season', methods=['POST'])
 def create_season():
     data = request.get_json()
@@ -48,11 +54,13 @@ def create_season():
     sets_needed = data.get('setsNeeded')
     include_byes = data.get('includeByes')
 
-    start_date = datetime.datetime.fromisoformat(start_date_iso[:-1]).date()  # Remove the Z from the end
-    skip_weeks = [datetime.datetime.fromisoformat(x[:-1]).date() for x in skip_weeks_iso]  # Remove the Z from the end
-
-    match_making.create_matches_for_season(league_name, start_date, sets_needed, skip_weeks=skip_weeks, include_byes=include_byes, play_all_sets=play_all_sets)
-    return "Success"
+    try:
+        start_date = datetime.datetime.fromisoformat(start_date_iso[:-1]).date()  # Remove the Z from the end
+        skip_weeks = [datetime.datetime.fromisoformat(x[:-1]).date() for x in skip_weeks_iso]  # Remove the Z from the end
+        match_making.create_matches_for_season(league_name, start_date, sets_needed, skip_weeks=skip_weeks, include_byes=include_byes, play_all_sets=play_all_sets)
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)})
+    return jsonify({'success': True})
 
 
 @matches_api.route('/get-current-matches', methods=['GET'])

@@ -19,7 +19,6 @@ rankings_updated_message = "Standings for season 3 have been updated. Please fin
 new_schedule_message = "The schedule for season 4 has been generated. You can view it here: https://sync.hudlnet.com/x/bAyvC"
 
 debug = True
-# slack.send_custom_for_missed_games(four_game_message, 3, datetime.date(2019,3,4), debug=debug)
 #slack.send_custom_to_active(new_season_message, debug=debug)
 slack.send_custom_messages(new_schedule_message, debug=debug)
 

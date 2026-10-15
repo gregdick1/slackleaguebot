@@ -1,4 +1,4 @@
-from backend import slack_util, configs, db, utility
+from backend import slack_util, configs, db, utility, participants
 
 
 def handles_message(lctx, command_object):
@@ -27,14 +27,14 @@ def handle_message(lctx, command_object):
 
 
 def get_matches_by_opponent(league_name, player_id):
-    matches = db.get_matches(league_name)
+    r = participants.resolver(league_name)
+    matches = r.player_view(db.get_matches(league_name), player_id)
     player_matches = [x for x in matches if x.winner_id is not None and not x.forfeit and (x.player_1_id == player_id or x.player_2_id == player_id)]
     matches_by_opponent = {}
     for match in player_matches:
-        opponent_id = [x for x in [match.player_1_id, match.player_2_id] if x != player_id][0]
-        if opponent_id not in matches_by_opponent:
-            matches_by_opponent[opponent_id] = []
-        matches_by_opponent[opponent_id].append(match)
+        opponent_side = [x for x in [match.player_1_id, match.player_2_id] if x != player_id][0]
+        for opponent_id in r.slack_ids(opponent_side):
+            matches_by_opponent.setdefault(opponent_id, []).append(match)
     return matches_by_opponent
 
 

@@ -1,6 +1,6 @@
 import datetime
 
-from backend import slack_util, db, utility, configs
+from backend import slack_util, db, utility, configs, participants
 
 whole_week = 'MATCHES FOR WEEK'
 user_week = 'WHO DO I PLAY'
@@ -43,14 +43,17 @@ def handle_message(lctx, command_object):
     user_date = datetime.datetime.fromtimestamp(timestamp).date()
 
     all_weekly_matches = db.get_matches_for_week(lctx.league_name, user_date)
-    players = db.get_players(lctx.league_name)
+    r = participants.resolver(lctx.league_name)
+    names = r.names_map()
 
     # TODO pretty sure this fails for any day other than mondays
     if command_object.text.upper() == whole_week:
-        message = build_whole_week_message(all_weekly_matches, players)
+        message = build_whole_week_message(all_weekly_matches, names)
         slack_util.post_message(lctx, message, command_object.channel)
         return
     if command_object.text.upper() == user_week:
-        message = build_user_week_message(all_weekly_matches, players, command_object.user)
+        season = db.get_current_season(lctx.league_name)
+        me = r.participant_for_user(command_object.user, season) or command_object.user
+        message = build_user_week_message(all_weekly_matches, names, me)
         slack_util.post_message(lctx, message, command_object.channel)
         return

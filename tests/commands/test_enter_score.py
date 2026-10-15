@@ -249,3 +249,43 @@ class Test(TestCase):
         self.assertEqual(0, len(tmp))
 
         mock_post_message.assert_called_once_with(lctx, enter_score.BLOCK_NEW_SCORES_MSG, 'comp_channel')
+
+    def test_parse_sides_table(self):
+        cases = [
+            ('me over <@b>', 's', (['s'], ['b'])),
+            ('mE oVeR <@b> blah 3-1', 's', (['s'], ['b'])),
+            ('<@b> OvEr Me 3-1', 's', (['b'], ['s'])),
+            ('me and <@p> over <@c> & <@d> 3-1', 's', (['s', 'p'], ['c', 'd'])),
+            ('me, <@p> over <@c>, <@d> 3-1', 's', (['s', 'p'], ['c', 'd'])),
+            ('me and <@p> over <@c> &amp; <@d> 3-1', 's', (['s', 'p'], ['c', 'd'])),  # Slack sends & as &amp;
+            ('<@c> <@d> over me and <@p> 3-1', 's', (['c', 'd'], ['s', 'p'])),
+            ('me and <@s> over <@c> <@c> 3-1', 's', (['s'], ['c'])),
+            ('me over <@U123|carol> 3-1', 's', (['s'], ['U123'])),
+            ('me over <@b> 3-1 gg <@c>', 's', (['s'], ['b'])),
+            ('me and <@p> over <@x> <@y> 3-1 thanks <@p>', 's', (['s', 'p'], ['x', 'y'])),
+            ('<@a> over <@b> 3-2', 'commish', (['a'], ['b'])),
+            ('me over playerA2', 's', None),
+            ('over <@b>', 's', None),
+            ('me beat <@b>', 's', None),
+        ]
+        for text, sender, expected in cases:
+            self.assertEqual(expected, enter_score.parse_sides(text, sender), text)
+
+    def test_handles_message_new_forms(self):
+        self.assertTrue(enter_score.handles_message(lctx, CommandMessage('me and <@x> over <@y> <@z> 3-1', 'comp_channel', 'u', 't')))
+        self.assertTrue(enter_score.handles_message(lctx, CommandMessage('me, <@x> over <@y>, <@z> 3-1', 'comp_channel', 'u', 't')))
+        self.assertFalse(enter_score.handles_message(lctx, CommandMessage('meow over <@y>', 'comp_channel', 'u', 't')))
+        self.assertFalse(enter_score.handles_message(lctx, CommandMessage('leaderboard over <@y>', 'comp_channel', 'u', 't')))
+        self.assertFalse(enter_score.handles_message(lctx, CommandMessage('me over me', 'comp_channel', 'u', 't')))
+        self.assertFalse(enter_score.handles_message(lctx, CommandMessage('me over <@y>', 'Dchannel', 'commish', 't')))
+        self.assertTrue(enter_score.handles_message(lctx, CommandMessage('me over <@x> 3-1 gg <@z>', 'comp_channel', 'u', 't')))
+
+    @patch.object(slack_util, 'add_reaction')
+    @patch.object(slack_util, 'post_message')
+    def test_trailing_mention_records(self, mock_post_message, mock_add_reaction):
+        # A trailing mention after the score (e.g. "gg @them") must not cause a format error.
+        msg = CommandMessage('<@playerA2> over me 3-1 gg <@playerA3>', 'comp_channel', 'playerA1', 'any_timestamp')
+        enter_score.handle_message(lctx, msg)
+        matches = db.get_matches(lctx.league_name)
+        winners = [x for x in matches if x.winner_id == 'playerA2']
+        self.assertEqual(1, len(winners))

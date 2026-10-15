@@ -21,6 +21,9 @@ def run_updates(league_name):
     if current_version == '5':
         _update_from_5_to_6(league_name)
         current_version = '6'
+    if current_version == '6':
+        _update_from_6_to_7(league_name)
+        current_version = '7'
 
 
 # Adds the ordering index to players
@@ -148,3 +151,20 @@ def _update_from_5_to_6(league_name):
     conn.commit()
     conn.close()
     db.set_config(league_name, configs.LEAGUE_VERSION, '6')
+
+
+# Adds the team table and the league format config
+def _update_from_6_to_7(league_name):
+    current_version = db.get_config(league_name, configs.LEAGUE_VERSION)
+    if not current_version or current_version != '6':
+        return False
+
+    conn = db.get_connection(league_name)
+    c = conn.cursor()
+    c.execute(db.TEAM_TABLE_DDL.replace('CREATE TABLE', 'CREATE TABLE IF NOT EXISTS', 1))
+    conn.commit()
+    conn.close()
+
+    if db.get_config(league_name, configs.LEAGUE_FORMAT) is None:
+        db.set_config(league_name, configs.LEAGUE_FORMAT, 'SINGLES')
+    db.set_config(league_name, configs.LEAGUE_VERSION, '7')

@@ -4,7 +4,7 @@ import json
 
 from slack_sdk import WebClient
 
-from backend import db, utility, configs
+from backend import db, utility, configs, participants
 
 users_list = []
 last_get_users_date = None
@@ -62,29 +62,37 @@ def send_match_message(lctx, message, to_user, against_user, players_dictionary,
     if to_user is None:
         return ''
 
+    r = participants.resolver(lctx.league_name)
     if against_user is None:
         message = 'This week, you have a bye. Relax and get some practice in.'
     else:
-        message = message.replace("@against_user", '<@' + against_user + '>')
+        message = message.replace("@against_user", r.tag(against_user))
+        season = db.get_current_season(lctx.league_name)
+        partner = r.partner_of(to_user, season)
+        message = message.replace("@partner_user", '<@' + partner + '>' if partner else '')
 
     if debug and to_user == lctx.configs[configs.COMMISSIONER_SLACK_ID]:
         post_message(lctx, message, lctx.configs[configs.COMMISSIONER_SLACK_ID])
 
-    debug_message = message if against_user is None else message.replace(against_user, players_dictionary[against_user])
+    debug_message = message
+    if against_user is not None:
+        for slack_id in r.slack_ids(against_user) + [partner]:
+            if slack_id in players_dictionary:
+                debug_message = debug_message.replace('<@' + slack_id + '>', '<@' + players_dictionary[slack_id] + '>')
     if debug:
         print("Debug sent to " + players_dictionary[to_user] + ": " + debug_message)
         return "Debug sent to " + players_dictionary[to_user] + ": " + debug_message
 
-    if not debug:
-        post_message(lctx, message, to_user)
-        print("For reals sent to " + players_dictionary[to_user] + ": " + debug_message)
-        return "For reals sent to " + players_dictionary[to_user] + ": " + debug_message
+    post_message(lctx, message, to_user)
+    print("For reals sent to " + players_dictionary[to_user] + ": " + debug_message)
+    return "For reals sent to " + players_dictionary[to_user] + ": " + debug_message
 
 
 def send_match_messages(lctx, message, cutoff_date, is_reminder, skip_matches, debug=True):
     season = db.get_current_season(lctx.league_name)
     matches = db.get_matches_for_season(lctx.league_name, season)
     players_dictionary = utility.get_players_dictionary(lctx)
+    r = participants.resolver(lctx.league_name)
 
     sent_matches = []
     for match in matches:
@@ -99,11 +107,10 @@ def send_match_messages(lctx, message, cutoff_date, is_reminder, skip_matches, d
         if not is_reminder and match.message_sent:
             continue
 
-        send_match_message(lctx, message, match.player_1_id, match.player_2_id, players_dictionary, debug=debug)
-        time.sleep(1.5)
-
-        send_match_message(lctx, message, match.player_2_id, match.player_1_id, players_dictionary, debug=debug)
-        time.sleep(1.5)
+        for side, other in ((match.player_1_id, match.player_2_id), (match.player_2_id, match.player_1_id)):
+            for recipient in (r.slack_ids(side) if side is not None else [None]):
+                send_match_message(lctx, message, recipient, other, players_dictionary, debug=debug)
+                time.sleep(1.5)
         sent_matches.append(match.id)
         if not is_reminder and not debug:
             db.mark_match_message_sent(lctx.league_name, match.id)
@@ -112,7 +119,13 @@ def send_match_messages(lctx, message, cutoff_date, is_reminder, skip_matches, d
 
 
 def send_custom_messages(lctx, message, debug=True):
-    players = db.get_active_players(lctx.league_name)
+    r = participants.resolver(lctx.league_name)
+    if r.doubles:
+        season = db.get_current_season(lctx.league_name)
+        member_ids = {m for team_id in r.participants_for_season(season) for m in r.slack_ids(team_id)}
+        players = [p for p in db.get_players(lctx.league_name) if p.slack_id in member_ids]
+    else:
+        players = db.get_active_players(lctx.league_name)
 
     if debug:
         post_message(lctx, message, lctx.configs[configs.COMMISSIONER_SLACK_ID])
@@ -128,30 +141,3 @@ def send_custom_messages(lctx, message, debug=True):
         time.sleep(1.5)
 
     return sent_messages
-
-
-# Currently unused..
-def send_custom_for_missed_games(lctx, message, num_missed, week, debug=True):
-    season = db.get_current_season(lctx.league_name)
-    season_matches = db.get_matches_for_season(lctx.league_name, season)
-    season_matches = [x for x in season_matches if x.player_1_id is not None and x.player_2_id is not None]
-    players = {}
-    players_dictionary = utility.get_players_dictionary(lctx)
-    for match in season_matches:
-        if match.week <= week and match.winner_id is None:
-            if match.player_1_id not in players:
-                players[match.player_1_id] = set()
-            if match.player_2_id not in players:
-                players[match.player_2_id] = set()
-
-            players[match.player_1_id].add(match.week)
-            players[match.player_2_id].add(match.week)
-
-    for player_id in players:
-        if len(players[player_id]) >= num_missed:
-            if debug and not player_id == lctx.configs[configs.COMMISSIONER_SLACK_ID]:
-                print('Sending to', players_dictionary[player_id], ':', message)
-            else:
-                post_message(lctx, message, player_id)
-                time.sleep(1.5)
-                print('For reals sent to', players_dictionary[player_id], ':', message)

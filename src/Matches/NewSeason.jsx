@@ -18,15 +18,19 @@ function NewSeason({callback}) {
 
     useEffect(() => {
       const fetchData = async () => {
-        const players = (await axios.get('/get-all-players')).data
+        const leagueConfigs = (await axios.get('get-league-configs', { params: { leagueName: leagueState.selectedLeague } })).data
         const groupSizes = new Map()
-        for(var p of players) {
-          if (p.grouping === '') continue
-          if (![...groupSizes.keys()].includes(p.grouping)) {
-            groupSizes.set(p.grouping, 0)
+        if (leagueConfigs.LEAGUE_FORMAT === 'DOUBLES') {
+          const drafts = (await axios.get('get-draft-teams', { params: { leagueName: leagueState.selectedLeague } })).data
+          for (const t of drafts.teams) groupSizes.set(t.grouping, (groupSizes.get(t.grouping) || 0) + 1)
+        } else {
+          const players = (await axios.get('/get-all-players')).data
+          for (var p of players) {
+            if (p.grouping === '') continue
+            groupSizes.set(p.grouping, (groupSizes.get(p.grouping) || 0) + 1)
           }
-          groupSizes.set(p.grouping, groupSizes.get(p.grouping)+1)
         }
+        if (groupSizes.size === 0) return
         var uniqueGroupSizes = [... new Set([...groupSizes.values()])]
         var maxGroupSize = Math.max(...uniqueGroupSizes)
         var minGroupSize = Math.min(...uniqueGroupSizes)
@@ -39,11 +43,11 @@ function NewSeason({callback}) {
       }
 
       fetchData().catch(console.error);
-    }, []);
+    }, [leagueState.selectedLeague]);
 
     const createSeason = () => {
       const updateServer = async () => {
-        await axios.post(`create-season`,
+        const response = await axios.post(`create-season`,
             {
                 leagueName: leagueState.selectedLeague,
                 startDate: new Date(startDate.year, startDate.month-1, startDate.day).toISOString(),
@@ -52,7 +56,10 @@ function NewSeason({callback}) {
                 playAllSets: shouldPlayAllSets,
                 includeByes: shouldIncludeByes
             });
-
+        if (response.data && response.data.success === false) {
+          alert(response.data.message)
+          return
+        }
         dispatch({ type: "need_to_check_for_commands", checkForCommandsToRun:true})
         document.getElementById('new-season-close-btn').click()
         callback()

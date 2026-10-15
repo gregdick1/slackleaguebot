@@ -1,7 +1,10 @@
 import datetime
 import random
 
-from backend import db
+from backend import db, participants
+
+NO_TEAMS_MSG = 'No teams for next season. Add teams on the Playerboard first.'
+MID_SEASON_DOUBLES_MSG = 'Mid-season add is not supported in doubles leagues.'
 
 
 def remove_byes(start_date, matchups):
@@ -67,6 +70,8 @@ def create_matches(start_date, players, skip_weeks, include_byes=False):
 # This will effectively create two new matches for the person being added for the first week, and then one additional
 # match for the player the remaining weeks to simulate an odd number group season.
 def add_player_to_group(league_name, player_name, season_num, sets_needed):
+    if participants.is_doubles_league(league_name):
+        raise ValueError(MID_SEASON_DOUBLES_MSG)
     player = db.get_player_by_name(league_name, player_name)
     group_players = [p for p in db.get_active_players(league_name) if p.grouping == player.grouping and p.name != player_name]
     dates = [m.week for m in db.get_matches_for_season(league_name, season_num)]
@@ -83,20 +88,32 @@ def add_player_to_group(league_name, player_name, season_num, sets_needed):
 def create_matches_for_season(league_name, start_date, sets_needed, skip_weeks=None, include_byes=False, play_all_sets=False):
     if skip_weeks is None:
         skip_weeks = []
-    all_players = db.get_active_players(league_name)
+    season = db.get_current_season(league_name) + 1
 
-    groupings = list(set(map(lambda player: player.grouping, all_players)))
-    groupings.sort()
+    if participants.is_doubles_league(league_name):
+        teams = db.get_teams_for_season(league_name, season)
+        if not teams:
+            raise ValueError(NO_TEAMS_MSG)
+        groupings = sorted(set(t.grouping for t in teams))
+        groups = {g: [t.team_id for t in teams if t.grouping == g] for g in groupings}
+
+        def write_match(match):
+            db.add_match_by_ids(league_name, match['player_1'], match['player_2'], match['week'], match['grouping'], season, sets_needed, play_all_sets=play_all_sets)
+    else:
+        all_players = db.get_active_players(league_name)
+        groupings = sorted(set(p.grouping for p in all_players))
+        groups = {g: [p for p in all_players if p.grouping == g] for g in groupings}
+
+        def write_match(match):
+            db.add_match(league_name, match['player_1'], match['player_2'], match['week'], match['grouping'], season, sets_needed, play_all_sets=play_all_sets)
 
     all_matches = []
     for grouping in groupings:
-        group_players = [p for p in all_players if p.grouping == grouping]
-        random.shuffle(group_players)
-        group_matches = create_matches(start_date, group_players, skip_weeks, include_byes)
+        group_members = groups[grouping]
+        random.shuffle(group_members)
+        group_matches = create_matches(start_date, group_members, skip_weeks, include_byes)
         for match in group_matches:
             match['grouping'] = grouping
         all_matches.extend(group_matches)
-    season = db.get_current_season(league_name)
-    season += 1
     for match in all_matches:
-        db.add_match(league_name, match['player_1'], match['player_2'], match['week'], match['grouping'], season, sets_needed, play_all_sets=play_all_sets)
+        write_match(match)

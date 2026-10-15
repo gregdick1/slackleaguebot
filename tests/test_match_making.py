@@ -1,6 +1,7 @@
 import datetime
 from unittest import TestCase
 
+import doubles_fixture
 import test_league_setup
 from backend import db, match_making
 
@@ -129,3 +130,45 @@ class Test(TestCase):
         self.assertEqual(84, len([x for x in matches if x.sets_needed == 4]))
         self.assertEqual(84, len(db.get_matches_for_season(league_name, 2)))
         self.assertEqual(2, db.get_current_season(league_name))
+
+    def test_doubles_season_from_draft_teams(self):
+        t = doubles_fixture.make_doubles_league(season_matches=False)
+        match_making.create_matches_for_season(league_name, datetime.date(2022, 1, 3), 3, [], False)
+        matches = db.get_matches_for_season(league_name, 1)
+        self.assertEqual({(t['AB'], t['CD']), (t['EF'], t['GH'])}, {tuple(sorted((m.player_1_id, m.player_2_id))) for m in matches})
+        self.assertEqual({'A', 'B'}, {m.grouping for m in matches})
+
+    def test_doubles_season_with_byes(self):
+        t = doubles_fixture.make_doubles_league(season_matches=False)
+        db.add_player(league_name, 'uY', 'Yara', '')
+        third = db.add_team(league_name, 1, 'uZ', 'uY', 'A')
+        match_making.create_matches_for_season(league_name, datetime.date(2022, 1, 3), 3, [], True)
+        group_a = [m for m in db.get_matches_for_season(league_name, 1) if m.grouping == 'A']
+        self.assertEqual(3, len([m for m in group_a if m.player_2_id is not None]))
+        self.assertEqual(3, len([m for m in group_a if m.player_2_id is None]))
+        self.assertIn(third, {m.player_1_id for m in group_a} | {m.player_2_id for m in group_a})
+
+    def test_doubles_season_needs_teams(self):
+        db.set_config(league_name, 'LEAGUE_FORMAT', 'DOUBLES')
+        with self.assertRaises(ValueError) as ctx:
+            match_making.create_matches_for_season(league_name, datetime.date(2022, 1, 3), 3, [], False)
+        self.assertEqual(match_making.NO_TEAMS_MSG, str(ctx.exception))
+
+    def test_mid_season_add_blocked_in_doubles(self):
+        doubles_fixture.make_doubles_league()
+        with self.assertRaises(ValueError) as ctx:
+            match_making.add_player_to_group(league_name, 'Zed', 1, 3)
+        self.assertEqual(match_making.MID_SEASON_DOUBLES_MSG, str(ctx.exception))
+
+    def test_doubles_season_odd_teams_no_byes(self):
+        t = doubles_fixture.make_doubles_league(season_matches=False)
+        db.add_player(league_name, 'uP', 'Pete', '')
+        db.add_player(league_name, 'uQ', 'Quinn', '')
+        third = db.add_team(league_name, 1, 'uP', 'uQ', 'A')
+        match_making.create_matches_for_season(league_name, datetime.date(2022, 1, 3), 3, [], False)
+        group_a = [m for m in db.get_matches_for_season(league_name, 1) if m.grouping == 'A']
+        self.assertEqual(3, len(group_a))
+        self.assertEqual(
+            {tuple(sorted((t['AB'], t['CD']))), tuple(sorted((t['AB'], third))), tuple(sorted((t['CD'], third)))},
+            {tuple(sorted((m.player_1_id, m.player_2_id))) for m in group_a}
+        )

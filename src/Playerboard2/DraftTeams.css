@@ -1,0 +1,4 @@
+.draft-teams .add-team-form { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
+.draft-teams .draft-group { min-height: 32px; margin-bottom: 8px; }
+.draft-teams .draft-team { display: flex; align-items: center; gap: 6px; }
+.draft-teams .draft-team-label { flex: 1; }

@@ -1,0 +1,7 @@
+*Group A Analysis:*
+_assuming all matches get played..._
+Player A4 is in the running for the championship and control their destiny.
+Player A1 could still claim the championship, but it will require others' games to fall a certain way.
+
+Player A2 and Player A4 could get relegated, but they can avoid it by winning their remaining games.
+Player A3 is locked into relegation.

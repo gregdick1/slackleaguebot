@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Envelope, EnvelopeCheck } from 'react-bootstrap-icons';
 import './MatchDisplay.css'
 
-function MatchDisplay({ match, allPlayers }) {
+function MatchDisplay({ match, names }) {
     let p1_score = match.winner_id === null ? '' : ''+match.player_1_score;
     let p2_score = match.winner_id === null ? '' : ''+match.player_2_score;
     let tie_score = match.winner_id === null ? '' : ''+match.tie_score;
@@ -11,10 +11,7 @@ function MatchDisplay({ match, allPlayers }) {
         if (p_id === null) {
             return "Bye"
         }
-        for (var p of allPlayers) {
-            if (p.slack_id === p_id) return p.name
-        }
-        return p_id
+        return names[p_id] || p_id
     }
     return (
         <div className="match-item">

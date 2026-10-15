@@ -6,12 +6,14 @@ import { LeagueContext } from "../contexts/League"
 import groupBy from '../helpers.js'
 import Spinner from "../Components/Spinner"
 import DbUpdater from "../Components/DbUpdater"
+import DraftTeams from './DraftTeams'
 
 import './PlayerBoard2.css'
 
 function PlayerBoard2() {
 
     const [seasonPlayers, setSeasonPlayers] = useState([])
+    const [leagueFormat, setLeagueFormat] = useState('SINGLES')
     const [season, setSeason] = useState(-1)
     const [seasons, setSeasons] = useState([])
     const [loadedForLeague, setLoadedForLeague] = useState('')
@@ -24,6 +26,7 @@ function PlayerBoard2() {
     const [addPlayerName, setAddPlayerName] = useState("")
 
     const [reload, setReload] = useState(false)
+    const [draftRefresh, setDraftRefresh] = useState(0)
     const [refreshUsersLoading, setRefreshUsersLoading] = useState(false)
     const [slackUsersRefreshState, setSlackUsersRefreshState] = useState({})
 
@@ -41,6 +44,8 @@ function PlayerBoard2() {
         }
         let seasons = (await axios.get('get-all-seasons', { params: { leagueName: leagueState.selectedLeague } })).data
         setSeasons(seasons)
+        const leagueConfigs = (await axios.get('get-league-configs', { params: { leagueName: leagueState.selectedLeague } })).data
+        setLeagueFormat(leagueConfigs.LEAGUE_FORMAT || 'SINGLES')
         let seasonToLoad = season
         if (seasonToLoad === -1) {
           seasonToLoad = seasons[seasons.length-1]
@@ -82,6 +87,7 @@ function PlayerBoard2() {
         setDeactivatedSlackIds(response.data)
         setDeactivating(false)
         setReload(true)
+        setDraftRefresh(r => r + 1)
       }
 
       updateServer().catch(console.error);
@@ -117,6 +123,7 @@ function PlayerBoard2() {
             alert("Adding Player failed: "+response.data['message'])
           }
           setReload(true)
+          setDraftRefresh(r => r + 1)
         }
 
         updateServer().catch(console.error);
@@ -162,6 +169,7 @@ function PlayerBoard2() {
             await axios.post(`inactivate-player`, { leagueName: leagueState.selectedLeague, playerId: result.draggableId });
             dispatch({ type: "need_to_check_for_commands", checkForCommandsToRun:true})
             setReload(true)
+            setDraftRefresh(r => r + 1)
           }
 
           updateServer().catch(console.error);
@@ -240,6 +248,7 @@ function PlayerBoard2() {
               await axios.post(`update-player-grouping-and-orders`, { leagueName: leagueState.selectedLeague, players: destinationGroupPlayers, grouping: destinationGroup });
             }
             setReload(true)
+            setDraftRefresh(r => r + 1)
             dispatch({ type: "need_to_check_for_commands", checkForCommandsToRun:true})
           }
 
@@ -405,6 +414,10 @@ function PlayerBoard2() {
             )}
           </Droppable>
         </DragDropContext>
+        { leagueFormat === 'DOUBLES' &&
+          <DraftTeams leagueName={leagueState.selectedLeague}
+                      refreshToken={draftRefresh}
+                      onChange={() => dispatch({ type: "need_to_check_for_commands", checkForCommandsToRun:true})} /> }
       </div>
     );
 }

@@ -3,38 +3,62 @@ import datetime, json
 from flask import Blueprint, request, jsonify
 
 from admin import admin_config
-from backend import db, match_making, utility, slack_util
+from backend import db, utility, slack_util, participants
 from backend.league_context import LeagueContext
 
 playerboard_api = Blueprint('playerboard_api', __name__)
 
 
-@playerboard_api.route('/submit-players', methods=['POST'])
-def submit_players():
-    players_and_groups = request.get_json().get("players")
-
-    for group, players in players_and_groups.items():
-        print(group, players)
-
-        ensure_players_in_db(players)
-        update_groupings(group, players)
-
-    today = datetime.datetime.today()
-    last_monday = today - datetime.timedelta(days=today.weekday())
-    next_monday = (last_monday + datetime.timedelta(days=7)).date()
-
-    league_name = admin_config.get_current_league()
-    lctx = LeagueContext.load_from_db(league_name)
-    # TODO use the config for sets needed
-    match_making.create_matches_for_season(lctx, next_monday, 3, skip_weeks=[], include_byes=False)
-
-    return "We did it boys"
+def _team_json(r, team):
+    return {'team_id': team.team_id, 'name': team.name, 'member_1': team.member_1, 'member_2': team.member_2,
+            'grouping': team.grouping, 'order_idx': team.order_idx, 'display_name': r.display_name(team.team_id)}
 
 
-@playerboard_api.route('/get-active-players', methods=['GET'])
-def get_active_players():
-    players = get_ranked_players()
-    return jsonify(players)
+def _team_action(work):
+    try:
+        result = work() or {}
+        return jsonify(dict({'success': True}, **result))
+    except (ValueError, TypeError, KeyError) as e:
+        return jsonify({'success': False, 'message': str(e)})
+
+
+@playerboard_api.route('/get-draft-teams', methods=['GET'])
+def get_draft_teams():
+    league_name = request.args.get("leagueName", default="", type=str)
+    if not league_name:
+        return jsonify({'success': False, 'message': 'leagueName is required.'})
+    season = db.get_current_season(league_name) + 1
+    r = participants.resolver(league_name)
+    return jsonify({'success': True, 'season': season, 'teams': [_team_json(r, t) for t in db.get_teams_for_season(league_name, season)]})
+
+
+@playerboard_api.route('/add-team', methods=['POST'])
+def add_team():
+    data = request.get_json()
+    league_name = data.get('leagueName')
+    season = db.get_current_season(league_name) + 1
+    return _team_action(lambda: {'teamId': db.add_team(league_name, season, data.get('member1'), data.get('member2'), data.get('grouping'), name=data.get('name'))})
+
+
+@playerboard_api.route('/update-team', methods=['POST'])
+def update_team():
+    data = request.get_json()
+    kwargs = {'member_1': data.get('member1'), 'member_2': data.get('member2')}
+    if 'name' in data:
+        kwargs['name'] = data.get('name')
+    return _team_action(lambda: db.update_team(data.get('leagueName'), data.get('teamId'), **kwargs))
+
+
+@playerboard_api.route('/delete-team', methods=['POST'])
+def delete_team():
+    data = request.get_json()
+    return _team_action(lambda: db.delete_team(data.get('leagueName'), data.get('teamId')))
+
+
+@playerboard_api.route('/update-team-grouping-and-orders', methods=['POST'])
+def update_team_grouping_and_orders():
+    data = request.get_json()
+    return _team_action(lambda: db.update_team_grouping_and_orders(data.get('leagueName'), data.get('teamIds'), data.get('grouping')))
 
 
 @playerboard_api.route('/get-players-from-season', methods=['GET'])
@@ -115,55 +139,13 @@ def get_deactivated_players():
     return jsonify(slack_util.get_deactivated_slack_ids(lctx))
 
 
-def ensure_players_in_db(players):
-    league_name = admin_config.get_current_league()  # TODO pass league name in
-    existing_players_dict = dict()
-    existing_players = db.get_players(league_name)
-
-    for existing_player in existing_players:
-        existing_players_dict[existing_player.name] = existing_player
-
-    players_to_add = []
-    for player in players:
-        if player['name'] not in existing_players_dict:
-            print("FOUND ONE", player['name'])
-            players_to_add.append(player)
-
-    if len(players_to_add) == 0:
-        return
-
-    # TODO move this to slack util if we're gonna keep it
-    lctx = LeagueContext.load_from_db(league_name)
-    users = slack_util._get_users_list(lctx)
-    user_map = {}
-    for user in users:
-        for player in players_to_add:
-            if user['profile']['real_name'].startswith(player['name']) and not user['deleted']:
-                user_map[player['name']] = user['id']
-                db.add_player(league_name, user['id'], player['name'], player['group'])
-
-
-def update_groupings(group, players):
-    league_name = admin_config.get_current_league()
-    existing = db.get_players(league_name)
-
-    for player in players:
-        for e in existing:
-            if e.name == player['name']:
-                if group == 'Trash':
-                    db.update_grouping(league_name, e.slack_id, "")
-                    db.set_active(league_name, e.slack_id, False)
-                else:
-                    db.update_grouping(league_name, e.slack_id, group)
-                    db.set_active(league_name, e.slack_id, True)
-
 
 def get_ranked_players(league_name=None, season=None):
     league_name = league_name or admin_config.get_current_league()
     if season is None:
         season = db.get_current_season(league_name)
     all_matches = db.get_matches_for_season(league_name, season)
-    all_players = db.get_players(league_name)
+    names = participants.resolver(league_name).names_map()
 
     groups = sorted(list(set([m.grouping for m in all_matches])))
     return_players = []
@@ -177,9 +159,10 @@ def get_ranked_players(league_name=None, season=None):
             if player['player_id'] is None:
                 continue
 
-            name = [p.name for p in all_players if p.slack_id is not None and p.slack_id == player['player_id']][0]
+            name = names.get(player['player_id'], player['player_id'])
             return_players.append(
                 {
+                    'id': player['player_id'],
                     'name': name,
                     'slack_id': player['player_id'],
                     'sets_won': player['s_w'],

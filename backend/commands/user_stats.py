@@ -1,4 +1,4 @@
-from backend import slack_util, db, configs
+from backend import slack_util, db, configs, participants
 
 
 def handles_message(lctx, command_object):
@@ -12,7 +12,8 @@ def handles_message(lctx, command_object):
 
 def handle_message(lctx, command_object):
     all_matches = db.get_matches(lctx.league_name)
-    message = build_stat_message(all_matches, command_object.user)
+    view = participants.resolver(lctx.league_name).player_view(all_matches, command_object.user)
+    message = build_stat_message(view, command_object.user)
     slack_util.post_message(lctx, message, command_object.channel)
 
 
