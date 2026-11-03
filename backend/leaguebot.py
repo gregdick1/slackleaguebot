@@ -33,10 +33,16 @@ class LeagueBot:
         message = command_parser.validate_and_clean_message(self.lctx, body['event'])
         if message is None:
             return
+        is_trusted = message.get('trusted_reporter', False)
         try:
             command = command_parser.determine_command(self.lctx, message)
+            if is_trusted:
+                self.logger.info('Report from trusted bot {}: {}'.format(message['user'], message['text']))
             if command is not None:
                 command.handle_message(self.lctx, command_parser.get_command_object(message))
+            elif is_trusted:
+                # Bots do not chat with each other: a report the bot does not understand is only logged
+                self.logger.info('Ignored the trusted bot message: no command handles it')
             else:
                 slack_util.post_message(self.lctx, "I don't recognize that. Try `help` to see what I can do.", message['channel'])
         except Exception as e:

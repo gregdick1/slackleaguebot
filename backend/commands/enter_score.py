@@ -75,7 +75,8 @@ def handles_message(lctx, command_object):
     if sides is None or parse_sides(text, command_object.user) is None:
         return False
     left_me, right_me = mentions_me(sides[0]), mentions_me(sides[1])
-    if is_admin:
+    # The commissioner (in a DM) and a trusted bot report for two other players: no "me"
+    if is_admin or command_object.is_trusted_reporter:
         return not left_me and not right_me
     return left_me != right_me
 

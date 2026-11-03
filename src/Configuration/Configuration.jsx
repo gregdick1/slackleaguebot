@@ -164,6 +164,7 @@ function Configuration() {
                 { editExisting && editor('Competition Channel Slack ID', 'COMPETITION_CHANNEL_SLACK_ID') }
                 { editExisting && editor('Bot Slack User ID', 'BOT_SLACK_USER_ID') }
                 { editExisting && editor('Commissioner Slack ID', 'COMMISSIONER_SLACK_ID') }
+                { editExisting && editor('Trusted Reporter Bot IDs', 'TRUSTED_REPORTER_IDS') }
               </div>
               <div className="config-box">
                 <label>Help Configs</label>

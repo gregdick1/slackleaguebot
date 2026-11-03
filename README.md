@@ -57,3 +57,16 @@ A league can run as doubles: two Slack users per team, teams re-formed every sea
 Players report with the singles syntax and can tag any opponent: `@bot me over @anyOpponent 3-1`. Either partner can report. Match DMs go to both partners; use `@partner_user` in the match message to tag the partner.
 
 Existing leagues: run **Update League** once after upgrading (schema v7). Singles behavior is unchanged.
+
+# Bot Score Reports
+A trusted bot (for example the ssb-streaming streambot) can report a score for two other players, with no `me`:
+`@bot @winner over @loser 3-1`. In doubles, tag one player of each team. It only works in the competition channel.
+Every other bot is still ignored, and the bot never replies to a trusted bot message it does not understand.
+
+1. Get the reporting bot's IDs: call `auth.test` with its bot token. It returns `user_id` (U…) and `bot_id` (B…). Either one works.
+2. For each league that accepts these reports (singles and doubles): in the admin UI, **download the latest DB first**
+   (an upload replaces the server DB, so a stale local copy would drop newer scores). On **Configuration**, set
+   **Trusted Reporter Bot IDs** (comma-separated), then upload.
+3. Restart the bot process. Configs load once at boot.
+
+Leave the setting empty to turn the feature off.
